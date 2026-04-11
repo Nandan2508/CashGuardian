@@ -1,0 +1,26 @@
+{
+  "name": "cashguardian-cli",
+  "version": "1.0.0",
+  "description": "CashGuardian CLI for Talk to Data hackathon",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest --runInBand",
+    "lint": "node --check index.js && node --check agent/queryAgent.js && node --check utils/formatter.js && node --check utils/dateUtils.js && node --check scripts/verifyData.js"
+  },
+  "keywords": [
+    "cli",
+    "finance",
+    "cashguardian"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "dotenv": "^16.4.7",
+    "nodemailer": "^6.10.1"
+  },
+  "devDependencies": {
+    "jest": "^30.0.5"
+  }
+}

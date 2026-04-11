@@ -1,0 +1,119 @@
+[
+  {
+    "week": "2026-01-W01",
+    "weekEndDate": "2026-01-17",
+    "revenue": 64000,
+    "expenses": 52000,
+    "newClients": 1,
+    "overdueCount": 0,
+    "avgDaysToPayment": 8
+  },
+  {
+    "week": "2026-01-W02",
+    "weekEndDate": "2026-01-24",
+    "revenue": 58000,
+    "expenses": 49000,
+    "newClients": 0,
+    "overdueCount": 0,
+    "avgDaysToPayment": 7
+  },
+  {
+    "week": "2026-01-W03",
+    "weekEndDate": "2026-01-31",
+    "revenue": 71000,
+    "expenses": 64000,
+    "newClients": 1,
+    "overdueCount": 1,
+    "avgDaysToPayment": 12
+  },
+  {
+    "week": "2026-02-W04",
+    "weekEndDate": "2026-02-07",
+    "revenue": 93000,
+    "expenses": 68000,
+    "newClients": 2,
+    "overdueCount": 1,
+    "avgDaysToPayment": 9
+  },
+  {
+    "week": "2026-02-W05",
+    "weekEndDate": "2026-02-14",
+    "revenue": 105000,
+    "expenses": 48000,
+    "newClients": 0,
+    "overdueCount": 1,
+    "avgDaysToPayment": 6
+  },
+  {
+    "week": "2026-02-W06",
+    "weekEndDate": "2026-02-21",
+    "revenue": 88000,
+    "expenses": 172000,
+    "newClients": 1,
+    "overdueCount": 2,
+    "avgDaysToPayment": 18
+  },
+  {
+    "week": "2026-02-W07",
+    "weekEndDate": "2026-02-28",
+    "revenue": 73000,
+    "expenses": 70000,
+    "newClients": 0,
+    "overdueCount": 2,
+    "avgDaysToPayment": 11
+  },
+  {
+    "week": "2026-03-W08",
+    "weekEndDate": "2026-03-07",
+    "revenue": 76000,
+    "expenses": 150000,
+    "newClients": 1,
+    "overdueCount": 2,
+    "avgDaysToPayment": 8
+  },
+  {
+    "week": "2026-03-W09",
+    "weekEndDate": "2026-03-14",
+    "revenue": 46000,
+    "expenses": 165000,
+    "newClients": 0,
+    "overdueCount": 3,
+    "avgDaysToPayment": 22
+  },
+  {
+    "week": "2026-03-W10",
+    "weekEndDate": "2026-03-21",
+    "revenue": 63000,
+    "expenses": 44000,
+    "newClients": 2,
+    "overdueCount": 3,
+    "avgDaysToPayment": 14
+  },
+  {
+    "week": "2026-03-W11",
+    "weekEndDate": "2026-03-28",
+    "revenue": 76000,
+    "expenses": 150000,
+    "newClients": 0,
+    "overdueCount": 4,
+    "avgDaysToPayment": 19
+  },
+  {
+    "week": "2026-04-W12",
+    "weekEndDate": "2026-04-04",
+    "revenue": 40000,
+    "expenses": 92000,
+    "newClients": 1,
+    "overdueCount": 4,
+    "avgDaysToPayment": 25
+  },
+  {
+    "week": "2026-04-W13",
+    "weekEndDate": "2026-04-11",
+    "revenue": 42000,
+    "expenses": 65000,
+    "newClients": 0,
+    "overdueCount": 4,
+    "avgDaysToPayment": 17
+  }
+]

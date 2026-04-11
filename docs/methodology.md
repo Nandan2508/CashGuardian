@@ -1,0 +1,1 @@
+/** Placeholder methodology documentation. */
