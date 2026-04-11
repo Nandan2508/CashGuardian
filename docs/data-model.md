@@ -179,6 +179,16 @@ The synthetic data was cross-validated against three public datasets to ensure r
 
 ---
 
+## Runtime Integration of Validation References
+
+CashGuardian now stores short validation notes in:
+
+- `data/externalValidation.json`
+
+At runtime, these notes are injected into the AI system prompt as context. This helps the model stay aligned with realistic payment behavior and SME cost patterns while still using the locked local business data as the single source of truth for calculations.
+
+---
+
 ## Why not use a public dataset directly?
 
 Public datasets don't have:

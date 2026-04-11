@@ -85,6 +85,14 @@ When AI is used, CashGuardian injects a live financial snapshot into the system 
 
 This design prevents hallucinated finance facts and keeps the AI focused on explanation, not calculation.
 
+CashGuardian also injects external validation notes from `data/externalValidation.json`:
+
+- IBM Finance Factoring insights for late-payment realism
+- UCI Online Retail II insights for sales-band realism
+- World Bank MSME insights for cost-structure realism
+
+These references do not replace the local financial dataset. They only provide grounded context for narrative quality.
+
 ## Dataset Validation
 
 The synthetic dataset was informed by public sources:

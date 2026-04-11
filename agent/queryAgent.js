@@ -1,4 +1,5 @@
 const invoices = require("../data/invoices.json");
+const externalValidation = require("../data/externalValidation.json");
 const {
   INTENTS,
   classifyIntent
@@ -22,10 +23,11 @@ const { formatCurrency } = require("../utils/formatter");
 
 /**
  * Builds the live system prompt used for AI answers.
- * @param {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string }} snapshot
+ * @param {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string, externalValidationNotes: string[] }} snapshot
  * @returns {string} Grounded system prompt.
  */
 function buildSystemPrompt(snapshot) {
+  const validationNotes = snapshot.externalValidationNotes.map((line) => `- ${line}`).join("\n");
   return `You are CashGuardian, a financial assistant for Mehta Wholesale Traders (Indian SME).
 Today is ${new Date().toDateString()}.
 
@@ -37,6 +39,10 @@ Overdue Invoices:      ${snapshot.overdueCount} invoices worth ₹${snapshot.ove
 High-Risk Clients:     ${snapshot.highRiskClients.join(", ")}
 Top Expense Category:  ${snapshot.topExpenseCategory}
 ===========================
+
+=== EXTERNAL VALIDATION REFERENCES ===
+${validationNotes}
+=====================================
 
 Rules:
 - Answer ONLY from the data above. Never invent numbers.
@@ -122,7 +128,7 @@ function fallbackResponse() {
 
 /**
  * Builds a global snapshot for AI grounding.
- * @returns {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string }}
+ * @returns {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string, externalValidationNotes: string[] }}
  */
 function getSnapshot() {
   const balance = getCashBalance();
@@ -137,7 +143,10 @@ function getSnapshot() {
     overdueCount: overdueInvoices.length,
     overdueTotal: overdueInvoices.reduce((sum, invoice) => sum + invoice.amount, 0),
     highRiskClients: riskReport.filter((client) => client.riskLevel === "HIGH").map((client) => client.client),
-    topExpenseCategory: expenseBreakdown[0] ? expenseBreakdown[0].category : "none"
+    topExpenseCategory: expenseBreakdown[0] ? expenseBreakdown[0].category : "none",
+    externalValidationNotes: externalValidation.map((item) =>
+      `${item.source} (${item.focus}): ${item.insight}`
+    )
   };
 }
 

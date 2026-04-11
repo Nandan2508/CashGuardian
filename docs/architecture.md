@@ -45,7 +45,8 @@ User Output
 5. The agent either:
    - returns a direct rule-based response, or
    - builds a system prompt and sends the grounded snapshot to the configured AI provider.
-6. `formatter.js` renders the result for the terminal.
+6. The system prompt includes external validation references from `data/externalValidation.json` to reinforce realism and reduce hallucinated assumptions.
+7. `formatter.js` renders the result for the terminal.
 
 ## AI Provider Abstraction
 
@@ -71,5 +72,6 @@ This separation keeps business logic independent from vendor-specific request fo
 - `data/transactions.json`: 90-day cash flow ledger
 - `data/invoices.json`: invoice and payment history
 - `data/metrics.json`: weekly KPI snapshots
+- `data/externalValidation.json`: public-dataset validation notes used as AI context
 
-These files are benchmark-locked and should not be regenerated or edited during feature work.
+The first three files are benchmark-locked and should not be regenerated or edited during feature work. The external validation file is descriptive context and should remain stable unless references are intentionally updated.

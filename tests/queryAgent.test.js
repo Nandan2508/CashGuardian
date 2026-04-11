@@ -1,4 +1,4 @@
-const { handleQuery, extractClientName, getHelpText } = require("../agent/queryAgent");
+const { handleQuery, extractClientName, getHelpText, buildSystemPrompt } = require("../agent/queryAgent");
 
 describe("queryAgent", () => {
   const originalApiKey = process.env.AI_API_KEY;
@@ -62,5 +62,20 @@ describe("queryAgent", () => {
     expect(response).toContain("2026-W08");
     expect(response).toContain("2026-W10");
     expect(response).toContain("+72%");
+  });
+
+  test("system prompt includes external validation dataset notes", () => {
+    const prompt = buildSystemPrompt({
+      netBalance: -12500,
+      totalIncome: 925500,
+      totalExpenses: 938000,
+      overdueCount: 4,
+      overdueTotal: 215500,
+      highRiskClients: ["Sharma Retail"],
+      topExpenseCategory: "salaries",
+      externalValidationNotes: ["IBM Finance Factoring: high-risk late-payment signal"]
+    });
+    expect(prompt).toContain("EXTERNAL VALIDATION REFERENCES");
+    expect(prompt).toContain("IBM Finance Factoring");
   });
 });

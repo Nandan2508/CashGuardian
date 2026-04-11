@@ -32,14 +32,14 @@ CashGuardian maps to the hackathon pillars like this:
 CashGuardian uses a provider abstraction over free-tier AI options:
 
 - Gemini: `gemini-1.5-flash`
-- Groq: `llama3-8b-8192`
+- Groq: `llama-3.1-8b-instant`
 - OpenRouter: `mistralai/mistral-7b-instruct:free`
 
 The application selects the provider through `AI_PROVIDER` and `AI_MODEL`, so the calling code stays the same while the backend can switch.
 
 ### Why context injection instead of fine-tuning
 
-The system prompt injects a live financial snapshot generated from local services. This keeps answers tied to current data instead of model memory, reduces hallucinations, and makes benchmark verification possible. The AI is used for explanation and summarisation, not for inventing numbers.
+The system prompt injects a live financial snapshot generated from local services. It also injects external validation context from [externalValidation.json](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\data\externalValidation.json), which summarizes IBM/UCI/World Bank references. This keeps answers tied to current data instead of model memory, reduces hallucinations, and makes benchmark verification possible. The AI is used for explanation and summarisation, not for inventing numbers.
 
 ### ASCII architecture diagram
 
@@ -84,6 +84,8 @@ The project uses synthetic business data designed to exercise every feature, the
 - IBM Finance Factoring late-payment histories
 - UCI Online Retail II
 - World Bank MSME Country Indicators
+
+Runtime note: core calculations always come from the locked local dataset files, while the external references are injected as contextual guardrails for AI explanations.
 
 ## Features
 
@@ -149,7 +151,7 @@ Week 2026-W19 projected balance: ₹1,65,000
 
 ## Benchmark
 
-CashGuardian uses the benchmark set in [BENCHMARK.md](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\BENCHMARK.md). The benchmark contains 13 ground-truth prompts with a maximum score of 55.
+CashGuardian uses the benchmark set in [BENCHMARK.md](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\BENCHMARK.md). The benchmark contains 13 ground-truth prompts. The current runner in [benchmark.js](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\tests\benchmark.js) computes a maximum of 53 points.
 
 ## Limitations
 
