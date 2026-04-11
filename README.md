@@ -34,6 +34,12 @@ npm test
 npm start
 ```
 
+Quick showcase run (non-interactive):
+
+```bash
+npm run demo
+```
+
 ## Configuration
 
 Required variables are listed in `.env.example`.
@@ -51,6 +57,17 @@ Optional for reminder email testing:
 - `EMAIL_USER`
 - `EMAIL_PASS`
 - `EMAIL_FROM`
+- `EMAIL_TO` (optional fallback recipient; useful for demos)
+
+### Gmail reminder setup
+
+For live reminder emails, use a dedicated Gmail account and App Password:
+
+1. Enable 2-Step Verification on the Gmail account.
+2. Create an App Password.
+3. Set `EMAIL_USER` to the Gmail address.
+4. Set `EMAIL_PASS` to the app password.
+5. For demo safety, set `EMAIL_TO` to your own inbox.
 
 ## Tech Stack
 
@@ -71,6 +88,7 @@ Optional for reminder email testing:
 - `What will my cash look like in 30 days?`
 - `Compare this month vs last month`
 - `Give me a weekly summary`
+- `Send a payment reminder to Sharma Retail`
 
 ## Data Sources
 
@@ -117,6 +135,17 @@ Latest benchmark run snapshot (from local `benchmark-results.json`):
 | BM-11 | Logistics Spike | 0 |
 | BM-12 | Month Comparison | 0 |
 | BM-13 | Weekly Summary | 1 |
+
+## Submission Checklist (Round 1)
+
+Before submitting GitHub URL:
+
+1. `npm install`
+2. `npm test` (expect `8/8` suites, `67` tests passing)
+3. `npm run benchmark:verbose` (updates `benchmark-results.json`)
+4. `npm run demo` (showcase command flow, including reminder action)
+5. Confirm `.env` is not committed and `.env.example` is complete
+6. Share repository URL
 
 ## Test Status
 

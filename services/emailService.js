@@ -1,12 +1,66 @@
 const nodemailer = require("nodemailer");
 const { formatCurrency, printAlert } = require("../utils/formatter");
+const clientContacts = require("../data/clientContacts.json");
+
+/**
+ * Resolves a reminder recipient email.
+ * Resolution order:
+ * 1) explicit EMAIL_TO override
+ * 2) client mapping from data/clientContacts.json
+ * 3) EMAIL_USER fallback
+ * @param {string} clientName - Business client name.
+ * @returns {string | null} Email address to send reminder to.
+ */
+function resolveRecipient(clientName) {
+  if (process.env.EMAIL_TO) {
+    return process.env.EMAIL_TO;
+  }
+
+  if (clientContacts[clientName]) {
+    return clientContacts[clientName];
+  }
+
+  return process.env.EMAIL_USER || null;
+}
+
+/**
+ * Checks whether mandatory SMTP config is present.
+ * @returns {{ ok: boolean, missing: string[] }} Validation result.
+ */
+function validateEmailConfig() {
+  const requiredVars = ["EMAIL_HOST", "EMAIL_PORT", "EMAIL_USER", "EMAIL_PASS", "EMAIL_FROM"];
+  const missing = requiredVars.filter((key) => !process.env[key]);
+  return {
+    ok: missing.length === 0,
+    missing
+  };
+}
 
 /**
  * Sends a payment reminder email to an overdue client.
  * @param {{ client: string, amount: number, daysOverdue: number, invoiceId: string }} invoiceData
- * @returns {Promise<{ success: boolean, messageId?: string, error?: string, alert: string }>}
+ * @returns {Promise<{ success: boolean, messageId?: string, error?: string, alert: string, recipient?: string }>}
  */
 async function sendPaymentReminder(invoiceData) {
+  const configValidation = validateEmailConfig();
+  if (!configValidation.ok) {
+    const missingList = configValidation.missing.join(", ");
+    return {
+      success: false,
+      error: `Missing email configuration: ${missingList}`,
+      alert: printAlert(`Payment reminder failed: Missing email configuration (${missingList}).`, "danger")
+    };
+  }
+
+  const recipient = resolveRecipient(invoiceData.client);
+  if (!recipient) {
+    return {
+      success: false,
+      error: "No reminder recipient configured",
+      alert: printAlert("Payment reminder failed: no recipient email available.", "danger")
+    };
+  }
+
   try {
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
@@ -20,7 +74,7 @@ async function sendPaymentReminder(invoiceData) {
 
     const info = await transporter.sendMail({
       from: process.env.EMAIL_FROM,
-      to: process.env.EMAIL_USER,
+      to: recipient,
       subject: `Payment Reminder - Invoice #${invoiceData.invoiceId} Overdue by ${invoiceData.daysOverdue} Days`,
       text: [
         `Dear ${invoiceData.client},`,
@@ -39,17 +93,21 @@ async function sendPaymentReminder(invoiceData) {
     return {
       success: true,
       messageId: info.messageId,
-      alert: printAlert(`Payment reminder sent for invoice ${invoiceData.invoiceId}.`, "info")
+      recipient,
+      alert: printAlert(`Payment reminder sent to ${recipient} for invoice ${invoiceData.invoiceId}.`, "info")
     };
   } catch (error) {
     return {
       success: false,
       error: error.message,
+      recipient,
       alert: printAlert(`Payment reminder failed: ${error.message}`, "danger")
     };
   }
 }
 
 module.exports = {
-  sendPaymentReminder
+  sendPaymentReminder,
+  resolveRecipient,
+  validateEmailConfig
 };
