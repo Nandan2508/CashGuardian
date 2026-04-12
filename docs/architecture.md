@@ -1,64 +1,100 @@
-# Architecture
+# Architecture: CashGuardian [Luminous Edition]
 
-## Layered Design
+CashGuardian is built as a **Local-First AI Assistant**. It uses a layered architecture to ensure that financial logic remains deterministic while AI reasoning provides a natural-language bridge.
 
-```mermaid
-flowchart TD
-    A[User Input - CLI] --> B[index.js]
-    B --> C[agent/queryAgent.js]
-    C --> D[agent/intentMap.js]
-    C --> E[Services Layer]
-    E --> E1[cashFlowService.js]
-    E --> E2[invoiceService.js]
-    E --> E3[riskService.js]
-    E --> E4[predictionService.js]
-    E --> E5[anomalyService.js]
-    E --> E6[summaryService.js]
-    E --> E7[emailService.js]
-    C --> F[AI Provider Adapter]
-    F --> G[utils/formatter.js]
-    G --> H[User Output]
-```
+---
 
-## Query Lifecycle
+## 🏗️ System Overview
 
-1. The user enters a natural-language question in the CLI.
-2. `index.js` reads the query and forwards it to `agent/queryAgent.js`.
-3. `intentMap.js` classifies the query with deterministic keyword matching.
-4. Relevant services compute the financial facts from locked local JSON.
-5. The agent either:
-   - returns a direct rule-based response, or
-   - builds a system prompt and sends the grounded snapshot to the configured AI provider.
-6. The system prompt includes external validation references from `data/externalValidation.json` to reinforce realism and reduce hallucinated assumptions.
-7. `formatter.js` renders the result for the terminal.
-
-## AI Provider Abstraction
+The system operates via two interfaces (CLI and Web) that funnel into a single **Query Agent**.
 
 ```mermaid
-flowchart LR
-    ENV[AI_PROVIDER env var] --> G[gemini]
-    ENV --> GR[groq]
-    ENV --> OR[openrouter]
-    G --> EP1[Google generateContent]
-    GR --> EP2[OpenAI-compatible Groq]
-    OR --> EP3[OpenAI-compatible OpenRouter]
+graph TD
+    subgraph Frontend
+        W[Web UI - Vanilla JS]
+        C[CLI - Readline]
+    end
+
+    subgraph "Bridge (Express)"
+        S[server.js]
+        DS[In-memory Store]
+    end
+
+    subgraph "Intelligence Agent"
+        Q[queryAgent.js]
+        IM[intentMap.js]
+        SVC[Services Layer]
+    end
+
+    subgraph "Data & AI"
+        D[(Demo JSON)]
+        U[(Uploaded Data)]
+        AI[Groq/Llama 3.1]
+    end
+
+    W --> S
+    C --> Q
+    S --> Q
+    DS --> Q
+    Q --> IM
+    Q --> SVC
+    SVC --> D
+    SVC --> U
+    Q --> AI
 ```
 
-This separation keeps business logic independent from vendor-specific request formatting. Switching providers requires only a `.env` change — no code changes.
+---
 
-## Secret Handling
+## 🔄 The Query Lifecycle
 
-- All secrets come from environment variables only
-- `.env.example` contains placeholders, never real values
-- `AI_API_KEY`, `EMAIL_USER`, and `EMAIL_PASS` are never committed intentionally
-- Services and agents avoid logging secrets to stdout
-- All commits are signed off per DCO requirements (`git commit -s`)
+Every question asked to CashGuardian goes through a "Grounding First" pipeline:
 
-## Data Sources
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant Q as Query Agent
+    participant S as Finance Services
+    participant AI as Llama 3.1 (Groq)
 
-- `data/transactions.json`: 90-day cash flow ledger
-- `data/invoices.json`: invoice and payment history
-- `data/metrics.json`: weekly KPI snapshots
-- `data/externalValidation.json`: public-dataset validation notes used as AI context
+    U->>Q: "What is my current balance?"
+    Q->>Q: Classify Intent (CASH_BALANCE)
+    Q->>S: Request Snapshot
+    S->>S: Aggregate Local Ledger
+    S-->>Q: Snap: ₹84,200 (Positive)
+    Q->>AI: Query + Snap + System Prompt
+    AI-->>Q: "Your balance is ₹84,200. You are in good shape."
+    Q-->>U: Final Grounded Response
+```
 
-The first three files are benchmark-locked and should not be regenerated or edited during feature work. The external validation file is descriptive context and should remain stable unless references are intentionally updated.
+---
+
+## 📂 Component Breakdown
+
+### 1. `server.js` (Web Bridge)
+A minimalist Express server that serves the `web/` static files and provides API endpoints for:
+- `/api/upload`: In-memory ingestion of CSV/JSON files.
+- `/api/query`: Logic-agnostic interface for the Web UI.
+- `/api/snapshot`: Real-time metric gathering for the "Dataset Overview" panel.
+
+### 2. `agent/queryAgent.js` (Intelligence Core)
+The primary orchestrator. It is responsible for:
+- Mapping inputs to intents.
+- Gathering required facts from services.
+- Building the **Grounding Context** for the AI.
+
+### 3. `agent/intentMap.js` (The Traffic Controller)
+Uses high-performance keyword mapping to determine if a query is deterministic (e.g., "Balance") or narrative (e.g., "Analyze my patterns").
+
+### 4. Services Layer (`services/`)
+A suite of immutable logic modules that perform calculations on the data.
+- **`cashFlowService.js`**: Ledger aggregation and trends.
+- **`invoiceService.js`**: Status tracking and aging analysis.
+- **`riskService.js`**: Customer reliability scoring.
+
+---
+
+## 🔒 Security & Data Privacy
+
+- **No Persistence**: Uploaded datasets are kept in RAM (`activeDataset`) and are destroyed when the server restarts.
+- **Selective Grounding**: Only relevant data extracts are sent to the AI provider. Raw, PII-heavy files are never transmitted in their entirety.
+- **Local Fallback**: The system functions entirely on local data; if the AI provider is unavailable, it returns a concise data-only response.

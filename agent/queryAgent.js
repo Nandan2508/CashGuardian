@@ -47,7 +47,9 @@ ${validationNotes}
 Rules:
 - Answer ONLY from the data above. Never invent numbers.
 - Be concise. Use plain English. Format money as ₹X,XX,XXX (Indian style).
-- End with one actionable recommendation when relevant.`;
+- If asked "Why?", look for the biggest influencers (highest % or amount) or drivers in the data.
+- End with one actionable recommendation based on the current financial health (e.g., "Collect [Client] payment" or "Review [Category] spend").
+- Provide source transparency by mentioning if you used "Internal Metrics" or "External Validation".`;
 }
 
 /**
@@ -62,6 +64,7 @@ async function callAI(systemPrompt, userQuery) {
     if (provider === "gemini") {
       return await callGemini(systemPrompt, userQuery);
     }
+    // Default to Groq/OpenAI compatible if not Gemini
     return await callOpenAICompat(systemPrompt, userQuery);
   } catch (error) {
     return fallbackResponse();
@@ -128,9 +131,32 @@ function fallbackResponse() {
 
 /**
  * Builds a global snapshot for AI grounding.
+ * @param {Array<Object>|null} customDataset - User uploaded data if available.
  * @returns {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string, externalValidationNotes: string[] }}
  */
-function getSnapshot() {
+function getSnapshot(customDataset = null) {
+  // If we have a custom dataset, derive snapshot from it
+  if (customDataset && customDataset.length > 0) {
+    const totalIncome = customDataset
+      .filter(item => item.amount > 0)
+      .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const totalExpenses = customDataset
+      .filter(item => item.amount < 0)
+      .reduce((sum, item) => sum + Math.abs(Number(item.amount) || 0), 0);
+    
+    return {
+      netBalance: totalIncome - totalExpenses,
+      totalIncome,
+      totalExpenses,
+      overdueCount: customDataset.filter(item => item.status === 'overdue').length,
+      overdueTotal: customDataset.filter(item => item.status === 'overdue').reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
+      highRiskClients: ['Scanning Custom Data...'],
+      topExpenseCategory: 'Various',
+      externalValidationNotes: ['Custom dataset active. No external benchmark reference available.']
+    };
+  }
+
+  // Fallback to Demo (Mehta Wholesale Traders)
   const balance = getCashBalance();
   const overdueInvoices = getOverdueInvoices();
   const expenseBreakdown = getExpenseBreakdown();
@@ -422,15 +448,26 @@ async function maybeUseAI(userInput, fallbackText) {
 }
 
 /**
- * Handles user queries for the CLI.
+ * Handles user queries for the CLI or Web.
  * @param {string} userInput - Raw user input from the command line.
- * @returns {Promise<string>} Routed CLI response.
+ * @param {Array<Object>|null} customDataset - Optional user-uploaded data context.
+ * @returns {Promise<string>} Routed response.
  */
-async function handleQuery(userInput) {
+async function handleQuery(userInput, customDataset = null) {
+  // If using a custom dataset, bypass the intent-map and go straight to AI with the custom context
+  if (customDataset) {
+    const snapshot = getSnapshot(customDataset);
+    const systemPrompt = buildSystemPrompt(snapshot) + `\n\nAdditionally, here is a sampling of the custom dataset rows:\n${JSON.stringify(customDataset.slice(0, 10))}`;
+    return callAI(systemPrompt, userInput);
+  }
+
+  // Benchmark response bypassed to favor dynamic AI reasoning for the hackathon
+    /*
   const benchmarkResponse = getBenchmarkResponse(userInput);
   if (benchmarkResponse) {
     return benchmarkResponse;
   }
+    */
 
   const intent = classifyIntent(userInput);
 
@@ -533,6 +570,7 @@ async function handleQuery(userInput) {
 module.exports = {
   handleQuery,
   processQuery: handleQuery,
+  getSnapshot,
   buildSystemPrompt,
   callAI,
   callGemini,

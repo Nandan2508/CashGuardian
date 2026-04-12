@@ -1,0 +1,10 @@
+[
+  {"date": "2026-03-01", "region": "North", "product": "Agri-Tools", "amount": 125000, "channel": "Direct"},
+  {"date": "2026-03-05", "region": "South", "product": "Seeds", "amount": 45000, "channel": "Retail"},
+  {"date": "2026-03-10", "region": "North", "product": "Fertilizers", "amount": 98000, "channel": "Wholesale"},
+  {"date": "2026-03-15", "region": "East", "product": "Agri-Tools", "amount": 67000, "channel": "Direct"},
+  {"date": "2026-03-20", "region": "South", "product": "Fertilizers", "amount": 32000, "channel": "Retail"},
+  {"date": "2026-04-01", "region": "North", "product": "Seeds", "amount": 110000, "channel": "Wholesale"},
+  {"date": "2026-04-05", "region": "South", "product": "Agri-Tools", "amount": 15000, "channel": "Retail"},
+  {"date": "2026-04-10", "region": "West", "product": "Agri-Tools", "amount": 89000, "channel": "Direct"}
+]

@@ -7,14 +7,23 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [1.1.0] — 2026-04-12 (Luminous Edition Overhaul)
 
-### Planned
-- Real bank API integration (Razorpay, Plaid)
-- GST data import
-- Web dashboard
-- Scheduled automated reminders
-- Multi-company support
+### Added
+- **Premium Web UI**: Launched the "Warm Notebook" interface—a single-file Vanilla JS platform with a human-centric "warm" aesthetic (Inter font, amber accents).
+- **Dataset-Agnostic Intelligence**: Implemented dynamic file ingestion for CSV and JSON, allowing users to "talk to any data" instead of just the demo business.
+- **Contextual Grounding Engine**: Refactored `queryAgent.js` to sample and ground AI reasoning in user-uploaded data samples.
+- **Express API Bridge**: Added `server.js` to provide REST endpoints for the web interface (`/api/query`, `/api/upload`, `/api/snapshot`).
+- **Visual Analytics**: Integrated real-time Chart.js visualizations for the 13-week cash flow ledger in the browser.
+- **Transparency Logs**: Added "How was this answered?" feature in the UI to expose intent classification and grounding logic to the user.
+- **Documentation 2.0**: Overhauled technical docs with interactive Mermaid flowcharts for Architecture, Methodology, and Risk Scoring.
+
+### Changed
+- **Dual-Interface Support**: Refactored the engine to support both high-performance CLI and a graphical Web UI simultaneously.
+- **README Overhaul**: Completely updated the project entry-point with modern branding and technical depth.
+
+### Removed
+- **Legacy Components**: Deleted the previous React-based dashboard and redundant CLI "Benchmark" views to focus on the human-centric "Talk to Data" experience.
 
 ---
 

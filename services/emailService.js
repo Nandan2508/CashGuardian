@@ -106,8 +106,63 @@ async function sendPaymentReminder(invoiceData) {
   }
 }
 
+/**
+ * Sends a general AI insight report to the user.
+ * @param {{ query: string, narrative: string, insightData?: any }} reportData
+ * @returns {Promise<{ success: boolean, messageId?: string, error?: string, alert: string, recipient?: string }>}
+ */
+async function sendInsightReport(reportData) {
+  const configValidation = validateEmailConfig();
+  if (!configValidation.ok) {
+    return { success: false, error: "Missing email configuration", alert: "Failed to send report." };
+  }
+
+  const recipient = process.env.EMAIL_TO || process.env.EMAIL_USER;
+  
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: Number(process.env.EMAIL_PORT || 587),
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: recipient,
+      subject: `[CashGuardian] Insight Report: ${reportData.query.substring(0, 30)}...`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #6366F1;">CashGuardian AI Insight</h2>
+          <p><strong>Query:</strong> ${reportData.query}</p>
+          <hr />
+          <div style="background: #f9f9fb; padding: 15px; border-radius: 8px; line-height: 1.6;">
+            ${reportData.narrative.replace(/\n/g, '<br>')}
+          </div>
+          <p style="font-size: 12px; color: #666; margin-top: 20px;">
+            Sent from your NatWest Talk to Data Dashboard.
+          </p>
+        </div>
+      `
+    });
+
+    return {
+      success: true,
+      messageId: info.messageId,
+      recipient,
+      alert: printAlert(`Insight report sent to ${recipient}.`, "info")
+    };
+  } catch (error) {
+    return { success: false, error: error.message, alert: "Email failed." };
+  }
+}
+
 module.exports = {
   sendPaymentReminder,
+  sendInsightReport,
   resolveRecipient,
   validateEmailConfig
 };

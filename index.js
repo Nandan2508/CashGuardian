@@ -7,15 +7,14 @@ const { handleQuery } = require("./agent/queryAgent");
 
 dotenv.config();
 
-const BANNER = [
-  "\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557",
-  "\u2551         CashGuardian CLI  \ud83d\udcbc                     \u2551",
-  "\u2551   Talk to your finances in plain English         \u2551",
-  "\u2551   Powered by free AI  |  Indian SME Edition      \u2551",
-  "\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d",
-  'Type your question or "help". Type "exit" to quit.',
-  ""
-].join("\n");
+const BANNER = `
+   ✨ CASHGUARDIAN AI [Luminous Edition] ✨
+   ──────────────────────────────────────────
+   Self-service Intelligence for your Data
+   Demo: Mehta Wholesale Traders (Indian SME)
+
+   Type your question or "help". Type "exit" to quit.
+`;
 
 /**
  * Starts the interactive CLI session.

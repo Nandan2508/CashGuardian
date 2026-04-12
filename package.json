@@ -9,7 +9,8 @@
     "lint": "node --check index.js && node --check agent/queryAgent.js && node --check utils/formatter.js && node --check utils/dateUtils.js && node --check scripts/verifyData.js",
     "benchmark": "node tests/benchmark.js",
     "benchmark:verbose": "node tests/benchmark.js --verbose",
-    "demo": "node scripts/showcaseDemo.js"
+    "demo": "node scripts/showcaseDemo.js",
+    "web": "node server.js"
   },
   "keywords": [
     "cli",
@@ -19,8 +20,10 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
+    "cors": "^2.8.6",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
+    "express": "^5.2.1",
     "nodemailer": "^6.10.1"
   },
   "devDependencies": {
