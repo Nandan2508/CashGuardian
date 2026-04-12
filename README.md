@@ -204,6 +204,7 @@ Before submitting GitHub URL:
 - [Architecture](./docs/architecture.md)
 - [Methodology](./docs/methodology.md)
 - [CLI usage](./docs/cli-usage.md)
+- [Data model](./docs/data-model.md)
 
 ## Limitations
 
