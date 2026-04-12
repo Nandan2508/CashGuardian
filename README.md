@@ -172,10 +172,11 @@ Before submitting GitHub URL:
 
 ## Architecture, Methodology, and CLI Reference
 
-- [Project docs](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\docs\README.md)
-- [Architecture](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\docs\architecture.md)
-- [Methodology](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\docs\methodology.md)
-- [CLI usage](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\docs\cli-usage.md)
+- [Project docs](./docs/)
+- [Architecture](./docs/methodology.md)
+- [Methodology](./docs/methodology.md)
+- [CLI usage](./docs/cli-usage.md)
+
 
 ## Limitations
 
