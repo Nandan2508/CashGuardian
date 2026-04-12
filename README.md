@@ -14,7 +14,6 @@ Many teams struggle to extract quick, accurate, and trustworthy answers from ope
 - Trust: consistent metric definitions and transparent data grounding
 - Speed: near-instant responses through a lightweight CLI flow
 
-
 ## Problem Statement Alignment
 
 | Pillar | How CashGuardian addresses it | Key feature |
@@ -43,11 +42,38 @@ Many teams struggle to extract quick, accurate, and trustworthy answers from ope
 - Benchmark runner with per-case latency capture
 - Jest test suite for services + query routing
 
+## Architecture
+
+```text
+User Input → index.js → queryAgent → intentMap → Services → AI Provider → formatter → Output
+```
+
+```mermaid
+flowchart TD
+    A[User Input - CLI] --> B[index.js]
+    B --> C[agent/queryAgent.js]
+    C --> D[agent/intentMap.js]
+    C --> E[Services Layer]
+    E --> E1[cashFlowService]
+    E --> E2[invoiceService]
+    E --> E3[riskService]
+    E --> E4[predictionService]
+    E --> E5[anomalyService]
+    E --> E6[summaryService]
+    C --> F[AI Provider Adapter]
+    F --> F1[Gemini]
+    F --> F2[Groq]
+    F --> F3[OpenRouter]
+    C --> G[utils/formatter.js]
+    G --> H[User Output]
+```
+
 ## Install and Run
 
 ```bash
 npm install
-copy .env.example .env
+cp .env.example .env        # Linux / Mac
+copy .env.example .env      # Windows
 npm test
 npm start
 ```
@@ -67,6 +93,8 @@ Minimum for AI responses:
 - `AI_PROVIDER`
 - `AI_API_KEY`
 - `AI_MODEL`
+
+> Free Gemini key (no credit card): https://aistudio.google.com/app/apikey — set `AI_PROVIDER=gemini`
 
 Optional for reminder email testing:
 
@@ -163,20 +191,19 @@ Before submitting GitHub URL:
 3. `npm run benchmark:verbose` (updates `benchmark-results.json`)
 4. `npm run demo` (showcase command flow, including reminder action)
 5. Confirm `.env` is not committed and `.env.example` is complete
-6. Share repository URL
+6. Confirm all commits are signed off (`git commit -s`)
+7. Share repository URL
 
 ## Test Status
 
 - Jest suites: `8/8` passing
 - Total automated tests: `67` passing
 
-## Architecture, Methodology, and CLI Reference
+## Documentation
 
-- [Project docs](./docs/)
-- [Architecture](./docs/methodology.md)
+- [Architecture](./docs/architecture.md)
 - [Methodology](./docs/methodology.md)
 - [CLI usage](./docs/cli-usage.md)
-
 
 ## Limitations
 
