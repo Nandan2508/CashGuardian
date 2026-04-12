@@ -1,28 +1,26 @@
-# CashGuardian
+# CashGuardian CLI
 
-Talk to your business finances in plain English — via CLI or browser.
-
----
+Talk to your business finances in plain English.
 
 ## Overview
 
-CashGuardian is a full-stack "Talk to Data" assistant built for the hackathon. It converts natural-language finance questions into deterministic, data-grounded answers and optionally uses free-tier AI providers for narrative responses. It runs as both an interactive CLI and a warm web interface.
-
-The intended users are founders, operators, and analysts who need fast and trustworthy insights without complex BI workflows.
-
----
+CashGuardian is a Node.js CLI assistant for SME finance analysis in the "Talk to Data" hackathon track. It converts natural-language finance questions into deterministic, data-grounded answers and optionally uses free-tier AI providers for narrative responses. The intended users are founders, operators, and analysts who need fast and trustworthy insights without complex BI workflows.
 
 ## Problem Statement
 
 Many teams struggle to extract quick, accurate, and trustworthy answers from operational data. They face tool complexity, ambiguous terminology, time pressure, and low confidence in outputs. CashGuardian reduces this friction by focusing on:
 
+- Clarity: plain-language answers for non-experts
+- Trust: consistent metric definitions and transparent data grounding
+- Speed: near-instant responses through a lightweight CLI flow
+
+## Problem Statement Alignment
+
 | Pillar | How CashGuardian addresses it | Key feature |
 |---|---|---|
 | **Clarity** | Plain-English answers via AI narrative — no BI jargon, no dashboards | `summaryService`, `queryAgent` |
 | **Trust** | All AI responses grounded in locked local data; 13-case benchmark with ground-truth numbers verifies accuracy | `BENCHMARK.md`, context injection |
-| **Speed** | Deterministic services return in <5ms; AI narrative is optional — works fully offline | avg 5.08ms, P95 56ms |
-
----
+| **Speed** | Deterministic services return in <5ms; AI narrative is optional — CLI works fully offline | avg 5.08ms, P95 56ms |
 
 ## Use Case Coverage
 
@@ -33,11 +31,18 @@ Many teams struggle to extract quick, accurate, and trustworthy answers from ope
 | 3 | Breakdown / decomposition | Expense breakdown by category with proportions; overdue invoices by client | *"Show me the expense breakdown"* | ✅ Implemented |
 | 4 | Summarise (weekly/monthly) | AI-generated narrative covering revenue, expenses, overdue status, top risk | *"Give me a weekly summary"* | ✅ Implemented |
 
----
+## Working Features
+
+- Deterministic cash, invoice, risk, anomaly, and forecast services
+- Intent-based query routing (`cash`, `overdue`, `risk`, `compare`, `summary`, `prediction`)
+- AI provider abstraction (`gemini`, `groq`, `openrouter`) with safe fallback handling
+- Prompt context injection using:
+  - locked operational dataset (`transactions`, `invoices`, `metrics`)
+  - external validation references (`externalValidation.json`)
+- Benchmark runner with per-case latency capture
+- Jest test suite for services + query routing
 
 ## Architecture
-
-CashGuardian uses a **Grounding First** architecture. Every query is grounded in local data before it reaches the AI — ensuring responses are factually accurate and never hallucinated.
 
 ```text
 User Input → index.js → queryAgent → intentMap → Services → AI Provider → formatter → Output
@@ -45,61 +50,23 @@ User Input → index.js → queryAgent → intentMap → Services → AI Provide
 
 ```mermaid
 flowchart TD
-    U([User]) --> UI[Web UI]
-    U --> CLI[CLI - readline]
-    UI --> S[Express Server]
-    CLI --> A[Query Agent]
-    S --> A
-    A --> IM[intentMap.js]
-    A --> SL[Services Layer]
-    SL --> S1[cashFlowService]
-    SL --> S2[invoiceService]
-    SL --> S3[riskService]
-    SL --> S4[predictionService]
-    SL --> S5[anomalyService]
-    SL --> S6[summaryService]
-    A --> AI[AI Provider Adapter]
-    AI --> G[Gemini]
-    AI --> GR[Groq]
-    AI --> OR[OpenRouter]
-    A --> F[formatter.js]
-    F --> U
+    A[User Input - CLI] --> B[index.js]
+    B --> C[agent/queryAgent.js]
+    C --> D[agent/intentMap.js]
+    C --> E[Services Layer]
+    E --> E1[cashFlowService]
+    E --> E2[invoiceService]
+    E --> E3[riskService]
+    E --> E4[predictionService]
+    E --> E5[anomalyService]
+    E --> E6[summaryService]
+    C --> F[AI Provider Adapter]
+    F --> F1[Gemini]
+    F --> F2[Groq]
+    F --> F3[OpenRouter]
+    C --> G[utils/formatter.js]
+    G --> H[User Output]
 ```
-
-### Intelligence flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant A as Query Agent
-    participant S as Services
-    participant D as Local Dataset
-    participant AI as AI Provider
-
-    U->>A: "Why did revenue drop this week?"
-    A->>S: Classify intent
-    S->>D: Ground data
-    D-->>A: Snapshot — net balance, overdue, trends
-    A->>AI: Grounded prompt — data + query
-    AI-->>A: Human narrative
-    A-->>U: Verified insight
-```
-
----
-
-## Working Features
-
-- Deterministic cash, invoice, risk, anomaly, and forecast services
-- Intent-based natural language query routing — type freely, not exact commands
-- AI provider abstraction (`gemini`, `groq`, `openrouter`) with safe fallback handling
-- Prompt context injection using locked operational dataset and external validation references
-- Web interface with chat UI, live snapshot panel, and 13-week cash flow chart
-- Dataset-agnostic engine — upload any CSV or JSON file to query your own data
-- REST API exposing all financial services as JSON endpoints
-- Benchmark runner with per-case latency capture
-- Jest test suite — 8 suites, 67 tests passing
-
----
 
 ## Install and Run
 
@@ -107,130 +74,97 @@ sequenceDiagram
 npm install
 cp .env.example .env        # Linux / Mac
 copy .env.example .env      # Windows
-```
-
-### Web UI (recommended)
-
-```bash
-npm run web
-# Open http://localhost:3001
-```
-
-### CLI
-
-```bash
+npm test
 npm start
 ```
 
-### Demo (non-interactive showcase)
+Quick showcase run (non-interactive):
 
 ```bash
 npm run demo
 ```
 
----
-
 ## Configuration
 
-All required variables are in `.env.example`.
+Required variables are listed in `.env.example`.
 
 Minimum for AI responses:
 
-```env
-AI_PROVIDER=gemini          # gemini | groq | openrouter
-AI_API_KEY=your-key-here
-AI_MODEL=gemini-1.5-flash
-PORT=3001
-```
+- `AI_PROVIDER`
+- `AI_API_KEY`
+- `AI_MODEL`
 
-> Free Gemini key — no credit card needed: https://aistudio.google.com/app/apikey
+> Free Gemini key (no credit card): https://aistudio.google.com/app/apikey — set `AI_PROVIDER=gemini`
 
-> Free Groq key: https://console.groq.com — use `llama-3.1-8b-instant`
+Optional for reminder email testing:
 
-Optional for email reminders:
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_USER`
+- `EMAIL_PASS`
+- `EMAIL_FROM`
+- `EMAIL_TO` (optional fallback recipient; useful for demos)
 
-```env
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-EMAIL_FROM=CashGuardian <your-email@gmail.com>
-EMAIL_TO=demo-recipient@gmail.com
-```
+### Gmail reminder setup
 
-### Gmail App Password setup
+For live reminder emails, use a dedicated Gmail account and App Password:
 
-1. Enable 2-Step Verification on the Gmail account
-2. Create an App Password under Google Account → Security
-3. Set `EMAIL_PASS` to the app password, not your account password
-
----
-
-## Usage Examples
-
-These are example phrasings — any natural language variation works. Type freely; the assistant understands intent, not exact commands.
-
-```text
-> What is my current cash balance?
-Current net cash balance is −₹12,500.
-Income: ₹9,25,500 | Expenses: ₹9,38,000
-
-> Show me all overdue invoices
-4 invoices are overdue, totalling ₹2,15,500.
-Highest exposure: Sharma Retail — ₹96,000
-
-> What will my cash look like in 30 days?
-🔴 CASH RUNOUT RISK — collect ₹2,15,500 in overdue invoices before expenses fall due.
-Week 2026-W16 projected balance: ₹47,625
-Week 2026-W17 projected balance: ₹46,750
-Week 2026-W18 projected balance: ₹1,22,875
-Week 2026-W19 projected balance: ₹1,65,000
-```
-
----
+1. Enable 2-Step Verification on the Gmail account.
+2. Create an App Password.
+3. Set `EMAIL_USER` to the Gmail address.
+4. Set `EMAIL_PASS` to the app password.
+5. For demo safety, set `EMAIL_TO` to your own inbox.
 
 ## Tech Stack
 
-| Layer | Tools |
-|---|---|
-| Runtime | Node.js 18+ |
-| CLI | readline |
-| Backend | Express |
-| Frontend | Vanilla HTML / CSS / JS |
-| Charts | Chart.js |
-| AI | Gemini / Groq / OpenRouter |
-| Dates | date-fns |
-| Email | Nodemailer |
-| Config | dotenv |
-| Testing | Jest |
+- Runtime: Node.js
+- CLI: readline
+- AI: Gemini / Groq / OpenRouter
+- Date utilities: date-fns
+- Email: Nodemailer
+- Config: dotenv
+- Testing: Jest
 
----
+## Usage Examples
+
+- `What is my current cash balance?`
+- `Give me a cash flow summary`
+- `Show me all overdue invoices`
+- `Which clients are at risk of not paying?`
+- `What will my cash look like in 30 days?`
+- `Compare this month vs last month`
+- `Give me a weekly summary`
+- `Send a payment reminder to Sharma Retail`
 
 ## Data Sources
 
-Core financial logic runs only on locked local files:
+Runtime business calculations are performed only on locked local data files:
 
-- `data/transactions.json` — 90-day cash flow ledger
-- `data/invoices.json` — invoice and payment history
-- `data/metrics.json` — 13 weekly KPI snapshots
+- `data/transactions.json`
+- `data/invoices.json`
+- `data/metrics.json`
 
 AI narrative quality is additionally guided by:
 
-- `data/externalValidation.json` — IBM, UCI, World Bank validation references
+- `data/externalValidation.json`
 
-Benchmark numbers come from the locked local dataset. External references provide narrative grounding context only. Uploaded files are processed in-memory and never saved to disk.
-
----
+This means benchmark numbers come from benchmark-locked local data; external references provide realism context only.
 
 ## Benchmark
 
-Verified against 13 ground-truth finance cases. Max score: 55.
+Benchmark definitions live in:
+
+- `BENCHMARK.md`
+- `tests/benchmark.js`
+
+Latest benchmark run snapshot (from local `benchmark-results.json`):
 
 - Cases executed: `13/13`
 - Errors: `0`
 - Average latency: `5.08ms`
 - P50 latency: `1ms`
 - P95 latency: `56ms`
+- Max latency: `56ms`
 
 | Benchmark | Category | Latency (ms) |
 |---|---|---:|
@@ -248,47 +182,28 @@ Verified against 13 ground-truth finance cases. Max score: 55.
 | BM-12 | Month Comparison | 0 |
 | BM-13 | Weekly Summary | 1 |
 
-Full benchmark definitions and scoring rubric: [BENCHMARK.md](./BENCHMARK.md)
+## Submission Checklist (Round 1)
 
----
+Before submitting GitHub URL:
 
-## Privacy and Trust
-
-- **Local first** — all data processing happens on your machine
-- **Privacy mode** — uploaded files are stored in-memory for the session only, never written to disk
-- **Grounding logs** — every AI response includes a "How was this answered?" transparency section showing intent, services called, and data source
-- **No hallucination** — AI receives a pre-computed financial snapshot, not raw data; it explains, it does not calculate
-
----
+1. `npm install`
+2. `npm test` (expect `8/8` suites, `67` tests passing)
+3. `npm run benchmark:verbose` (updates `benchmark-results.json`)
+4. `npm run demo` (showcase command flow, including reminder action)
+5. Confirm `.env` is not committed and `.env.example` is complete
+6. Confirm all commits are signed off (`git commit -s`)
+7. Share repository URL
 
 ## Test Status
 
 - Jest suites: `8/8` passing
 - Total automated tests: `67` passing
 
----
-
-## Submission Checklist
-
-1. `npm install`
-2. `npm test` — expect `8/8` suites, `67` tests passing
-3. `npm run benchmark:verbose` — updates `benchmark-results.json`
-4. `npm run demo` — showcase command flow including reminder
-5. `npm run web` — confirm web UI loads at `http://localhost:3001`
-6. Confirm `.env` is not committed and `.env.example` is complete
-7. Confirm all commits are signed off (`git commit -s`)
-8. Share repository URL
-
----
-
 ## Documentation
 
 - [Architecture](./docs/architecture.md)
 - [Methodology](./docs/methodology.md)
 - [CLI usage](./docs/cli-usage.md)
-- [Data model](./docs/data-model.md)
-
----
 
 ## Limitations
 
@@ -300,13 +215,24 @@ Full benchmark definitions and scoring rubric: [BENCHMARK.md](./BENCHMARK.md)
 
 ## Future Improvements
 
-- Automated benchmark scoring against deterministic outputs
-- Structured JSON output mode for dashboard integration
-- Richer entity extraction for multi-client queries
-- Persistent session history across page reloads
+- Add automated benchmark scoring (not just manual rubric fields)
+- Add structured JSON output mode for dashboard integration
+- Expand intent parsing with entity extraction for richer multi-client queries
+
+## 🚀 Deployment (Vercel)
+
+CashGuardian is pre-configured for one-click deployment to **Vercel**.
+
+1.  **Push to GitHub**: Ensure all changes are pushed to your repository.
+2.  **Import to Vercel**: Connect your GitHub repo to Vercel.
+3.  **Environment Variables**: In the Vercel Dashboard, add your `.env` variables:
+    - `AI_PROVIDER` (e.g., `gemini`)
+    - `AI_API_KEY` (Your key)
+    - `AI_MODEL` (e.g., `gemini-1.5-flash`)
+4.  **Deploy**: Vercel will automatically detect `vercel.json` and serve the platform.
 
 ---
 
-## License
+## 🏛️ License
 
-Apache 2.0. See [LICENSE](./LICENSE).
+Apache 2.0. See `LICENSE`.

@@ -122,7 +122,11 @@ app.get('/api/benchmark', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 CashGuardian Luminous Server running on http://localhost:${PORT}`);
-  console.log(`📄 Serving vanilla web interface from /web`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 CashGuardian Luminous Server running on http://localhost:${PORT}`);
+    console.log(`📄 Serving vanilla web interface from /web`);
+  });
+}
+
+module.exports = app;
