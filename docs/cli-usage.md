@@ -44,7 +44,7 @@ Recommendation: require advance payment or stop credit for the highest-risk acco
 ```text
 > What will my cash look like in 30 days?
 Starting balance: −₹12,500
-🔴 CASH RUNOUT RISK
+🔴 CASH RUNOUT RISK — collect ₹2,15,500 in overdue invoices before expenses fall due.
 2026-W16 -> income ₹1,32,313 | expenses ₹72,188 | balance ₹47,625
 2026-W17 -> income ₹71,313   | expenses ₹72,188 | balance ₹46,750
 2026-W18 -> income ₹1,48,313 | expenses ₹72,188 | balance ₹1,22,875
@@ -67,7 +67,7 @@ Miscellaneous    ₹9,000   1%
 
 ```text
 > Are there any unusual patterns in my spending?
-Logistics expenses in week 2026-W08 were ₹36,000, which is 53% above the usual ₹23,500 baseline.
+Logistics expenses in week 2026-W08 were ₹36,000, which is 72% above the usual ₹21,000 baseline.
 This suggests an operational spike worth reviewing.
 ```
 
@@ -75,17 +75,20 @@ This suggests an operational spike worth reviewing.
 
 ```text
 > Give me a weekly summary
-This week, Mehta Wholesale Traders brought in ₹42,000 and spent ₹65,000, resulting in a net outflow of ₹23,000. Compared with the previous week, the net position has improved by ₹80,000. 4 invoices remain overdue totalling ₹2,15,500, and Sharma Retail is the top payment risk. Recent anomalies include sales in 2026-W10 (64%) and logistics in 2026-W08 (53%).
+This week, Mehta Wholesale Traders brought in ₹42,000 and spent ₹65,000, resulting in a net
+outflow of ₹23,000. Compared with the previous week, the net position has improved by ₹80,000.
+4 invoices remain overdue totalling ₹2,15,500, and Sharma Retail is the top payment risk.
+Recent anomalies include sales in 2026-W10 (64%) and logistics in 2026-W08 (72%).
 ```
 
-### 9. Compare this month vs last month
+### 9. Period comparison
 
 ```text
 > Compare this month vs last month
-Current period: 2026-04-01 to 2026-04-10
+Current period:  2026-04-01 to 2026-04-10
 Previous period: 2026-03-01 to 2026-03-31
-Income delta: −₹3,14,000
-Expense delta: −₹3,34,500
+Income delta:   −₹3,14,000
+Expense delta:  −₹3,34,500
 Net improvement: ₹20,500
 ```
 
@@ -109,7 +112,7 @@ Available commands:
 - expense breakdown
 - spending anomalies
 - weekly summary
-- compare this month vs last month
+- period comparison (this month vs last month)
 - send payment reminder
 - help
 ```
