@@ -1,6 +1,31 @@
-# CashGuardian CLI
+# CashGuardian 
 
 Talk to your business finances in plain English.
+
+🌐 **Live Demo**: [cash-guardian-three.vercel.app](https://cash-guardian-three.vercel.app/)
+
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=node.js&logoColor=white)
+![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)
+![Tests](https://img.shields.io/badge/Tests-67%20passing-brightgreen?style=flat-square)
+![Benchmarks](https://img.shields.io/badge/Benchmarks-13%2F13-brightgreen?style=flat-square)
+![Latency](https://img.shields.io/badge/Avg%20Latency-5.08ms-blue?style=flat-square)
+![Deploy](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat-square&logo=vercel)
+
+## Screenshots
+
+### Web Dashboard
+![CashGuardian Dashboard](./docs/images/dashboard.png)
+*Web UI showing overdue invoices, net balance, risk client, and 13-week cash flow chart*
+
+### CLI — Help & Commands
+![CashGuardian CLI Help](./docs/images/cli-help.png)
+*Terminal view of available natural-language commands*
+
+### CLI — Monthly Comparison
+![CashGuardian Monthly Comparison](./docs/images/cli-compare.png)
+*Month-over-month comparison output with income and expense deltas*
+
+---
 
 ## Overview
 
@@ -219,7 +244,7 @@ Before submitting GitHub URL:
 - Add structured JSON output mode for dashboard integration
 - Expand intent parsing with entity extraction for richer multi-client queries
 
-## 🚀 Deployment (Vercel)
+##  Deployment (Vercel)
 
 CashGuardian is pre-configured for one-click deployment to **Vercel**.
 
