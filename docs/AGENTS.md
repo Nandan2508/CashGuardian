@@ -1,1 +1,0 @@
-/** Placeholder AGENTS mirror documentation. */

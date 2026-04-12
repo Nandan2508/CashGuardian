@@ -14,6 +14,23 @@ Many teams struggle to extract quick, accurate, and trustworthy answers from ope
 - Trust: consistent metric definitions and transparent data grounding
 - Speed: near-instant responses through a lightweight CLI flow
 
+## Problem Statement Alignment
+
+| Pillar | How CashGuardian addresses it | Key feature |
+|---|---|---|
+| **Clarity** | Plain-English answers via AI narrative — no BI jargon, no dashboards | `summaryService`, `queryAgent` |
+| **Trust** | All AI responses grounded in locked local data; 13-case benchmark with ground-truth numbers verifies accuracy | `BENCHMARK.md`, context injection |
+| **Speed** | Deterministic services return in <5ms; AI narrative is optional — CLI works fully offline | avg 5.08ms, P95 56ms |
+
+## Use Case Coverage
+
+| # | Hackathon use case | CashGuardian feature | Example query | Status |
+|---|---|---|---|---|
+| 1 | Understand what changed | Anomaly detection — flags income/expense spikes vs 8-week rolling average | *"Are there unusual patterns in my spending?"* | ✅ Implemented |
+| 2 | Compare (time periods) | Period comparison engine — WoW and MoM with % deltas and narrative | *"Compare this month vs last month"* | ✅ Implemented |
+| 3 | Breakdown / decomposition | Expense breakdown by category with proportions; overdue invoices by client | *"Show me the expense breakdown"* | ✅ Implemented |
+| 4 | Summarise (weekly/monthly) | AI-generated narrative covering revenue, expenses, overdue status, top risk | *"Give me a weekly summary"* | ✅ Implemented |
+
 ## Working Features
 
 - Deterministic cash, invoice, risk, anomaly, and forecast services
@@ -25,11 +42,38 @@ Many teams struggle to extract quick, accurate, and trustworthy answers from ope
 - Benchmark runner with per-case latency capture
 - Jest test suite for services + query routing
 
+## Architecture
+
+```text
+User Input → index.js → queryAgent → intentMap → Services → AI Provider → formatter → Output
+```
+
+```mermaid
+flowchart TD
+    A[User Input - CLI] --> B[index.js]
+    B --> C[agent/queryAgent.js]
+    C --> D[agent/intentMap.js]
+    C --> E[Services Layer]
+    E --> E1[cashFlowService]
+    E --> E2[invoiceService]
+    E --> E3[riskService]
+    E --> E4[predictionService]
+    E --> E5[anomalyService]
+    E --> E6[summaryService]
+    C --> F[AI Provider Adapter]
+    F --> F1[Gemini]
+    F --> F2[Groq]
+    F --> F3[OpenRouter]
+    C --> G[utils/formatter.js]
+    G --> H[User Output]
+```
+
 ## Install and Run
 
 ```bash
 npm install
-copy .env.example .env
+cp .env.example .env        # Linux / Mac
+copy .env.example .env      # Windows
 npm test
 npm start
 ```
@@ -49,6 +93,8 @@ Minimum for AI responses:
 - `AI_PROVIDER`
 - `AI_API_KEY`
 - `AI_MODEL`
+
+> Free Gemini key (no credit card): https://aistudio.google.com/app/apikey — set `AI_PROVIDER=gemini`
 
 Optional for reminder email testing:
 
@@ -145,19 +191,19 @@ Before submitting GitHub URL:
 3. `npm run benchmark:verbose` (updates `benchmark-results.json`)
 4. `npm run demo` (showcase command flow, including reminder action)
 5. Confirm `.env` is not committed and `.env.example` is complete
-6. Share repository URL
+6. Confirm all commits are signed off (`git commit -s`)
+7. Share repository URL
 
 ## Test Status
 
 - Jest suites: `8/8` passing
 - Total automated tests: `67` passing
 
-## Architecture, Methodology, and CLI Reference
+## Documentation
 
-- [Project docs](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\docs\README.md)
-- [Architecture](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\docs\architecture.md)
-- [Methodology](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\docs\methodology.md)
-- [CLI usage](C:\Users\sapan.nv\OneDrive\Desktop\natwest\CashGuardian\docs\cli-usage.md)
+- [Architecture](./docs/architecture.md)
+- [Methodology](./docs/methodology.md)
+- [CLI usage](./docs/cli-usage.md)
 
 ## Limitations
 

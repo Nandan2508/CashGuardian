@@ -2,38 +2,22 @@
 
 ## Layered Design
 
-```text
-User Input (CLI)
-      |
-      v
-index.js
-      |
-      v
-agent/queryAgent.js
-      |
-      +--> agent/intentMap.js
-      |
-      +--> services/
-             |--> cashFlowService.js
-             |--> invoiceService.js
-             |--> riskService.js
-             |--> predictionService.js
-             |--> anomalyService.js
-             |--> summaryService.js
-             |--> emailService.js
-      |
-      v
-AI Provider Adapter
-      |
-      +--> Gemini generateContent
-      +--> Groq chat completions
-      +--> OpenRouter chat completions
-      |
-      v
-utils/formatter.js
-      |
-      v
-User Output
+```mermaid
+flowchart TD
+    A[User Input - CLI] --> B[index.js]
+    B --> C[agent/queryAgent.js]
+    C --> D[agent/intentMap.js]
+    C --> E[Services Layer]
+    E --> E1[cashFlowService.js]
+    E --> E2[invoiceService.js]
+    E --> E3[riskService.js]
+    E --> E4[predictionService.js]
+    E --> E5[anomalyService.js]
+    E --> E6[summaryService.js]
+    E --> E7[emailService.js]
+    C --> F[AI Provider Adapter]
+    F --> G[utils/formatter.js]
+    G --> H[User Output]
 ```
 
 ## Query Lifecycle
@@ -50,15 +34,17 @@ User Output
 
 ## AI Provider Abstraction
 
-```text
-process.env.AI_PROVIDER
-        |
-        +--> gemini     -> Google generateContent endpoint
-        +--> groq       -> OpenAI-compatible Groq endpoint
-        +--> openrouter -> OpenAI-compatible OpenRouter endpoint
+```mermaid
+flowchart LR
+    ENV[AI_PROVIDER env var] --> G[gemini]
+    ENV --> GR[groq]
+    ENV --> OR[openrouter]
+    G --> EP1[Google generateContent]
+    GR --> EP2[OpenAI-compatible Groq]
+    OR --> EP3[OpenAI-compatible OpenRouter]
 ```
 
-This separation keeps business logic independent from vendor-specific request formatting.
+This separation keeps business logic independent from vendor-specific request formatting. Switching providers requires only a `.env` change — no code changes.
 
 ## Secret Handling
 
@@ -66,6 +52,7 @@ This separation keeps business logic independent from vendor-specific request fo
 - `.env.example` contains placeholders, never real values
 - `AI_API_KEY`, `EMAIL_USER`, and `EMAIL_PASS` are never committed intentionally
 - Services and agents avoid logging secrets to stdout
+- All commits are signed off per DCO requirements (`git commit -s`)
 
 ## Data Sources
 
