@@ -44,6 +44,10 @@ High-Risk Clients:     ${snapshot.highRiskClients.join(", ")}
 Top Expense Category:  ${snapshot.topExpenseCategory}
 ===========================
 
+=== OVERDUE INVOICE LIST ===
+${snapshot.overdueList && snapshot.overdueList.length > 0 ? snapshot.overdueList.map(i => `- ${i.client}: ₹${i.amount.toLocaleString('en-IN')} (Due: ${i.dueDate})`).join('\n') : "No overdue invoices found."}
+===========================
+
 === EXTERNAL VALIDATION REFERENCES ===
 ${validationNotes}
 =====================================
@@ -281,12 +285,21 @@ function getSnapshot(customDataset = null) {
       .slice(0, 3)
       .map(([name, amt]) => `${name} (₹${amt.toLocaleString('en-IN')})`);
 
+    const overdueList = cleanedData
+      .filter(item => item.status === 'overdue')
+      .map(item => ({
+        client: item.client || "Unknown",
+        amount: item.amount,
+        dueDate: item.dueDate || "N/A"
+      }));
+
     snapshot = {
       netBalance: totalIncome - totalExpenses,
       totalIncome,
       totalExpenses,
       overdueCount: cleanedData.filter(item => item.status === 'overdue').length,
       overdueTotal: cleanedData.filter(item => item.status === 'overdue').reduce((sum, item) => sum + item.amount, 0),
+      overdueList,
       highRiskClients: highRiskClients.length > 0 ? highRiskClients : ['None'],
       topExpenseCategory: breakdown.length > 0 ? breakdown.sort((a,b) => b.total - a.total)[0].category : 'Various',
       externalValidationNotes: ['Custom dataset active. Analysis based on user-provided transactional boundaries.'],
