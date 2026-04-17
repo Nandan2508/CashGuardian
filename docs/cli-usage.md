@@ -34,17 +34,7 @@ Patel Distributors is also elevated with score 62.
 Recommendation: require advance payment or stop credit for the highest-risk accounts.
 ```
 
-### 5. 30-day cash prediction
 
-```text
-> What will my cash look like in 30 days?
-Starting balance: −₹12,500
-🔴 CASH RUNOUT RISK — collect ₹2,15,500 in overdue invoices before expenses fall due.
-2026-W16 -> income ₹1,32,313 | expenses ₹72,188 | balance ₹47,625
-2026-W17 -> income ₹71,313   | expenses ₹72,188 | balance ₹46,750
-2026-W18 -> income ₹1,48,313 | expenses ₹72,188 | balance ₹1,22,875
-2026-W19 -> income ₹1,14,313 | expenses ₹72,188 | balance ₹1,65,000
-```
 
 ### 6. Expense breakdown
 
@@ -102,7 +92,7 @@ Available commands:
 - cash flow summary
 - overdue invoices
 - risky clients
-- 30-day cash prediction
+
 - expense breakdown
 - spending anomalies
 - weekly summary

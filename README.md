@@ -81,7 +81,6 @@ graph TD
             S1[cashFlowService]
             S2[invoiceService]
             S3[riskService]
-            S4[predictionService]
             S5[anomalyService]
             S6[summaryService]
         end
@@ -105,7 +104,6 @@ graph TD
     Q --> S1
     Q --> S2
     Q --> S3
-    Q --> S4
     Q --> S5
     Q --> S6
     
@@ -229,12 +227,7 @@ Income: ₹9,25,500 | Expenses: ₹9,38,000
 4 invoices are overdue, totalling ₹2,15,500.
 Highest exposure: Sharma Retail — ₹96,000
 
-> What will my cash look like in 30 days?
-🔴 CASH RUNOUT RISK — collect ₹2,15,500 in overdue invoices before expenses fall due.
-Week 2026-W16 projected balance: ₹47,625
-Week 2026-W17 projected balance: ₹46,750
-Week 2026-W18 projected balance: ₹1,22,875
-Week 2026-W19 projected balance: ₹1,65,000
+
 ```
 
 ---

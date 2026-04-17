@@ -11,7 +11,7 @@ describe("anomalyService", () => {
       category: "logistics",
       actual: 36000,
       expected: 23500,
-      deviation: "53%",
+      deviation: "+53%",
       severity: "medium"
     });
   });
@@ -26,7 +26,7 @@ describe("anomalyService", () => {
       category: "sales",
       actual: 105000,
       expected: 64000,
-      deviation: "64%",
+      deviation: "+64%",
       severity: "medium"
     });
   });
@@ -42,7 +42,7 @@ describe("anomalyService", () => {
 
   test("returns anomalies sorted by largest deviation first", () => {
     const anomalies = detectAnomalies();
-    expect(anomalies[0].deviation).toBe("64%");
-    expect(anomalies[1].deviation).toBe("53%");
+    expect(anomalies[0].deviation).toBe("+64%");
+    expect(anomalies[1].deviation).toBe("+53%");
   });
 });

@@ -28,7 +28,6 @@ graph TD
             S1[cashFlowService]
             S2[invoiceService]
             S3[riskService]
-            S4[predictionService]
             S5[anomalyService]
             S6[summaryService]
         end
@@ -53,7 +52,6 @@ graph TD
     Q --> S1
     Q --> S2
     Q --> S3
-    Q --> S4
     Q --> S5
     Q --> S6
     Q -- "Grounded Prompt" --> AI_G
@@ -114,7 +112,7 @@ A suite of immutable logic modules that perform calculations on the data.
 - **`cashFlowService.js`**: Ledger aggregation and variance analysis.
 - **`invoiceService.js`**: Status tracking and overdue aging analysis.
 - **`riskService.js`**: Customer reliability scoring using late-payment signals.
-- **`predictionService.js`**: 30-day cash projection logic.
+
 - **`anomalyService.js`**: Baseline-deviation detection for spikes and drops.
 - **`summaryService.js`**: Periodic (weekly/monthly) performance narratives.
 

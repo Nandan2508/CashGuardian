@@ -176,37 +176,7 @@ Each benchmark has:
 
 ---
 
-## Category 4 — Prediction
 
-### BM-08 — 30-Day Forecast
-
-**Input:** `What will my cash look like in 30 days?`
-
-**Required facts:**
-- [ ] Starting balance ~₹−12,500
-- [ ] Week-by-week breakdown (4 weeks)
-- [ ] Cash risk flagged (starting negative)
-- [ ] Upcoming invoices ₹1,81,000 mentioned as potential inflows
-
-**Forbidden:**
-- Projecting strongly positive balance with no explanation
-- Ignoring the negative starting balance
-
-**Max score: 4**
-
----
-
-### BM-09 — Cash Runout Risk
-
-**Input:** `Will I run out of cash this month?`
-
-**Required facts:**
-- [ ] Acknowledges current negative balance
-- [ ] ₹2,15,500 overdue highlighted as critical to collect
-- [ ] Clear YES / AT RISK answer
-- [ ] Actionable suggestion (collect overdue invoices, reduce expenses)
-
-**Max score: 4**
 
 ---
 
@@ -286,13 +256,12 @@ Fill in after running all benchmarks:
 | BM-05 | Client History | 4 | 1 | 🔴 |
 | BM-06 | Risk Report | 4 | 4 | ✅ |
 | BM-07 | Single Client | 4 | 4 | ✅ |
-| BM-08 | 30-Day Forecast | 4 | 1 | 🔴 |
-| BM-09 | Cash Runout | 4 | 4 | ✅ |
+
 | BM-10 | Anomaly Detection | 4 | 2 | 🟡 |
 | BM-11 | Logistics Spike | 4 | 0 | 🔴 |
 | BM-12 | Month Comparison | 4 | 4 | ✅ |
 | BM-13 | Weekly Summary | 4 | 4 | ✅ |
-| | **TOTAL** | **55** | **40** | **GOOD** |
+| | **TOTAL** | **47** | **35** | **GOOD** |
 
 ### Grade scale
 

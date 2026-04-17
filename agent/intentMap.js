@@ -6,7 +6,6 @@ const INTENTS = {
   CASH_SUMMARY: "cash_summary",
   OVERDUE_INVOICES: "overdue_invoices",
   RISK_CLIENTS: "risk_clients",
-  PREDICTION: "cash_prediction",
   EXPENSE_BREAKDOWN: "expense_breakdown",
   SEND_REMINDER: "send_reminder",
   ANOMALY: "anomaly_detect",
@@ -19,12 +18,11 @@ const INTENTS = {
 const INTENT_RULES = [
   { intent: INTENTS.CASH_BALANCE, keywords: ["balance", "how much cash", "current cash"] },
   { intent: INTENTS.CASH_SUMMARY, keywords: ["summary", "overview", "cash flow"] },
-  { intent: INTENTS.OVERDUE_INVOICES, keywords: ["overdue", "unpaid", "late invoice"] },
+  { intent: INTENTS.OVERDUE_INVOICES, keywords: ["overdue", "unpaid", "late invoice", "invoice", "invoices"] },
   { intent: INTENTS.RISK_CLIENTS, keywords: ["risk", "at risk", "won't pay", "bad client"] },
-  { intent: INTENTS.PREDICTION, keywords: ["predict", "forecast", "next 30", "future", "30 days", "cash look like"] },
+  { intent: INTENTS.ANOMALY, keywords: ["anomaly", "spike", "unusual", "weird", "sudden"] },
   { intent: INTENTS.EXPENSE_BREAKDOWN, keywords: ["expense", "spending", "costs", "breakdown"] },
   { intent: INTENTS.SEND_REMINDER, keywords: ["send", "remind", "email", "reminder"] },
-  { intent: INTENTS.ANOMALY, keywords: ["anomaly", "spike", "unusual", "weird", "sudden"] },
   { intent: INTENTS.WEEKLY_SUMMARY, keywords: ["weekly", "this week", "digest"] },
   { intent: INTENTS.COMPARE, keywords: ["compare", "vs", "versus", "last month", "this month"] },
   { intent: INTENTS.HELP, keywords: ["help", "what can you", "commands"] }

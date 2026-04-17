@@ -14,9 +14,15 @@ const clientContacts = require("../data/clientContacts.json");
  * @returns {string | null} Email address to send reminder to.
  */
 function resolveRecipient(clientName, customDataset = null) {
+  // 1) HIGHEST PRIORITY: explicit EMAIL_TO override for testing/demos
+  if (process.env.EMAIL_TO) {
+    console.log(`📧 Using explicit EMAIL_TO override: ${process.env.EMAIL_TO}`);
+    return process.env.EMAIL_TO;
+  }
+
   const normalizedClient = clientName ? clientName.toLowerCase() : "";
 
-  // 1) HIGHEST PRIORITY: email column in the uploaded CSV dataset
+  // 2) Client mapping from customDataset (if provided)
   if (customDataset && customDataset.length > 0) {
     const row = customDataset.find(item => {
       // Find the client key (robust)
@@ -38,14 +44,14 @@ function resolveRecipient(clientName, customDataset = null) {
     }
   }
 
-  // 2) Static client contact map (data/clientContacts.json)
+  // 3) Static client contact map (data/clientContacts.json)
   if (clientContacts[clientName]) {
     console.log(`📧 Resolved recipient from clientContacts.json: ${clientContacts[clientName]}`);
     return clientContacts[clientName];
   }
 
-  // 3) Last resort: EMAIL_TO or EMAIL_USER from .env
-  const fallback = process.env.EMAIL_TO || process.env.EMAIL_USER || null;
+  // 4) Last resort: EMAIL_USER fallback
+  const fallback = process.env.EMAIL_USER || null;
   if (fallback) console.log(`📧 Using fallback email: ${fallback}`);
   return fallback;
 }

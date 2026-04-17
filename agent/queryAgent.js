@@ -19,7 +19,6 @@ const {
   getInvoicesByClient
 } = require("../services/invoiceService");
 const { getRiskReport, getClientRisk } = require("../services/riskService");
-const { getCashPrediction } = require("../services/predictionService");
 const { detectAnomalies } = require("../services/anomalyService");
 const { generateSummary } = require("../services/summaryService");
 const { sendPaymentReminder } = require("../services/emailService");
@@ -368,14 +367,11 @@ function formatOverdueInvoices(overdueInvoices) {
   }
 
   const total = overdueInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const lines = overdueInvoices.map((invoice) =>
-    `${invoice.id} ${invoice.client} ${formatCurrency(invoice.amount)} (${invoice.daysOverdue} days overdue)`
-  );
+  const items = overdueInvoices.map((invoice) =>
+    `${invoice.client}: ${formatCurrency(invoice.amount)} (${invoice.id})`
+  ).join("\n");
 
-  return [
-    `${overdueInvoices.length} invoices are overdue, totalling ${formatCurrency(total)}.`,
-    ...lines
-  ].join("\n");
+  return `There are exactly ${overdueInvoices.length} overdue individual invoices on file, totaling ${formatCurrency(total)}.\n${items}`;
 }
 
 /**
@@ -400,28 +396,7 @@ function formatRiskReport(report) {
   ).join("\n");
 }
 
-/**
- * Formats a prediction response.
- * @param {{ currentBalance: number, projections: Array<{ week: string, expectedIncome: number, expectedExpenses: number, projectedBalance: number }>, cashRunoutRisk: boolean }} prediction
- * @returns {string} Prediction text.
- */
-function formatPrediction(prediction) {
-  const lines = [
-    `Starting balance: ${formatCurrency(prediction.currentBalance)}`
-  ];
 
-  if (prediction.cashRunoutRisk) {
-    lines.push("🔴 CASH RUNOUT RISK");
-  }
-
-  prediction.projections.forEach((projection) => {
-    lines.push(
-      `${projection.week} -> income ${formatCurrency(projection.expectedIncome)} | expenses ${formatCurrency(projection.expectedExpenses)} | balance ${formatCurrency(projection.projectedBalance)}`
-    );
-  });
-
-  return lines.join("\n");
-}
 
 /**
  * Formats anomaly results.
@@ -650,8 +625,7 @@ async function maybeUseAI(userInput, fallbackText) {
 async function handleQuery(userInput, customDataset = null) {
   const intent = classifyIntent(userInput);
 
-  // If sending a reminder, we should ALWAYS trigger the actual service, 
-  // even if using a custom dataset.
+  // If sending a reminder, we should ALWAYS trigger the actual service
   if (intent === INTENTS.SEND_REMINDER) {
     const clientName = extractClientName(userInput, customDataset);
     if (!clientName) return "Please specify which client should receive the reminder.";
@@ -665,7 +639,7 @@ async function handleQuery(userInput, customDataset = null) {
     const result = await sendPaymentReminder({
       client: clientName,
       amount: Math.abs(overdueRow.amount),
-      daysOverdue: overdueRow.daysOverdue || 7, // Default if not found
+      daysOverdue: overdueRow.daysOverdue || 7,
       invoiceId: overdueRow.id || overdueRow.invoiceId || 'N/A'
     }, customDataset);
 
@@ -678,14 +652,6 @@ async function handleQuery(userInput, customDataset = null) {
     const systemPrompt = buildSystemPrompt(snapshot) + `\n\nAdditionally, here is a sampling of the custom dataset rows:\n${JSON.stringify(customDataset.slice(0, 10))}`;
     return callAI(systemPrompt, userInput);
   }
-
-  // Benchmark response bypassed to favor dynamic AI reasoning for the hackathon
-  /*
-const benchmarkResponse = getBenchmarkResponse(userInput);
-if (benchmarkResponse) {
-  return benchmarkResponse;
-}
-  */
 
   if (intent === INTENTS.HELP) {
     return getHelpText();
@@ -736,10 +702,6 @@ if (benchmarkResponse) {
     return maybeUseAI(userInput, formatRiskReport(getRiskReport()));
   }
 
-  if (intent === INTENTS.PREDICTION) {
-    return maybeUseAI(userInput, formatPrediction(getCashPrediction()));
-  }
-
   if (intent === INTENTS.EXPENSE_BREAKDOWN) {
     return maybeUseAI(userInput, formatExpenseBreakdown(getExpenseBreakdown()));
   }
@@ -767,27 +729,6 @@ if (benchmarkResponse) {
     }
     const period = userInput.toLowerCase().includes("month") ? "month" : "week";
     return maybeUseAI(userInput, formatComparison(comparePeriods(period)));
-  }
-
-  if (intent === INTENTS.SEND_REMINDER) {
-    const clientName = extractClientName(userInput);
-    if (!clientName) {
-      return "Please specify which client should receive the reminder.";
-    }
-
-    const overdueInvoice = getOverdueInvoices().find((invoice) => invoice.client === clientName);
-    if (!overdueInvoice) {
-      return `No overdue invoice found for ${clientName}.`;
-    }
-
-    const result = await sendPaymentReminder({
-      client: overdueInvoice.client,
-      amount: overdueInvoice.amount,
-      daysOverdue: overdueInvoice.daysOverdue,
-      invoiceId: overdueInvoice.id
-    });
-
-    return result.alert;
   }
 
   return hasAiCredentials()

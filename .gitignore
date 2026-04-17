@@ -2,3 +2,6 @@ node_modules/
 .env
 npm-debug.log*
 benchmark-results.json
+*.log
+test*.js
+reminders.json

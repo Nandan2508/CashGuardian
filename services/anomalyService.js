@@ -85,8 +85,8 @@ function detectAnomalies() {
       const roundedDeviation = Math.round(deviationValue);
       const severity = getSeverity(roundedDeviation);
       const explanation = type === "expense"
-        ? `${category.charAt(0).toUpperCase() + category.slice(1)} expenses in week ${week} were ₹${actual.toLocaleString("en-IN")} - ${roundedDeviation}% higher than the usual ₹${roundedExpected.toLocaleString("en-IN")}. This may indicate a one-off operational spike.`
-        : `${category.charAt(0).toUpperCase() + category.slice(1)} income in week ${week} was ₹${actual.toLocaleString("en-IN")} - ${roundedDeviation}% higher than the usual ₹${roundedExpected.toLocaleString("en-IN")}. This may indicate an unusually strong collection or sales week.`;
+        ? `${category.charAt(0).toUpperCase() + category.slice(1)} expenses in week ${week} were ₹${actual.toLocaleString("en-IN")} (+${roundedDeviation}% higher than the usual ₹${roundedExpected.toLocaleString("en-IN")}). This may indicate a one-off operational spike.`
+        : `${category.charAt(0).toUpperCase() + category.slice(1)} income in week ${week} was ₹${actual.toLocaleString("en-IN")} (+${roundedDeviation}% higher than the usual ₹${roundedExpected.toLocaleString("en-IN")}). This may indicate an unusually strong collection or sales week.`;
 
       anomalies.push({
         type,
@@ -94,7 +94,7 @@ function detectAnomalies() {
         week,
         actual,
         expected: roundedExpected,
-        deviation: `${roundedDeviation}%`,
+        deviation: `+${roundedDeviation}%`,
         severity,
         explanation
       });
