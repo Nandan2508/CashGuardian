@@ -762,7 +762,7 @@ async function handleQuery(userInput, customDataset = null) {
       "Task: Provide a strategic executive narrative of the decomposition data above. Highlight the top contributor and explain any concentration risks or outliers found in the statistically relevant patterns. Ignore other snapshot data if it contradicts the Target Decomposition breakdown.";
 
     const summary = await callAI(systemPrompt, userInput);
-    return `${summary}\n\n${table}`;
+    return `${summary}\n${table}`;
   }
 
   if (intent === INTENTS.WEEKLY_SUMMARY) {
