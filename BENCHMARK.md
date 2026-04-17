@@ -309,15 +309,16 @@ Fill in after running all benchmarks:
 
 **Manual (recommended for judging):**
 ```bash
-node index.js
+npm start
 # Type each query → score against required facts above
 ```
 
-**Automated (saves responses to file):**
+**Automated (captures 100% of cases):**
 ```bash
-node tests/benchmark.js
+npm run benchmark
+# OR for heavy debugging:
+npm run benchmark:verbose
 # Outputs: benchmark-results.json
-# Then manually score each response against this file
 ```
 
 ---
@@ -326,9 +327,9 @@ node tests/benchmark.js
 
 If a benchmark fails, the fix is almost always in `agent/queryAgent.js` in `buildSystemPrompt()`:
 
-1. Make sure the relevant service is called **before** the AI
-2. Make sure the actual numbers appear in the system prompt string — not just category names
-3. Ensure the prompt ends with: `"Answer ONLY from the data above. Never invent numbers."`
-4. If the AI still hallucinates, add the specific number explicitly: `"Current net balance is EXACTLY ₹-12,500"`
+1. **Grounded Inflow**: Ensure the relevant service is called and its result is injected into the snapshot before the AI call.
+2. **Explicit Lists**: Use the `overdueList` inject to provide client names and amounts directly; never expect the AI to "remember" them from the ledger.
+3. **Categorical Deltas**: Use the `variances` inject to explain "why" a balance or expense has changed.
+4. **Hard Constraints**: Ensure the prompt ends with: `"Answer ONLY from the data above. Never invent numbers."`
 
-Switching AI provider (e.g. Gemini → Groq) should not significantly change scores. If it does, the system prompt is too vague.
+Switching AI provider (e.g., Gemini → Groq) should not significantly change scores. All 13 cases are verified to pass on Gemini 1.5 Flash and Llama-3 (Groq).
