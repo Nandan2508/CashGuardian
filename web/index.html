@@ -172,8 +172,6 @@
                 </span>
             </nav>
 
-            </div>
-
             <div class="sidebar-history">
                 <div class="intel-title">Recent Intelligence</div>
                 <div id="history-list" class="no-history">No recent insights yet.</div>
@@ -252,6 +250,11 @@
                 </div>
             </div>
 
+            <div class="chart-container" id="duel-card" style="display: none;">
+                <div class="chart-title"><i class="fas fa-balance-scale"></i> Performance Duel</div>
+                <div class="canvas-wrapper" style="height: 200px;"><canvas id="duelChart"></canvas></div>
+            </div>
+
             <div class="chart-container">
                 <div class="chart-title"><i class="fas fa-chart-line"></i> Cash Flow Trend (Current vs Prev)</div>
                 <div class="canvas-wrapper"><canvas id="cashflow-chart"></canvas></div>
@@ -273,6 +276,7 @@
     <script>
         let cashflowChart = null;
         let breakdownChart = null;
+        let duelChart = null;
         let lastReportContent = '';
         let awaitingPdfConfirm = false;
         let chatHistory = []; // Conversational memory
@@ -306,6 +310,7 @@
                     panel.style.width = `${width}px`;
                     if (cashflowChart) cashflowChart.resize();
                     if (breakdownChart) breakdownChart.resize();
+                    if (duelChart) duelChart.resize();
                 }
             });
 
@@ -388,9 +393,24 @@
                         </div>
                     `;
                     saveToHistory(query);
+
+                    if (data.duel) {
+                        updateDuelChart(data.duel);
+                        document.getElementById('duel-card').style.display = 'block';
+                    }
                 }
                 scrollToBottom();
             } catch (err) { console.error(err); }
+        }
+
+        function updateDuelChart(duel) {
+            const { entityA, entityB } = duel;
+            duelChart.data.labels = ['Revenue', 'Growth', 'Volume'];
+            duelChart.data.datasets = [
+                { label: entityA.name, backgroundColor: '#C17E4A', data: [entityA.revenue, entityA.growth, entityA.volume] },
+                { label: entityB.name, backgroundColor: '#E6A495', data: [entityB.revenue, entityB.growth, entityB.volume] }
+            ];
+            duelChart.update();
         }
 
         const HISTORY_KEY = 'cg_query_history';
@@ -642,6 +662,19 @@
                     }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: true, position: 'right', labels: { boxWidth: 15, font: { size: 11 } } } } }
+            });
+
+            const ctxDuel = document.getElementById('duelChart').getContext('2d');
+            duelChart = new Chart(ctxDuel, {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+                    scales: { x: { beginAtZero: true } }
+                }
             });
         }
 

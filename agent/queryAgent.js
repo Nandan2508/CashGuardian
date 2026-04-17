@@ -8,7 +8,8 @@ const {
   getCashBalance,
   getCashSummary,
   getExpenseBreakdown,
-  comparePeriods
+  comparePeriods,
+  compareEntities
 } = require("../services/cashFlowService");
 const {
   getOverdueInvoices,
@@ -49,6 +50,8 @@ Revenue Drivers: ${JSON.stringify(snapshot.variances?.income.slice(0, 3) || [])}
 Expense Drivers: ${JSON.stringify(snapshot.variances?.expenses.slice(0, 3) || [])}
 =====================================
 
+${snapshot.duel ? `=== COMPARISON DUEL (Head-to-Head) ===\n${JSON.stringify(snapshot.duel)}\n=====================================\n` : ''}
+
 Rules:
 - Answer ONLY from the data above. Never invent numbers.
 - **Executive Storytelling**: Provide high-depth narrative insights. Start with a 1-2 sentence direct executive summary (Core insight first).
@@ -56,6 +59,7 @@ Rules:
 - **Tone**: Strategic, professional, and data-anchored.
 - Format money as ₹X,XX,XXX (Indian style).
 - **Driver Analysis**: If asked "Why?", identify the specific categories in high-variance drivers (e.g., "Marketing expenses spiked by 45%"). Reference the delta values provided in the VARIANCE DRIVERS section.
+- **Comparison Logic**: If a COMPARISON DUEL section is present, provide a direct performance analysis between the two entities. Highlight growth WoW, volume, and revenue. Identify the "statistically relevant differences" as requested.
 - **Actionable Advice**: End with one specific "Strategic Next Step".
 - **Trademark**: ALWAYS end with:  
   ---
@@ -651,6 +655,18 @@ async function handleQuery(userInput, customDataset = null) {
   }
 
   if (intent === INTENTS.COMPARE) {
+    const normalized = userInput.toLowerCase();
+    if (normalized.includes(" vs ") || normalized.includes(" versus ")) {
+      const parts = normalized.split(/ vs | versus /);
+      const entityA = parts[0].trim().replace(/compare /g, "");
+      const entityB = parts[1].trim();
+      const duelData = compareEntities(entityA, entityB);
+      
+      const snapshot = getSnapshot(customDataset);
+      snapshot.duel = duelData;
+      const response = await callAI(buildSystemPrompt(snapshot), userInput);
+      return { content: response, duel: duelData };
+    }
     const period = userInput.toLowerCase().includes("month") ? "month" : "week";
     return maybeUseAI(userInput, formatComparison(comparePeriods(period)));
   }

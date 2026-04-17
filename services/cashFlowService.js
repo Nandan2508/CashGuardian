@@ -182,6 +182,54 @@ function summarizeByCategory(items) {
 }
 
 /**
+ * Summarizes performance metrics for a specific entity search string.
+ * @param {string} entity - Search term (client, category, or desc keyword).
+ * @returns {object} Aggregated metrics.
+ */
+function summarizeEntityMetrics(entity) {
+  const norm = entity.toLowerCase();
+  const matches = transactions.filter(t => 
+    (t.client && t.client.toLowerCase().includes(norm)) ||
+    (t.category && t.category.toLowerCase().includes(norm)) ||
+    (t.description && t.description.toLowerCase().includes(norm))
+  );
+
+  const revenue = matches.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0);
+  const costs = matches.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0);
+  const volume = matches.length;
+  
+  // Growth WoW (Last 7 days vs 7 days before)
+  const latest = getLatestTransactionDate();
+  const cStart = new Date(latest); cStart.setUTCDate(cStart.getUTCDate() - 6);
+  const pEnd = new Date(cStart); pEnd.setUTCDate(pEnd.getUTCDate() - 1);
+  const pStart = new Date(pEnd); pStart.setUTCDate(pStart.getUTCDate() - 6);
+  
+  const cVolume = matches.filter(t => { const d = parseUtcDate(t.date); return d >= cStart && d <= latest; }).length;
+  const pVolume = matches.filter(t => { const d = parseUtcDate(t.date); return d >= pStart && d <= pEnd; }).length;
+  
+  return {
+    revenue,
+    costs,
+    volume,
+    avgTicket: volume > 0 ? Math.round(revenue / (matches.filter(t => t.type === 'income').length || 1)) : 0,
+    growth: pVolume > 0 ? Math.round(((cVolume - pVolume) / pVolume) * 100) : 0
+  };
+}
+
+/**
+ * Performs a side-by-side comparison of two entities.
+ * @param {string} a - First entity keyword.
+ * @param {string} b - Second entity keyword.
+ * @returns {object} Head-to-head comparison result.
+ */
+function compareEntities(a, b) {
+  return {
+    entityA: { name: a, ...summarizeEntityMetrics(a) },
+    entityB: { name: b, ...summarizeEntityMetrics(b) }
+  };
+}
+
+/**
  * Compares current period vs previous period.
  * @param {"week"|"month"} period - Period granularity.
  * @param {number} unitsBack - How many units wide the current/previous windows are.
@@ -244,5 +292,6 @@ module.exports = {
   getCashBalance,
   getCashSummary,
   getExpenseBreakdown,
-  comparePeriods
+  comparePeriods,
+  compareEntities
 };

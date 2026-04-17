@@ -10,7 +10,8 @@ const {
   getCashBalance,
   getCashSummary,
   getExpenseBreakdown,
-  comparePeriods
+  comparePeriods,
+  compareEntities
 } = require("../services/cashFlowService");
 const {
   getOverdueInvoices,
@@ -124,17 +125,31 @@ async function executeNode(state) {
 
   // 3. Fallback to AI Reasoning (Passing history for conversational awareness)
   const snapshot = getSnapshot(activeDataset);
+
+  // Check for Head-to-Head Comparison (Duel)
+  const normalized = userInput.toLowerCase();
+  if (intent === INTENTS.COMPARE && (normalized.includes(" vs ") || normalized.includes(" versus "))) {
+    const parts = normalized.split(/ vs | versus /);
+    const entityA = parts[0].trim().replace(/compare /g, "");
+    const entityB = parts[1].trim();
+    snapshot.duel = compareEntities(entityA, entityB);
+    console.log(`[LangGraph] Duel detected: ${entityA} vs ${entityB}`);
+  }
+
   const systemPrompt = buildSystemPrompt(snapshot) + 
     (lastClient ? `\n\nCONTEXT: You are currently discussing "${lastClient}". If the user uses pronouns like "him", "them", or "that client", they refer to "${lastClient}".` : "") +
     `\n\nREPORT QUALITY RULE: You are currently using a high-reasoning 70B model. Provide at least 3-4 detailed paragraphs of analysis. Avoid short answers. Deep-dive into the "Why" behind the numbers.`;
 
   const llm = getLLM();
-  const response = await llm.invoke([
+  const result = await llm.invoke([
     new SystemMessage(systemPrompt),
     ...messages
   ]);
 
-  return { response: response.content };
+  return { 
+    response: result.content,
+    duel: snapshot.duel || null 
+  };
 }
 
 const { Annotation } = require("@langchain/langgraph");

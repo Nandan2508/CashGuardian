@@ -87,8 +87,9 @@ app.post('/api/query', async (req, res) => {
     const intent = classifyIntent(query);
 
     res.json({
-      response,
+      response: response.content || response,
       intent,
+      duel: response.duel || null,
       latencyMs,
       source: activeDataset ? 'User Provided Data' : 'Internal Finance Dataset'
     });
