@@ -413,45 +413,36 @@
 
         function updateDuelChart(duel) {
             const { entityA, entityB } = duel;
-
-            // Context-awareness: are we comparing expenses or revenue?
-            const isExpenseComparison = (entityA.revenue === 0 && entityB.revenue === 0);
-            const mainLabel = isExpenseComparison ? 'Expenses %' : 'Revenue %';
-            const valA = isExpenseComparison ? entityA.costs : entityA.revenue;
-            const valB = isExpenseComparison ? entityB.costs : entityB.revenue;
             
             // Normalize data for visualization (0-100 scaling)
-            const maxVal = Math.max(valA, valB) || 1;
+            const maxRev = Math.max(entityA.revenue, entityB.revenue) || 1;
             const maxGrowth = Math.max(Math.abs(entityA.growth), Math.abs(entityB.growth), 1);
             const maxVol = Math.max(entityA.volume, entityB.volume) || 1;
 
-            duelChart.data.labels = [mainLabel, 'Growth %', 'Volume %'];
+            duelChart.data.labels = ['Revenue %', 'Growth %', 'Volume %'];
             duelChart.data.datasets = [
                 { 
                     label: entityA.name, 
                     backgroundColor: '#C17E4A', 
                     data: [
-                        (valA / maxVal) * 100,
+                        (entityA.revenue / maxRev) * 100,
                         (entityA.growth / maxGrowth) * 100,
                         (entityA.volume / maxVol) * 100
                     ],
-                    // Store raw values for tooltips
-                    raw: [formatCurrency(valA), `${entityA.growth}%`, entityA.volume]
+                    raw: [formatCurrency(entityA.revenue), `${entityA.growth}%`, entityA.volume]
                 },
                 { 
                     label: entityB.name, 
                     backgroundColor: '#E6A495', 
                     data: [
-                        (valB / maxVal) * 100,
+                        (entityB.revenue / maxRev) * 100,
                         (entityB.growth / maxGrowth) * 100,
                         (entityB.volume / maxVol) * 100
                     ],
-                    // Store raw values for tooltips
-                    raw: [formatCurrency(valB), `${entityB.growth}%`, entityB.volume]
+                    raw: [formatCurrency(entityB.revenue), `${entityB.growth}%`, entityB.volume]
                 }
             ];
 
-            // Custom tooltip to show real numbers
             duelChart.options.plugins.tooltip = {
                 callbacks: {
                     label: function(context) {
@@ -460,14 +451,6 @@
                     }
                 }
             };
-                callbacks: {
-                    label: function(context) {
-                        const rawVal = context.dataset.raw[context.dataIndex];
-                        return `${context.dataset.label}: ${rawVal}`;
-                    }
-                }
-            };
-
             duelChart.update();
         }
 
