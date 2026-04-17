@@ -175,6 +175,10 @@ const StateAnnotation = Annotation.Root({
   response: Annotation({
     reducer: (x, y) => y ?? x,
     default: () => null,
+  }),
+  duel: Annotation({
+    reducer: (x, y) => y ?? x,
+    default: () => null,
   })
 });
 
@@ -216,7 +220,10 @@ async function handleQuery(userInput, customDataset = null, history = []) {
       lastClient
     });
 
-    return result.response;
+    return {
+      content: result.response,
+      duel: result.duel
+    };
   } catch (error) {
     console.error("[LangGraph Error]", error);
     return "Something went wrong with the Agentic Intelligence. Run 'git checkout queryAgent.js' to revert.";
