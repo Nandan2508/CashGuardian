@@ -181,7 +181,7 @@ async function executeNode(state) {
 
   const systemPrompt = buildSystemPrompt(snapshot) + 
     (lastClient ? `\n\nCONTEXT: You are currently discussing "${lastClient}". If the user uses pronouns like "him", "them", or "that client", they refer to "${lastClient}".` : "") +
-    `\n\nREPORT QUALITY RULE: You are currently using a high-reasoning 70B model. Provide at least 3-4 detailed paragraphs of analysis. Avoid short answers. Deep-dive into the "Why" behind the numbers.`;
+    `\n\nGROUNDING RULE: Answer ONLY using the data provided in the snapshot. If the data is sparse, be brief and professional. Do NOT invent reasoning or "Why" factors that are not explicitly stated in the variance drivers or external validation notes. Accuracy is prioritized over length.`;
 
   const llm = getLLM();
   const result = await llm.invoke([

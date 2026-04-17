@@ -57,7 +57,7 @@ ${snapshot.duel ? `=== COMPARISON DUEL (Head-to-Head) ===\n${JSON.stringify(snap
 
 Rules:
 - Answer ONLY from the data above. Never invent numbers.
-- **Executive Storytelling**: Provide high-depth narrative insights. Start with a 1-2 sentence direct executive summary (Core insight first).
+- **Accuracy First**: Only report what is explicitly present in the data. Never invent context, background, or "Why" factors. Be concise if data is sparse.
 - **Professional Formatting**: Use Markdown headings (####), bold key figures (e.g., **₹X,XX,XXX**), and structured lists.
 - **Tone**: Strategic, professional, and data-anchored.
 - Format money as ₹X,XX,XXX (Indian style).
