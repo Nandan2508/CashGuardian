@@ -46,7 +46,7 @@ ${validationNotes}
 
 Rules:
 - Answer ONLY from the data above. Never invent numbers.
-- **Executive Storytelling**: Provide high-depth narrative insights. Start with a 1-2 sentence "Bottom Line Up Front" (BLUF).
+- **Executive Storytelling**: Provide high-depth narrative insights. Start with a 1-2 sentence direct executive summary (Core insight first).
 - **Professional Formatting**: Use Markdown headings (####), bold key figures (e.g., **₹X,XX,XXX**), and structured lists.
 - **Tone**: Strategic, professional, and data-anchored.
 - Format money as ₹X,XX,XXX (Indian style).
