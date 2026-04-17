@@ -10,26 +10,31 @@ The system operates via two interfaces (CLI and Web) that funnel into a single *
 
 ```mermaid
 graph TD
-    subgraph Frontend
+    subgraph Client_Layer [Frontend Interfaces]
         W[Web UI - Vanilla JS]
         C[CLI - Readline]
     end
 
-    subgraph "Bridge (Express)"
+    subgraph "Logic_Gateway (Express)"
         S[server.js]
-        DS[In-memory Store]
+        DS[In-memory Grounding Store]
     end
 
-    subgraph "Intelligence Agent"
+    subgraph "Intelligence_Agent (Grounded Core)"
         Q[queryAgent.js]
         IM[intentMap.js]
         SVC[Services Layer]
     end
 
-    subgraph "Data & AI"
+    subgraph "Data_Sources"
         D[(Demo JSON)]
-        U[(Uploaded Data)]
-        AI[Groq/Llama 3.1]
+        U[(Uploaded Excel/CSV/JSON)]
+    end
+
+    subgraph "LLM_Intelligence (Plug-and-Play)"
+        AI_G[Gemini 1.5 Flash]
+        AI_GR[Groq / Llama 3.1]
+        AI_GPT[GPT-4o / OpenRouter]
     end
 
     W --> S
@@ -40,7 +45,9 @@ graph TD
     Q --> SVC
     SVC --> D
     SVC --> U
-    Q --> AI
+    Q -- "Grounded Prompt" --> AI_G
+    Q -- "Grounded Prompt" --> AI_GR
+    Q -- "Grounded Prompt" --> AI_GPT
 ```
 
 ---
@@ -54,16 +61,16 @@ sequenceDiagram
     participant U as User
     participant Q as Query Agent
     participant S as Finance Services
-    participant AI as Llama 3.1 (Groq)
+    participant AI as LLM (Gemini/Groq/GPT)
 
-    U->>Q: "What is my current balance?"
-    Q->>Q: Classify Intent (CASH_BALANCE)
-    Q->>S: Request Snapshot
-    S->>S: Aggregate Local Ledger
-    S-->>Q: Snap: ₹84,200 (Positive)
-    Q->>AI: Query + Snap + System Prompt
-    AI-->>Q: "Your balance is ₹84,200. You are in good shape."
-    Q-->>U: Final Grounded Response
+    U->>Q: "Analyze my revenue drivers"
+    Q->>Q: Intent Classification
+    Q->>S: Pull Transactional Context
+    S->>S: Deterministic Calculation
+    S-->>Q: Grounded Snapshot (Data Only)
+    Q->>AI: Grounded Prompt (Instruction + Data)
+    AI-->>Q: Executive Narrative Response
+    Q-->>U: Final Grounded Insight
 ```
 
 ---

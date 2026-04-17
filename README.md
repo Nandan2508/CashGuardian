@@ -63,26 +63,43 @@ Many teams struggle to extract quick, accurate, and trustworthy answers from ope
 CashGuardian uses a **Grounded Reasoning** architecture. Every query is orchestrated by a state-aware agent that grounds operational data before it reaches the AI — ensuring responses are factually accurate, benchmarked, and never hallucinated.
 
 ```mermaid
-flowchart TD
-    U([User]) --> UI[Web UI]
-    U --> CLI[CLI - readline]
-    UI --> S[Express Server]
-    CLI --> A[Query Agent]
-    S --> A
-    A --> IM[intentMap.js]
-    A --> SL[Services Layer]
-    SL --> S1[cashFlowService]
-    SL --> S2[invoiceService]
-    SL --> S3[riskService]
-    SL --> S4[predictionService]
-    SL --> S5[anomalyService]
-    SL --> S6[summaryService]
-    A --> AI[AI Provider Adapter]
-    AI --> G[Gemini]
-    AI --> GR[Groq]
-    AI --> OR[OpenRouter]
-    A --> F[formatter.js]
-    F --> U
+graph TD
+    subgraph Client_Layer [Frontend Interfaces]
+        W[Web UI]
+        C[CLI]
+    end
+
+    subgraph "Logic_Gateway (Express)"
+        S[server.js]
+        DS[In-memory Grounding]
+    end
+
+    subgraph "Intelligence_Agent (Grounded Core)"
+        Q[queryAgent.js]
+        SVC[Services Layer]
+    end
+
+    subgraph "Data_Sources"
+        D[(Demo JSON)]
+        U[(Uploaded Data)]
+    end
+
+    subgraph "LLM_Intelligence (Plug-and-Play)"
+        AI_G[Gemini]
+        AI_GR[Groq]
+        AI_GPT[GPT-4o]
+    end
+
+    W --> S
+    C --> Q
+    S --> Q
+    DS --> Q
+    Q --> SVC
+    SVC --> D
+    SVC --> U
+    Q -- "Grounded" --> AI_G
+    Q -- "Grounded" --> AI_GR
+    Q -- "Grounded" --> AI_GPT
 ```
 
 ### Intelligence flow
@@ -90,18 +107,17 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant A as Query Agent
+    participant Q as Query Agent
     participant S as Services Layer
-    participant D as Data Layer
-    participant AI as AI Engine
+    participant AI as LLM (Gemini/Groq/GPT)
 
-    U->>A: "What changed in my expenses?"
-    A->>S: Ground dataset
-    S->>D: Excel-Proof Parsing (Cleanse)
-    D-->>A: Grounded metrics & deltas
-    A->>AI: Reason over snapshot + context
-    AI-->>A: Strategic executive narrative
-    A-->>U: Verified insight + PDF Dossier
+    U->>Q: "Analyze my patterns"
+    Q->>Q: Intent Classification
+    Q->>S: Pull Transactional Context
+    S-->>Q: Grounded Snapshot
+    Q->>AI: Reason over Snapshot + Context
+    AI-->>Q: Strategic Executive narrative
+    Q-->>U: Final Grounded Insight
 ```
 
 ---
