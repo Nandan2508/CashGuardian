@@ -1,0 +1,137 @@
+[
+  {
+    "id": "TXN9001",
+    "date": "2026-01-05",
+    "type": "income",
+    "amount": 150000,
+    "category": "sales",
+    "description": "Bulk fabric order",
+    "client": "Jain Textiles"
+  },
+  {
+    "id": "TXN9002",
+    "date": "2026-01-10",
+    "type": "expense",
+    "amount": 45000,
+    "category": "salaries",
+    "description": "Jan Staff Salaries",
+    "client": null
+  },
+  {
+    "id": "TXN9003",
+    "date": "2026-01-15",
+    "type": "expense",
+    "amount": 20000,
+    "category": "rent",
+    "description": "Warehouse Rent Jan",
+    "client": null
+  },
+  {
+    "id": "TXN9004",
+    "date": "2026-02-05",
+    "type": "income",
+    "amount": 180000,
+    "category": "sales",
+    "description": "Apparel distribution",
+    "client": "Oberoi Fabrics"
+  },
+  {
+    "id": "TXN9005",
+    "date": "2026-02-10",
+    "type": "expense",
+    "amount": 45000,
+    "category": "salaries",
+    "description": "Feb Staff Salaries",
+    "client": null
+  },
+  {
+    "id": "TXN9006",
+    "date": "2026-02-15",
+    "type": "expense",
+    "amount": 20000,
+    "category": "rent",
+    "description": "Warehouse Rent Feb",
+    "client": null
+  },
+  {
+    "id": "TXN9007",
+    "date": "2026-02-20",
+    "type": "expense",
+    "amount": 12000,
+    "category": "marketing",
+    "description": "Social media ads",
+    "client": null
+  },
+  {
+    "id": "TXN9008",
+    "date": "2026-03-05",
+    "type": "income",
+    "amount": 220000,
+    "category": "sales",
+    "description": "Summer collection shipment",
+    "client": "Singhal Garments"
+  },
+  {
+    "id": "TXN9009",
+    "date": "2026-03-10",
+    "type": "expense",
+    "amount": 45000,
+    "category": "salaries",
+    "description": "Mar Staff Salaries",
+    "client": null
+  },
+  {
+    "id": "TXN9010",
+    "date": "2026-03-12",
+    "type": "expense",
+    "amount": 36000,
+    "category": "marketing",
+    "description": "Festival Season Spike - Marketing",
+    "client": null
+  },
+  {
+    "id": "TXN9011",
+    "date": "2026-03-15",
+    "type": "expense",
+    "amount": 20000,
+    "category": "rent",
+    "description": "Warehouse Rent Mar",
+    "client": null
+  },
+  {
+    "id": "TXN9012",
+    "date": "2026-03-20",
+    "type": "expense",
+    "amount": 8000,
+    "category": "logistics",
+    "description": "Local delivery charges",
+    "client": null
+  },
+  {
+    "id": "TXN9013",
+    "date": "2026-03-25",
+    "type": "income",
+    "amount": 50000,
+    "category": "refund",
+    "description": "GST Input Credit Refund",
+    "client": null
+  },
+  {
+    "id": "TXN9014",
+    "date": "2026-04-05",
+    "type": "income",
+    "amount": 120000,
+    "category": "sales",
+    "description": "April pre-orders",
+    "client": "Jain Textiles"
+  },
+  {
+    "id": "TXN9015",
+    "date": "2026-04-10",
+    "type": "expense",
+    "amount": 48000,
+    "category": "salaries",
+    "description": "April Staff Salaries + Bonus",
+    "client": null
+  }
+]

@@ -93,7 +93,7 @@
 
         .chart-container { margin-top: 32px; display: flex; flex-direction: column; gap: 12px; }
         .chart-title { font-size: 12px; font-weight: 600; color: var(--text-main); }
-        .canvas-wrapper { height: 200px; width: 100%; }
+        .canvas-wrapper { height: 450px; width: 100%; transition: height 0.3s ease; }
 
         .footer-note { padding: 16px; font-size: 10px; color: var(--text-muted); text-align: center; background: white; }
 
@@ -285,7 +285,20 @@
                 const healthPill = document.getElementById('health-pill-container');
                 healthPill.className = 'health-pill ' + (data.netBalance >= 0 ? 'positive' : 'negative');
                 document.getElementById('health-status').innerText = data.netBalance >= 0 ? 'Cash Positive' : 'Cash Deficit';
+
+                // Update dynamic chart
+                if (data.trend) {
+                    updateChart(data.trend);
+                }
             } catch (err) { console.error(err); }
+        }
+
+        function updateChart(trendData) {
+            if (!cashflowChart) return;
+            cashflowChart.data.labels = trendData.labels;
+            cashflowChart.data.datasets[0].data = trendData.revenue;
+            cashflowChart.data.datasets[1].data = trendData.expenses;
+            cashflowChart.update();
         }
 
         function initChart() {
@@ -293,13 +306,13 @@
             cashflowChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12', 'W13'],
+                    labels: [],
                     datasets: [
-                        { label: 'Revenue', data: [65000, 59000, 80000, 81000, 56000, 55000, 40000, 85000, 92000, 105000, 64000, 78000, 95000], borderColor: '#C17E4A', backgroundColor: 'rgba(193, 126, 74, 0.1)', fill: true, tension: 0.4 },
-                        { label: 'Expenses', data: [45000, 48000, 52000, 51000, 53000, 55000, 58000, 72000, 68000, 75000, 70000, 72000, 80000], borderColor: '#E6A495', borderDash: [5, 5], fill: false, tension: 0.4 }
+                        { label: 'Revenue', data: [], borderColor: '#C17E4A', backgroundColor: 'rgba(193, 126, 74, 0.1)', fill: true, tension: 0.4 },
+                        { label: 'Expenses', data: [], borderColor: '#E6A495', borderDash: [5, 5], fill: false, tension: 0.4 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { display: true, grid: { display: false } } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } }, scales: { y: { display: true, grid: { color: '#F0F0F0' } }, x: { display: true, grid: { display: false } } } }
             });
         }
 

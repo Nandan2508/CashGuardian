@@ -1,0 +1,47 @@
+[
+  {
+    "week": "2026-W09",
+    "weekEndDate": "2026-03-07",
+    "revenue": 55000,
+    "expenses": 42000,
+    "newClients": 1,
+    "overdueCount": 1,
+    "avgDaysToPayment": 12
+  },
+  {
+    "week": "2026-W10",
+    "weekEndDate": "2026-03-14",
+    "revenue": 62000,
+    "expenses": 45000,
+    "newClients": 0,
+    "overdueCount": 1,
+    "avgDaysToPayment": 14
+  },
+  {
+    "week": "2026-W11",
+    "weekEndDate": "2026-03-21",
+    "revenue": 68000,
+    "expenses": 82000,
+    "newClients": 2,
+    "overdueCount": 2,
+    "avgDaysToPayment": 15
+  },
+  {
+    "week": "2026-W12",
+    "weekEndDate": "2026-03-28",
+    "revenue": 75000,
+    "expenses": 48000,
+    "newClients": 1,
+    "overdueCount": 1,
+    "avgDaysToPayment": 16
+  },
+  {
+    "week": "2026-W13",
+    "weekEndDate": "2026-04-04",
+    "revenue": 82000,
+    "expenses": 50000,
+    "newClients": 1,
+    "overdueCount": 2,
+    "avgDaysToPayment": 18
+  }
+]

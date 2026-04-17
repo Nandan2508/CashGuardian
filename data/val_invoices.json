@@ -1,0 +1,74 @@
+[
+  {
+    "id": "VIN001",
+    "client": "Jain Textiles",
+    "amount": 75000,
+    "issueDate": "2026-01-01",
+    "dueDate": "2026-01-15",
+    "status": "paid",
+    "paymentHistory": ["2026-01-25"]
+  },
+  {
+    "id": "VIN002",
+    "client": "Jain Textiles",
+    "amount": 75000,
+    "issueDate": "2026-01-20",
+    "dueDate": "2026-02-05",
+    "status": "paid",
+    "paymentHistory": ["2026-02-15"]
+  },
+  {
+    "id": "VIN003",
+    "client": "Jain Textiles",
+    "amount": 90000,
+    "issueDate": "2026-02-15",
+    "dueDate": "2026-03-01",
+    "status": "paid",
+    "paymentHistory": ["2026-03-12"]
+  },
+  {
+    "id": "VIN004",
+    "client": "Jain Textiles",
+    "amount": 120000,
+    "issueDate": "2026-03-15",
+    "dueDate": "2026-03-30",
+    "status": "overdue",
+    "paymentHistory": []
+  },
+  {
+    "id": "VIN005",
+    "client": "Oberoi Fabrics",
+    "amount": 180000,
+    "issueDate": "2026-01-20",
+    "dueDate": "2026-02-05",
+    "status": "paid",
+    "paymentHistory": ["2026-02-05"]
+  },
+  {
+    "id": "VIN006",
+    "client": "Oberoi Fabrics",
+    "amount": 65000,
+    "issueDate": "2026-04-01",
+    "dueDate": "2026-04-15",
+    "status": "overdue",
+    "paymentHistory": []
+  },
+  {
+    "id": "VIN007",
+    "client": "Singhal Garments",
+    "amount": 220000,
+    "issueDate": "2026-02-25",
+    "dueDate": "2026-03-10",
+    "status": "paid",
+    "paymentHistory": ["2026-03-05"]
+  },
+  {
+    "id": "VIN008",
+    "client": "Singhal Garments",
+    "amount": 45000,
+    "issueDate": "2026-04-05",
+    "dueDate": "2026-04-25",
+    "status": "unpaid",
+    "paymentHistory": []
+  }
+]

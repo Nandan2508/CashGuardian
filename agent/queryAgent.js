@@ -130,11 +130,52 @@ function fallbackResponse() {
 }
 
 /**
- * Builds a global snapshot for AI grounding.
+ * Helper to group transactions into weekly buckets for the trend graph.
+ * @param {Array<Object>} transactions - List of transaction objects.
+ * @returns {{ labels: string[], revenue: number[], expenses: number[] }}
+ */
+function calculateWeeklyTrend(transactions) {
+  if (!transactions.length) return { labels: [], revenue: [], expenses: [] };
+
+  // 1. Find date range
+  const dates = transactions.map(t => new Date(t.date));
+  const latest = new Date(Math.max(...dates));
+  
+  // 2. Generate 13 weeks of labels
+  const trend = { labels: [], revenue: [], expenses: [] };
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+
+  for (let i = 12; i >= 0; i--) {
+    const weekEnd = new Date(latest.getTime() - (i * weekMs));
+    const weekStart = new Date(weekEnd.getTime() - weekMs);
+    
+    // Simple numeric week label
+    const weekNum = Math.ceil((weekEnd.getTime() - new Date(weekEnd.getFullYear(), 0, 1).getTime()) / weekMs);
+    trend.labels.push(`W${weekNum}`);
+
+    const weekTransactions = transactions.filter(t => {
+      const d = new Date(t.date);
+      return d > weekStart && d <= weekEnd;
+    });
+
+    const income = weekTransactions.filter(t => t.type === 'income').reduce((s, t) => s + (Number(t.amount) || 0), 0);
+    const expense = weekTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
+
+    trend.revenue.push(income);
+    trend.expenses.push(expense);
+  }
+
+  return trend;
+}
+
+/**
+ * Builds a global snapshot for AI grounding and UI metrics.
  * @param {Array<Object>|null} customDataset - User uploaded data if available.
- * @returns {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string, externalValidationNotes: string[] }}
+ * @returns {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string, externalValidationNotes: string[], trend: object }}
  */
 function getSnapshot(customDataset = null) {
+  let snapshot;
+
   // If we have a custom dataset, derive snapshot from it
   if (customDataset && customDataset.length > 0) {
     const totalIncome = customDataset
@@ -144,7 +185,7 @@ function getSnapshot(customDataset = null) {
       .filter(item => item.amount < 0)
       .reduce((sum, item) => sum + Math.abs(Number(item.amount) || 0), 0);
     
-    return {
+    snapshot = {
       netBalance: totalIncome - totalExpenses,
       totalIncome,
       totalExpenses,
@@ -152,28 +193,40 @@ function getSnapshot(customDataset = null) {
       overdueTotal: customDataset.filter(item => item.status === 'overdue').reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
       highRiskClients: ['Scanning Custom Data...'],
       topExpenseCategory: 'Various',
-      externalValidationNotes: ['Custom dataset active. No external benchmark reference available.']
+      externalValidationNotes: ['Custom dataset active. No external benchmark reference available.'],
+      trend: calculateWeeklyTrend(customDataset)
+    };
+  } else {
+    // Fallback to Demo (Mehta Wholesale Traders)
+    const balance = getCashBalance();
+    const overdueInvoices = getOverdueInvoices();
+    const expenseBreakdown = getExpenseBreakdown();
+    const riskReport = getRiskReport();
+    const metrics = require("../data/metrics.json");
+
+    // Pull last 13 weeks from metrics.json for the trend
+    const recentMetrics = metrics.slice(-13);
+
+    snapshot = {
+      netBalance: balance.netBalance,
+      totalIncome: balance.totalIncome,
+      totalExpenses: balance.totalExpenses,
+      overdueCount: overdueInvoices.length,
+      overdueTotal: overdueInvoices.reduce((sum, invoice) => sum + invoice.amount, 0),
+      highRiskClients: riskReport.filter((client) => client.riskLevel === "HIGH").map((client) => client.client),
+      topExpenseCategory: expenseBreakdown[0] ? expenseBreakdown[0].category : "none",
+      externalValidationNotes: externalValidation.map((item) =>
+        `${item.source} (${item.focus}): ${item.insight}`
+      ),
+      trend: {
+        labels: recentMetrics.map(m => m.week.split('-').pop()), // "W01", "W02" etc
+        revenue: recentMetrics.map(m => m.revenue),
+        expenses: recentMetrics.map(m => m.expenses)
+      }
     };
   }
 
-  // Fallback to Demo (Mehta Wholesale Traders)
-  const balance = getCashBalance();
-  const overdueInvoices = getOverdueInvoices();
-  const expenseBreakdown = getExpenseBreakdown();
-  const riskReport = getRiskReport();
-
-  return {
-    netBalance: balance.netBalance,
-    totalIncome: balance.totalIncome,
-    totalExpenses: balance.totalExpenses,
-    overdueCount: overdueInvoices.length,
-    overdueTotal: overdueInvoices.reduce((sum, invoice) => sum + invoice.amount, 0),
-    highRiskClients: riskReport.filter((client) => client.riskLevel === "HIGH").map((client) => client.client),
-    topExpenseCategory: expenseBreakdown[0] ? expenseBreakdown[0].category : "none",
-    externalValidationNotes: externalValidation.map((item) =>
-      `${item.source} (${item.focus}): ${item.insight}`
-    )
-  };
+  return snapshot;
 }
 
 /**
