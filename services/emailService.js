@@ -14,22 +14,26 @@ const clientContacts = require("../data/clientContacts.json");
  * @returns {string | null} Email address to send reminder to.
  */
 function resolveRecipient(clientName, customDataset = null) {
-  // 1) Check custom dataset for email column first (Talk to Data Priority)
+  // 1) HIGHEST PRIORITY: email column in the uploaded CSV dataset
+  //    This ensures "Send reminder to Gupta" uses the CSV email, not .env
   if (customDataset && customDataset.length > 0) {
     const row = customDataset.find(item => item.client === clientName && item.email);
-    if (row) return row.email;
+    if (row) {
+      console.log(`📧 Resolved recipient from dataset: ${row.email} (for ${clientName})`);
+      return row.email;
+    }
   }
 
-  // 2) explicit EMAIL_TO override (for testing/debug)
-  if (process.env.EMAIL_TO) {
-    return process.env.EMAIL_TO;
-  }
-
+  // 2) Static client contact map (data/clientContacts.json)
   if (clientContacts[clientName]) {
+    console.log(`📧 Resolved recipient from clientContacts.json: ${clientContacts[clientName]}`);
     return clientContacts[clientName];
   }
 
-  return process.env.EMAIL_USER || null;
+  // 3) Last resort: EMAIL_TO or EMAIL_USER from .env
+  const fallback = process.env.EMAIL_TO || process.env.EMAIL_USER || null;
+  if (fallback) console.log(`📧 Using fallback email: ${fallback}`);
+  return fallback;
 }
 
 /**
