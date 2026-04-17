@@ -11,23 +11,26 @@ function parseUtcDate(dateStr) {
 
 /**
  * Returns the latest transaction date in the dataset.
+ * @param {Array<object>} dataset - Optional transaction set.
  * @returns {Date} Latest transaction date.
  */
-function getLatestTransactionDate() {
-  return transactions.reduce((latest, transaction) => {
+function getLatestTransactionDate(dataset = transactions) {
+  if (!dataset || dataset.length === 0) return new Date();
+  return dataset.reduce((latest, transaction) => {
     const transactionDate = parseUtcDate(transaction.date);
     return transactionDate > latest ? transactionDate : latest;
-  }, parseUtcDate(transactions[0].date));
+  }, parseUtcDate(dataset[0].date));
 }
 
 /**
  * Filters transactions to an inclusive date range.
  * @param {Date} from - Range start.
  * @param {Date} to - Range end.
+ * @param {Array<object>} dataset - Optional transaction set.
  * @returns {Array<object>} Filtered transactions.
  */
-function getTransactionsInRange(from, to) {
-  return transactions.filter((transaction) => {
+function getTransactionsInRange(from, to, dataset = transactions) {
+  return dataset.filter((transaction) => {
     const transactionDate = parseUtcDate(transaction.date);
     return transactionDate >= from && transactionDate <= to;
   });
@@ -157,19 +160,34 @@ function getCategoryVariances(current, previous) {
   const prevIncome = summarizeByCategory(previous.filter(t => t.type === 'income'));
   const prevExpenses = summarizeByCategory(previous.filter(t => t.type === 'expense'));
 
-  const incomeVariances = Object.keys({ ...currentIncome, ...prevIncome }).map(cat => ({
-    category: cat,
-    current: currentIncome[cat] || 0,
-    previous: prevIncome[cat] || 0,
-    delta: (currentIncome[cat] || 0) - (prevIncome[cat] || 0)
-  })).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  const calculatePct = (curr, prev) => {
+    if (prev === 0) return curr > 0 ? 100 : 0;
+    return Math.round(((curr - prev) / prev) * 100);
+  };
 
-  const expenseVariances = Object.keys({ ...currentExpenses, ...prevExpenses }).map(cat => ({
-    category: cat,
-    current: currentExpenses[cat] || 0,
-    previous: prevExpenses[cat] || 0,
-    delta: (currentExpenses[cat] || 0) - (prevExpenses[cat] || 0)
-  })).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  const incomeVariances = Object.keys({ ...currentIncome, ...prevIncome }).map(cat => {
+    const curr = currentIncome[cat] || 0;
+    const prev = prevIncome[cat] || 0;
+    return {
+      category: cat,
+      current: curr,
+      previous: prev,
+      delta: curr - prev,
+      percentage: calculatePct(curr, prev)
+    };
+  }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+
+  const expenseVariances = Object.keys({ ...currentExpenses, ...prevExpenses }).map(cat => {
+    const curr = currentExpenses[cat] || 0;
+    const prev = prevExpenses[cat] || 0;
+    return {
+      category: cat,
+      current: curr,
+      previous: prev,
+      delta: curr - prev,
+      percentage: calculatePct(curr, prev)
+    };
+  }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
 
   return { income: incomeVariances, expenses: expenseVariances };
 }
@@ -184,22 +202,23 @@ function summarizeByCategory(items) {
 /**
  * Summarizes performance metrics for a specific entity search string.
  * @param {string} entity - Search term (client, category, or desc keyword).
+ * @param {Array<Object>} dataset - Optional transaction set.
  * @returns {object} Aggregated metrics.
  */
-function summarizeEntityMetrics(entity) {
+function summarizeEntityMetrics(entity, dataset = transactions) {
   const norm = entity.toLowerCase();
-  const matches = transactions.filter(t => 
+  const matches = dataset.filter(t => 
     (t.client && t.client.toLowerCase().includes(norm)) ||
     (t.category && t.category.toLowerCase().includes(norm)) ||
     (t.description && t.description.toLowerCase().includes(norm))
   );
 
-  const revenue = matches.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0);
-  const costs = matches.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0);
+  const revenue = matches.filter(t => t.type === 'income').reduce((s,t) => s + (Number(t.amount) || 0), 0);
+  const costs = matches.filter(t => t.type === 'expense').reduce((s,t) => s + Math.abs(Number(t.amount) || 0), 0);
   const volume = matches.length;
   
   // Growth WoW (Last 7 days vs 7 days before)
-  const latest = getLatestTransactionDate();
+  const latest = getLatestTransactionDate(dataset);
   const cStart = new Date(latest); cStart.setUTCDate(cStart.getUTCDate() - 6);
   const pEnd = new Date(cStart); pEnd.setUTCDate(pEnd.getUTCDate() - 1);
   const pStart = new Date(pEnd); pStart.setUTCDate(pStart.getUTCDate() - 6);
@@ -220,12 +239,13 @@ function summarizeEntityMetrics(entity) {
  * Performs a side-by-side comparison of two entities.
  * @param {string} a - First entity keyword.
  * @param {string} b - Second entity keyword.
+ * @param {Array<Object>} dataset - Optional transaction set.
  * @returns {object} Head-to-head comparison result.
  */
-function compareEntities(a, b) {
+function compareEntities(a, b, dataset = transactions) {
   return {
-    entityA: { name: a, ...summarizeEntityMetrics(a) },
-    entityB: { name: b, ...summarizeEntityMetrics(b) }
+    entityA: { name: a, ...summarizeEntityMetrics(a, dataset) },
+    entityB: { name: b, ...summarizeEntityMetrics(b, dataset) }
   };
 }
 
@@ -293,5 +313,8 @@ module.exports = {
   getCashSummary,
   getExpenseBreakdown,
   comparePeriods,
-  compareEntities
+  compareEntities,
+  getLatestTransactionDate,
+  getTransactionsInRange,
+  getCategoryVariances
 };

@@ -9,7 +9,10 @@ const {
   getCashSummary,
   getExpenseBreakdown,
   comparePeriods,
-  compareEntities
+  compareEntities,
+  getLatestTransactionDate,
+  getTransactionsInRange,
+  getCategoryVariances
 } = require("../services/cashFlowService");
 const {
   getOverdueInvoices,
@@ -216,18 +219,42 @@ function getSnapshot(customDataset = null) {
     
     const breakdown = Object.entries(breakdownMap).map(([category, total]) => ({ category, total }));
 
+    // --- ENHANCED INTEL FOR CUSTOM DATA ---
+    const latestDate = getLatestTransactionDate(customDataset);
+    const midPoint = new Date(latestDate);
+    midPoint.setUTCDate(midPoint.getUTCDate() - 30);
+    const startPoint = new Date(midPoint);
+    startPoint.setUTCDate(startPoint.getUTCDate() - 30);
+
+    const currentInterval = getTransactionsInRange(midPoint, latestDate, customDataset);
+    const prevInterval = getTransactionsInRange(startPoint, midPoint, customDataset);
+    const variances = getCategoryVariances(currentInterval, prevInterval);
+
+    const overdueClients = customDataset
+      .filter(item => item.status === 'overdue' && item.client && item.client !== 'Walk-in Client')
+      .reduce((acc, item) => {
+        acc[item.client] = (acc[item.client] || 0) + (Number(item.amount) || 0);
+        return acc;
+      }, {});
+    
+    const highRiskClients = Object.entries(overdueClients)
+      .sort((a,b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name, amt]) => `${name} (₹${amt.toLocaleString('en-IN')})`);
+
     snapshot = {
       netBalance: totalIncome - totalExpenses,
       totalIncome,
       totalExpenses,
       overdueCount: customDataset.filter(item => item.status === 'overdue').length,
       overdueTotal: customDataset.filter(item => item.status === 'overdue').reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
-      highRiskClients: ['Scanning Custom Data...'],
+      highRiskClients: highRiskClients.length > 0 ? highRiskClients : ['None'],
       topExpenseCategory: breakdown.length > 0 ? breakdown.sort((a,b) => b.total - a.total)[0].category : 'Various',
-      externalValidationNotes: ['Custom dataset active. No external benchmark reference available.'],
+      externalValidationNotes: ['Custom dataset active. Analysis based on user-provided transactional boundaries.'],
       trend: calculateWeeklyTrend(customDataset, 0),
       comparisonTrend: calculateWeeklyTrend(customDataset, 13),
-      breakdown
+      breakdown,
+      variances
     };
   } else {
     // Fallback to Demo (Mehta Wholesale Traders)
@@ -660,7 +687,7 @@ async function handleQuery(userInput, customDataset = null) {
       const parts = normalized.split(/ vs | versus /);
       const entityA = parts[0].trim().replace(/compare /g, "");
       const entityB = parts[1].trim();
-      const duelData = compareEntities(entityA, entityB);
+      const duelData = compareEntities(entityA, entityB, customDataset);
       
       const snapshot = getSnapshot(customDataset);
       snapshot.duel = duelData;

@@ -1,0 +1,51 @@
+id,date,type,amount,category,description,client,email,status,dueDate,daysOverdue
+TXN001,2026-04-15,income,125000,sales,Quarterly Wholesale Order,Sharma Retail,sharma@retail.com,paid,,0
+TXN002,2026-04-14,expense,45000,rent,Warehouse Monthly Rent,,finance@mehta.com,paid,,0
+TXN003,2026-04-13,expense,85000,salaries,Staff Payroll April,,hr@mehta.com,paid,,0
+TXN004,2026-04-12,income,95000,sales,Bulk Inventory Movement,Gupta Enterprises,contact@gupta.in,paid,,0
+TXN005,2026-04-10,expense,12000,utilities,Electricity & Water,,utilities@mehta.com,paid,,0
+TXN006,2026-04-08,expense,35000,marketing,Social Media Campaign Spike,,marketing@mehta.com,paid,,0
+TXN007,2026-04-05,income,75000,consulting,Strategy Workshop,Patel Distributors,patel@distributors.com,overdue,2026-03-25,21
+TXN008,2026-04-03,expense,15000,logistics,Express Shipping Fees,,logistics@mehta.com,paid,,0
+TXN009,2026-04-01,income,110000,sales,Batch Invoice #88,Sharma Retail,sharma@retail.com,paid,,0
+TXN010,2026-03-28,expense,8200,marketing,Search Ads,,marketing@mehta.com,paid,,0
+TXN011,2026-03-25,income,62000,sales,Pending Balance,Gupta Enterprises,contact@gupta.in,overdue,2026-03-10,38
+TXN012,2026-03-22,expense,45000,rent,Warehouse Monthly Rent,,finance@mehta.com,paid,,0
+TXN013,2026-03-20,expense,85000,salaries,Staff Payroll March,,hr@mehta.com,paid,,0
+TXN014,2026-03-18,income,150000,sales,Direct Wholesale,Kapoor Traders,kapoor@wholesale.in,paid,,0
+TXN015,2026-03-15,expense,11000,utilities,Maintenance,,utilities@mehta.com,paid,,0
+TXN016,2026-03-12,expense,5000,marketing,Standard Ads,,marketing@mehta.com,paid,,0
+TXN017,2026-03-09,income,45000,sales,Small Order,Sharma Retail,sharma@retail.com,paid,,0
+TXN018,2026-03-05,expense,14000,logistics,Trucking,,logistics@mehta.com,paid,,0
+TXN019,2026-03-01,income,130000,sales,Invoice #777,Gupta Enterprises,contact@gupta.in,paid,,0
+TXN020,2026-02-25,expense,45000,rent,Warehouse Monthly Rent,,finance@mehta.com,paid,,0
+TXN021,2026-02-22,expense,85000,salaries,Staff Payroll February,,hr@mehta.com,paid,,0
+TXN022,2026-02-18,income,88000,sales,Export Shipment,Verma & Sons,verma@sons.co.in,paid,,0
+TXN023,2026-02-15,expense,10000,utilities,Water,,utilities@mehta.com,paid,,0
+TXN024,2026-02-12,expense,4000,marketing,Flyer Printing,,marketing@mehta.com,paid,,0
+TXN025,2026-02-08,income,42000,consulting,Tax Prep,Sharma Retail,sharma@retail.com,paid,,0
+TXN026,2026-02-05,expense,16000,logistics,Port Duties,,logistics@mehta.com,paid,,0
+TXN027,2026-01-28,income,95000,sales,New Year Bulk,Gupta Enterprises,contact@gupta.in,paid,,0
+TXN028,2026-01-25,expense,45000,rent,Warehouse Monthly Rent,,finance@mehta.com,paid,,0
+TXN029,2026-01-22,expense,85000,salaries,Staff Payroll January,,hr@mehta.com,paid,,0
+TXN030,2026-01-18,income,210000,sales,Festive Clearance,Sharma Retail,sharma@retail.com,paid,,0
+TXN031,2026-01-15,expense,12500,utilities,Grid Power,,utilities@mehta.com,paid,,0
+TXN032,2026-01-10,expense,6500,marketing,Holiday Discount Blast,,marketing@mehta.com,paid,,0
+TXN033,2026-04-16,income,82000,sales,Additional Q2 Batch,Kapoor Traders,kapoor@wholesale.in,paid,,0
+TXN034,2026-04-16,expense,2500,utilities,Misc Repairs,,utilities@mehta.com,paid,,0
+TXN035,2026-04-17,income,30000,sales,Inventory Liquidation,Sharma Retail,sharma@retail.com,paid,,0
+TXN036,2026-04-17,income,45000,sales,Cash Sale,Walk-in Client,,paid,,0
+TXN037,2026-04-10,income,120000,sales,Export Order #9,Verma & Sons,verma@sons.co.in,paid,,0
+TXN038,2026-03-30,income,80000,sales,Spring Stock,Patel Distributors,patel@distributors.com,paid,,0
+TXN039,2026-02-15,income,55000,sales,Winter Stock,Patel Distributors,patel@distributors.com,paid,,0
+TXN040,2026-04-01,expense,12000,marketing,Outdoor Billboard,,marketing@mehta.com,paid,,0
+TXN041,2026-03-15,expense,4000,marketing,Bulk SMS Campaign,,marketing@mehta.com,paid,,0
+TXN042,2026-04-05,expense,22000,logistics,Freight Forwarding,,logistics@mehta.com,paid,,0
+TXN043,2026-03-05,expense,12000,logistics,Local Delivery,,logistics@mehta.com,paid,,0
+TXN044,2026-04-12,income,95000,sales,Bulk Inventory Movement,Gupta Enterprises,contact@gupta.in,overdue,2026-04-01,16
+TXN045,2026-04-15,income,200000,sales,Annual Contract Prepay,Sharma Retail,sharma@retail.com,paid,,0
+TXN046,2026-03-10,income,40000,sales,Small Repeat,Sharma Retail,sharma@retail.com,paid,,0
+TXN047,2026-02-10,income,40000,sales,Small Repeat,Sharma Retail,sharma@retail.com,paid,,0
+TXN048,2026-01-10,income,40000,sales,Small Repeat,Sharma Retail,sharma@retail.com,paid,,0
+TXN049,2026-01-05,income,120000,sales,Early Jan Stock,Gupta Enterprises,contact@gupta.in,paid,,0
+TXN050,2026-01-02,expense,15000,marketing,New Year Launch,,marketing@mehta.com,paid,,0
