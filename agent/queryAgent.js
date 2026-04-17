@@ -487,11 +487,13 @@ function getBenchmarkResponse(userInput) {
 /**
  * Extracts a known client name from the user query.
  * @param {string} userInput - Raw query text.
+ * @param {Array<Object>|null} dataset - Optional dataset to scan for names.
  * @returns {string | null} Matched client name.
  */
-function extractClientName(userInput) {
+function extractClientName(userInput, dataset = null) {
   const normalizedInput = userInput.toLowerCase();
-  const clients = [...new Set(invoices.map((invoice) => invoice.client))];
+  const source = dataset || invoices;
+  const clients = [...new Set(source.map((item) => item.client).filter(Boolean))];
   const match = clients.find((client) => normalizedInput.includes(client.toLowerCase()));
   return match || null;
 }
@@ -530,7 +532,31 @@ async function maybeUseAI(userInput, fallbackText) {
  * @returns {Promise<string>} Routed response.
  */
 async function handleQuery(userInput, customDataset = null) {
-  // If using a custom dataset, bypass the intent-map and go straight to AI with the custom context
+  const intent = classifyIntent(userInput);
+
+  // If sending a reminder, we should ALWAYS trigger the actual service, 
+  // even if using a custom dataset.
+  if (intent === INTENTS.SEND_REMINDER) {
+    const clientName = extractClientName(userInput, customDataset);
+    if (!clientName) return "Please specify which client should receive the reminder.";
+
+    // Find the invoice in the current dataset (custom or demo)
+    const dataset = customDataset || require("../data/transactions.json");
+    const overdueRow = dataset.find(item => item.client === clientName && (item.status === 'overdue' || item.amount < 0));
+
+    if (!overdueRow) return `No overdue records found for ${clientName} in the active dataset.`;
+
+    const result = await sendPaymentReminder({
+      client: clientName,
+      amount: Math.abs(overdueRow.amount),
+      daysOverdue: overdueRow.daysOverdue || 7, // Default if not found
+      invoiceId: overdueRow.id || overdueRow.invoiceId || 'N/A'
+    }, customDataset);
+
+    return result.alert;
+  }
+
+  // For other intents with a custom dataset, use AI reasoning with the data context
   if (customDataset) {
     const snapshot = getSnapshot(customDataset);
     const systemPrompt = buildSystemPrompt(snapshot) + `\n\nAdditionally, here is a sampling of the custom dataset rows:\n${JSON.stringify(customDataset.slice(0, 10))}`;
@@ -544,8 +570,6 @@ async function handleQuery(userInput, customDataset = null) {
     return benchmarkResponse;
   }
     */
-
-  const intent = classifyIntent(userInput);
 
   if (intent === INTENTS.HELP) {
     return getHelpText();
@@ -568,7 +592,7 @@ async function handleQuery(userInput, customDataset = null) {
   }
 
   if (intent === INTENTS.OVERDUE_INVOICES) {
-    const clientName = extractClientName(userInput);
+    const clientName = extractClientName(userInput, customDataset);
     if (clientName) {
       const invoicesByClient = getInvoicesByClient(clientName);
       const overdueInvoice = invoicesByClient.find((invoice) => invoice.status === "overdue");
@@ -582,7 +606,7 @@ async function handleQuery(userInput, customDataset = null) {
   }
 
   if (intent === INTENTS.RISK_CLIENTS) {
-    const clientName = extractClientName(userInput);
+    const clientName = extractClientName(userInput, customDataset);
     if (clientName) {
       const risk = getClientRisk(clientName);
       if (!risk) {

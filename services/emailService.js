@@ -6,14 +6,22 @@ const clientContacts = require("../data/clientContacts.json");
  * Resolves a reminder recipient email.
  * Resolution order:
  * 1) explicit EMAIL_TO override
- * 2) client mapping from data/clientContacts.json
- * 3) EMAIL_USER fallback
+ * 2) client mapping from customDataset (if provided)
+ * 3) client mapping from data/clientContacts.json
+ * 4) EMAIL_USER fallback
  * @param {string} clientName - Business client name.
+ * @param {Array<Object>|null} customDataset - Optional active dataset.
  * @returns {string | null} Email address to send reminder to.
  */
-function resolveRecipient(clientName) {
+function resolveRecipient(clientName, customDataset = null) {
   if (process.env.EMAIL_TO) {
     return process.env.EMAIL_TO;
+  }
+
+  // Check custom dataset for email column first
+  if (customDataset && customDataset.length > 0) {
+    const row = customDataset.find(item => item.client === clientName && item.email);
+    if (row) return row.email;
   }
 
   if (clientContacts[clientName]) {
@@ -39,9 +47,10 @@ function validateEmailConfig() {
 /**
  * Sends a payment reminder email to an overdue client.
  * @param {{ client: string, amount: number, daysOverdue: number, invoiceId: string }} invoiceData
+ * @param {Array<Object>|null} customDataset - Optional active data context.
  * @returns {Promise<{ success: boolean, messageId?: string, error?: string, alert: string, recipient?: string }>}
  */
-async function sendPaymentReminder(invoiceData) {
+async function sendPaymentReminder(invoiceData, customDataset = null) {
   const configValidation = validateEmailConfig();
   if (!configValidation.ok) {
     const missingList = configValidation.missing.join(", ");
@@ -52,7 +61,7 @@ async function sendPaymentReminder(invoiceData) {
     };
   }
 
-  const recipient = resolveRecipient(invoiceData.client);
+  const recipient = resolveRecipient(invoiceData.client, customDataset);
   if (!recipient) {
     return {
       success: false,
