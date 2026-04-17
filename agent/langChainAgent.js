@@ -18,7 +18,7 @@ const {
   getInvoicesByClient
 } = require("../services/invoiceService");
 const { getRiskReport, getClientRisk } = require("../services/riskService");
-const { getCashPrediction } = require("../services/predictionService");
+const { decomposeTransactions } = require("./decompositionService");
 const { detectAnomalies } = require("../services/anomalyService");
 const { generateSummary } = require("../services/summaryService");
 const { sendPaymentReminder } = require("../services/emailService");
@@ -123,8 +123,51 @@ async function executeNode(state) {
     }
   }
 
-  // 3. Fallback to AI Reasoning (Passing history for conversational awareness)
   const snapshot = getSnapshot(activeDataset);
+
+  // 3. New Decomposition (Breakdown) handling
+  if (intent === INTENTS.DECOMPOSITION) {
+    const { decomposeTransactions } = require("./decompositionService");
+    const { formatDecompositionTable } = require("./queryAgent");
+    const norm = userInput.toLowerCase();
+    let decompType = "expense";
+    let decompFilter = null;
+    let decompGroup = "category";
+
+    if (norm.includes("sales") || norm.includes("revenue") || norm.includes("income")) {
+      decompType = "income";
+      decompFilter = "sales";
+      decompGroup = "client";
+    }
+
+    if (norm.includes("cost") || norm.includes("expense") || norm.includes("spending")) {
+      decompType = "expense";
+      decompGroup = "category";
+    }
+
+    const result = decomposeTransactions(decompType, decompFilter, decompGroup);
+    const table = formatDecompositionTable(result);
+
+    const systemPrompt =
+      buildSystemPrompt(snapshot) +
+      `\n\n### MANDATORY DATA SOURCE: TARGET DECOMPOSITION\n` +
+      `You MUST explain the following components of the focus area "${result.target}":\n` +
+      `Total: ${formatCurrency(result.total)}\n` +
+      `Breakdown: ${JSON.stringify(result.components)}\n` +
+      `Statistically relevant patterns: ${result.insights.join(", ") || "None detected"}\n` +
+      `### END DATA SOURCE\n\n` +
+      "Task: Provide a strategic executive narrative of the decomposition data above. Highlight the top contributor and explain any concentration risks or outliers found in the statistically relevant patterns. Ignore other snapshot data if it contradicts the Target Decomposition breakdown.";
+
+    const llm = getLLM();
+    const resultAI = await llm.invoke([new SystemMessage(systemPrompt), ...messages]);
+
+    return {
+      response: `${resultAI.content}\n\n${table}`,
+      duel: null
+    };
+  }
+
+  // 4. Fallback to AI Reasoning (Passing history for conversational awareness)
 
   // Check for Head-to-Head Comparison (Duel)
   const normalized = userInput.toLowerCase();

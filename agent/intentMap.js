@@ -11,6 +11,7 @@ const INTENTS = {
   ANOMALY: "anomaly_detect",
   WEEKLY_SUMMARY: "weekly_summary",
   COMPARE: "compare",
+  DECOMPOSITION: "decomposition",
   HELP: "help",
   UNKNOWN: "unknown"
 };
@@ -21,6 +22,7 @@ const INTENT_RULES = [
   { intent: INTENTS.OVERDUE_INVOICES, keywords: ["overdue", "unpaid", "late invoice", "invoice", "invoices"] },
   { intent: INTENTS.RISK_CLIENTS, keywords: ["risk", "at risk", "won't pay", "bad client"] },
   { intent: INTENTS.ANOMALY, keywords: ["anomaly", "spike", "unusual", "weird", "sudden"] },
+  { intent: INTENTS.DECOMPOSITION, keywords: ["breakdown of", "what makes up", "decomposition of", "components of"] },
   { intent: INTENTS.EXPENSE_BREAKDOWN, keywords: ["expense", "spending", "costs", "breakdown"] },
   { intent: INTENTS.SEND_REMINDER, keywords: ["send", "remind", "email", "reminder"] },
   { intent: INTENTS.WEEKLY_SUMMARY, keywords: ["weekly", "this week", "digest"] },

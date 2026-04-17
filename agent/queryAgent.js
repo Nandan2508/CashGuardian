@@ -21,6 +21,7 @@ const {
 const { getRiskReport, getClientRisk } = require("../services/riskService");
 const { detectAnomalies } = require("../services/anomalyService");
 const { generateSummary } = require("../services/summaryService");
+const { decomposeTransactions } = require("../services/decompositionService");
 const { sendPaymentReminder } = require("../services/emailService");
 const { formatCurrency } = require("../utils/formatter");
 
@@ -412,6 +413,21 @@ function formatAnomalies(anomalies) {
 }
 
 /**
+ * Formats decomposition results into a tabular string.
+ * @param {object} result - Raw decomposition data.
+ * @returns {string} Tabular output.
+ */
+function formatDecompositionTable(result) {
+  const { printTable } = require("../utils/formatter");
+  const rows = result.components.map((c) => ({
+    Component: c.label,
+    Amount: formatCurrency(c.value),
+    Share: `${c.percentage}%`
+  }));
+  return printTable(rows, ["Component", "Amount", "Share"]);
+}
+
+/**
  * Formats compare results.
  * @param {{ current: { period: string }, previous: { period: string }, narrative: string }} comparison
  * @returns {string} Comparison text.
@@ -708,6 +724,45 @@ async function handleQuery(userInput, customDataset = null) {
 
   if (intent === INTENTS.ANOMALY) {
     return maybeUseAI(userInput, formatAnomalies(detectAnomalies()));
+  }
+
+  if (intent === INTENTS.DECOMPOSITION) {
+    const norm = userInput.toLowerCase();
+    let type = "expense";
+    let filter = null;
+    let group = "category";
+
+    if (norm.includes("sales") || norm.includes("revenue") || norm.includes("income")) {
+      type = "income";
+      filter = "sales"; // Default to sales if income mentioned
+      group = "client"; // Usually decompose income by client
+    }
+
+    if (norm.includes("cost") || norm.includes("expense") || norm.includes("spending")) {
+      type = "expense";
+      group = "category";
+    }
+
+    const result = decomposeTransactions(type, filter, group);
+    const table = formatDecompositionTable(result);
+
+    if (!hasAiCredentials()) {
+      return `🔴 AI_API_KEY not set. Add it to .env (see AI_PROVIDER_SETUP.md)\n\n${table}`;
+    }
+
+    // AI summary grounded with decomposition facts
+    const snapshot = getSnapshot(customDataset);
+    const systemPrompt = buildSystemPrompt(snapshot) +
+      `\n\n### MANDATORY DATA SOURCE: TARGET DECOMPOSITION\n` +
+      `You MUST explain the following components of the focus area "${result.target}":\n` +
+      `Total: ${formatCurrency(result.total)}\n` +
+      `Breakdown: ${JSON.stringify(result.components)}\n` +
+      `Statistically relevant patterns: ${result.insights.join(", ") || "None detected"}\n` +
+      `### END DATA SOURCE\n\n` +
+      "Task: Provide a strategic executive narrative of the decomposition data above. Highlight the top contributor and explain any concentration risks or outliers found in the statistically relevant patterns. Ignore other snapshot data if it contradicts the Target Decomposition breakdown.";
+
+    const summary = await callAI(systemPrompt, userInput);
+    return `${summary}\n\n${table}`;
   }
 
   if (intent === INTENTS.WEEKLY_SUMMARY) {
