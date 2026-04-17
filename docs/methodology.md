@@ -36,6 +36,7 @@ CashGuardian features a robust sanitization layer designed to handle the "dirty"
 1. **Currency Normalization**: Strips ₹, $, commas, and whitespace before casting to absolute numbers.
 2. **Robust Date Parsing**: Automatically detects and converts `DD-MM-YYYY`, `DD/MM/YYYY`, and partial ISO formats into standardized UTC dates.
 3. **Implicit Classification**: If a transaction `type` is missing, the engine infers `income` vs `expense` based on numeric sign (positive/negative).
+4. **Header Intelligence**: Dynamically resolves contact fields by scanning for common variations (e.g., `Email`, `recipient_email`, `customer_contact`) ensuring grounded correspondence even with "dirty" CSV headers.
 
 ```mermaid
 flowchart LR

@@ -14,13 +14,27 @@ const clientContacts = require("../data/clientContacts.json");
  * @returns {string | null} Email address to send reminder to.
  */
 function resolveRecipient(clientName, customDataset = null) {
+  const normalizedClient = clientName ? clientName.toLowerCase() : "";
+
   // 1) HIGHEST PRIORITY: email column in the uploaded CSV dataset
-  //    This ensures "Send reminder to Gupta" uses the CSV email, not .env
   if (customDataset && customDataset.length > 0) {
-    const row = customDataset.find(item => item.client === clientName && item.email);
+    const row = customDataset.find(item => {
+      // Find the client key (robust)
+      const clientKey = Object.keys(item).find(k => k.toLowerCase() === 'client' || k.toLowerCase() === 'customer');
+      return clientKey && item[clientKey] && item[clientKey].toLowerCase() === normalizedClient;
+    });
+
     if (row) {
-      console.log(`📧 Resolved recipient from dataset: ${row.email} (for ${clientName})`);
-      return row.email;
+      // Find an email key (robust)
+      const emailKey = Object.keys(row).find(k => 
+        ['email', 'Email', 'E-mail', 'recipient_email', 'contact'].some(variation => k.toLowerCase() === variation.toLowerCase()) ||
+        k.toLowerCase().includes('email')
+      );
+      
+      if (emailKey && row[emailKey]) {
+        console.log(`📧 Resolved recipient from dataset: ${row[emailKey]} (for ${clientName})`);
+        return row[emailKey];
+      }
     }
   }
 
