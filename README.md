@@ -29,9 +29,9 @@ Talk to your business finances in plain English — via natural language, ground
 
 ---
 
-CashGuardian is a full-stack **Talk to Data** platform built for the hackathon. It converts natural-language finance questions into deterministic, data-grounded answers using a state-aware **Agentic Reasoning Engine**. It runs as both a reactive CLI and a professional, glassmorphism web interface.
+CashGuardian is a full-stack **Talk to Data** platform built for the hackathon. It converts natural-language finance questions into deterministic, data-grounded answers. It runs as both a CLI and a web interface.
 
-The platform is designed for founders, operators, and analysts who need fast, trustworthy insights and **Executive PDF Reporting** without complex BI overhead.
+The platform is designed for founders, operators, and analysts who need fast, trustworthy insights and reporting without complex BI overhead.
 
 ---
 
@@ -60,7 +60,7 @@ Many teams struggle to extract quick, accurate, and trustworthy answers from ope
 
 ## Architecture
 
-CashGuardian uses a **Grounded Reasoning** architecture. Every query is orchestrated by a state-aware agent that grounds operational data before it reaches the AI — ensuring responses are factually accurate, benchmarked, and never hallucinated.
+CashGuardian uses a **Grounded Reasoning** architecture. Every query is orchestrated by a state-aware agent that grounds operational data before it reaches the AI — ensuring responses are factually accurate and benchmarked.
 
 ```mermaid
 graph TD
@@ -119,7 +119,7 @@ graph TD
     Q -- "Grounded" --> AI_GPT
 ```
 
-### Intelligence flow
+### Query flow
 
 ```mermaid
 sequenceDiagram
@@ -133,21 +133,21 @@ sequenceDiagram
     Q->>S: Pull Transactional Context
     S-->>Q: Grounded Snapshot
     Q->>AI: Reason over Snapshot + Context
-    AI-->>Q: Strategic Executive narrative
+    AI-->>Q: Narrative response
     Q-->>U: Final Grounded Insight
 ```
 
 ---
 
-- **Agentic Reasoning**: State-aware orchestration for complex financial pivots (Variance, Comparison, Risk).
-- **Excel-Proof Ingestion**: Robust handling of "dirty" localized CSV/Excel data (₹ symbols, commas, Indian dates).
-- **Executive PDF Dossiers**: Professional report generation with a 13-week trend appendix.
-- **Comparison Duels**: High-performance head-to-head entity and period analysis.
-- **Grounding Logs**: Detailed source transparency for every AI narrative.
-- **Voice Intelligence**: Built-in speech recognition for hands-free querying.
-- **AI abstraction**: AI provider abstraction (`gemini`, `groq`, `openrouter`) with safe fallback handling
-- **Web Dashboard**: Glassmorphism UI with real-time 13-week cash flow trajectory.
-- **Benchmark Suite**: 13-case automated accuracy and latency runner.
+- State-aware orchestration for complex financial pivots like variance, comparison, and risk analysis.
+- Robust handling of CSV and Excel data, including currency symbols and localized date formats.
+- Portable report generation with a 13-week trend appendix.
+- Head-to-head analysis for comparing different business entities or time periods.
+- Detailed source transparency showing which data was used for every AI response.
+- Built-in speech recognition for hands-free querying.
+- Multi-provider AI abstraction supporting Gemini, Groq, and OpenRouter with safe fallbacks.
+- Web dashboard with a real-time 13-week cash flow trajectory.
+- Automated 13-case accuracy and latency benchmark suite.
 
 ---
 
@@ -304,10 +304,10 @@ Full benchmark definitions and scoring rubric: [BENCHMARK.md](./BENCHMARK.md)
 
 ## Privacy and Trust
 
-- **Local first** — all data processing happens on your machine
-- **Privacy mode** — uploaded files are stored in-memory for the session only, never written to disk
-- **Grounding logs** — every AI response includes a "How was this answered?" transparency section showing intent, services called, and data source
-- **No hallucination** — AI receives a pre-computed financial snapshot, not raw data; it explains, it does not calculate
+- All data processing happens on your local machine.
+- Uploaded files are stored in-memory for the current session only and are never written to disk.
+- Every AI response includes a transparency section showing the intent, services called, and data source.
+- AI receives a pre-computed financial snapshot rather than raw data to ensure it explains and does not calculate.
 
 ---
 
