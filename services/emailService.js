@@ -14,14 +14,15 @@ const clientContacts = require("../data/clientContacts.json");
  * @returns {string | null} Email address to send reminder to.
  */
 function resolveRecipient(clientName, customDataset = null) {
-  if (process.env.EMAIL_TO) {
-    return process.env.EMAIL_TO;
-  }
-
-  // Check custom dataset for email column first
+  // 1) Check custom dataset for email column first (Talk to Data Priority)
   if (customDataset && customDataset.length > 0) {
     const row = customDataset.find(item => item.client === clientName && item.email);
     if (row) return row.email;
+  }
+
+  // 2) explicit EMAIL_TO override (for testing/debug)
+  if (process.env.EMAIL_TO) {
+    return process.env.EMAIL_TO;
   }
 
   if (clientContacts[clientName]) {

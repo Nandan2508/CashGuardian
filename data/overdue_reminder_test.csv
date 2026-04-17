@@ -1,0 +1,4 @@
+id,date,type,amount,category,description,client,status,daysOverdue,email
+INV-999,2026-03-01,expense,-125000,consulting,Outstanding Development Fee,Krishan Malhotra,overdue,45,krishanmalhotra2005@gmail.com
+TXN-101,2026-04-10,income,75000,sales,Software License,Tech Corp,paid,0,tech@example.com
+TXN-102,2026-04-15,expense,-2500,utilities,Electricity Bill,PowerGrid,paid,0,billing@power.com
