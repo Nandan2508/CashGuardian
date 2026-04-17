@@ -7,7 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
             --bg: #FDFBF7;
@@ -92,8 +94,20 @@
         .metric-value.negative { color: var(--accent-red); }
 
         .chart-container { margin-top: 32px; display: flex; flex-direction: column; gap: 12px; }
-        .chart-title { font-size: 12px; font-weight: 600; color: var(--text-main); }
-        .canvas-wrapper { height: 450px; width: 100%; transition: height 0.3s ease; }
+        .chart-title { font-size: 13px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .chart-title i { color: var(--accent-gold); }
+        .canvas-wrapper { height: 400px; width: 100%; transition: height 0.3s ease; }
+        .breakdown-wrapper { height: 250px; width: 100%; margin-top: 20px; }
+
+        .btn-mic { width: 44px; height: 44px; border-radius: 50%; border: none; background: #FDEFE8; color: var(--accent-gold); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: relative; }
+        .btn-mic:hover { background: #FADBCB; transform: scale(1.05); }
+        .btn-mic.listening { background: var(--accent-red); color: white; animation: pulse-mic 1.5s infinite; }
+        
+        @keyframes pulse-mic {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230, 164, 149, 0.4); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(230, 164, 149, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230, 164, 149, 0); }
+        }
 
         .footer-note { padding: 16px; font-size: 10px; color: var(--text-muted); text-align: center; background: white; }
 
@@ -156,12 +170,15 @@
                 <div class="question-pill" onclick="sendQuery('What will my cash look like in 30 days?')">30d Forecast</div>
             </div>
 
-            <div class="input-bar">
-                <div class="input-wrapper">
-                    <input type="text" id="query-input" placeholder="Type a message or command..." onkeypress="if(event.key==='Enter') sendQuery()">
+                <div class="input-bar">
+                    <button class="btn-mic" id="mic-btn" onclick="startVoiceRecognition()" title="Voice Command">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <div class="input-wrapper">
+                        <input type="text" id="query-input" placeholder="Ask me something or use mic..." onkeypress="if(event.key==='Enter') sendQuery()">
+                    </div>
+                    <button class="btn-send" onclick="sendQuery()">Send</button>
                 </div>
-                <button class="btn-send" onclick="sendQuery()">Send</button>
-            </div>
             
             <footer class="footer-note">
                 Demo mode: all calculations run on local locked data. Upload mode: your file is processed locally and never stored on disk.
@@ -190,8 +207,13 @@
             </div>
 
             <div class="chart-container">
-                <div class="chart-title">13-week cash flow</div>
+                <div class="chart-title"><i class="fas fa-chart-line"></i> Cash Flow Trend (Current vs Prev)</div>
                 <div class="canvas-wrapper"><canvas id="cashflow-chart"></canvas></div>
+            </div>
+
+            <div class="chart-container" style="border-top: 1px solid var(--header-border); padding-top: 24px;">
+                <div class="chart-title"><i class="fas fa-chart-pie"></i> Expense Decomposition</div>
+                <div class="breakdown-wrapper"><canvas id="breakdown-chart"></canvas></div>
             </div>
 
             <div style="margin-top: 40px; border-top: 1px solid var(--header-border); padding-top: 24px;">
@@ -204,9 +226,12 @@
 
     <script>
         let cashflowChart = null;
+        let breakdownChart = null;
+        let lastReportContent = '';
+        let awaitingPdfConfirm = false;
 
         window.addEventListener('DOMContentLoaded', () => {
-            initChart();
+            initCharts();
             fetchSnapshot();
         });
 
@@ -215,8 +240,19 @@
             const query = text || input.value.trim();
             if (!query) return;
 
+            // Handle PDF Confirmation
+            if (awaitingPdfConfirm && (query.toLowerCase().trim() === 'yes' || query.toLowerCase().trim() === 'yup')) {
+                generatePDF(lastReportContent);
+                appendMessage('user', 'Yes, please.');
+                appendMessage('ai', 'Generating your report... Done! 📄 Check your downloads.');
+                awaitingPdfConfirm = false;
+                input.value = '';
+                return;
+            }
+
             input.value = '';
             appendMessage('user', query);
+            awaitingPdfConfirm = false;
 
             const aiBubbleId = 'ai-' + Date.now();
             appendMessage('ai', '<span class="loading-dots">Thinking</span>', aiBubbleId);
@@ -234,8 +270,18 @@
                 if (data.error) {
                     bubble.innerHTML = `<div style="color: var(--accent-red); font-weight: 600;">⚠️ Query Failed</div><div style="font-size: 13px; margin-top: 4px;">${data.details || data.error}</div>`;
                 } else {
+                    let responseText = data.response;
+                    
+                    // Check if response is a summary that warrants a PDF export
+                    const isSummary = query.toLowerCase().includes('summarise') || query.toLowerCase().includes('summary');
+                    if (isSummary) {
+                        lastReportContent = responseText;
+                        responseText += "<br><br><strong>📊 Would you like me to export this summary as a professional PDF? (Type 'yes' to confirm)</strong>";
+                        awaitingPdfConfirm = true;
+                    }
+
                     bubble.innerHTML = `
-                        <div class="answer-text">${data.response.replace(/\n/g, '<br>')}</div>
+                        <div class="answer-text">${responseText.replace(/\n/g, '<br>')}</div>
                         <div class="response-meta"><span class="latency-badge">${data.latencyMs}ms</span><span>Source: ${data.source}</span></div>
                         <div class="transparency-section">
                             <div class="transparency-toggle" onclick="toggleTransparency(this)">
@@ -250,7 +296,7 @@
                     `;
                 }
                 scrollToBottom();
-            } catch (err) { document.getElementById(aiBubbleId).innerHTML = 'Connection failed.'; }
+            } catch (err) { console.error(err); }
         }
 
         function appendMessage(role, text, id = null) {
@@ -272,6 +318,52 @@
             history.scrollTop = history.scrollHeight;
         }
 
+        async function startVoiceRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Speech recognition is not supported in this browser.");
+                return;
+            }
+            const recognition = new SpeechRecognition();
+            const btn = document.getElementById('mic-btn');
+            
+            recognition.onstart = () => btn.classList.add('listening');
+            recognition.onend = () => btn.classList.remove('listening');
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript;
+                document.getElementById('query-input').value = text;
+                sendQuery(text);
+            };
+            recognition.start();
+        }
+
+        function generatePDF(text) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Branding
+            doc.setFillColor(193, 126, 74); // Gold
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.text("CashGuardian Intelligence Report", 20, 25);
+            
+            doc.setTextColor(50, 50, 50);
+            doc.setFontSize(10);
+            const date = new Date().toLocaleString();
+            doc.text(`Generated on: ${date}`, 20, 50);
+            
+            doc.setFontSize(12);
+            doc.text("Analysis Summary:", 20, 65);
+            
+            // Content
+            const splitText = doc.splitTextToSize(text.replace(/<br>/g, '\n'), 170);
+            doc.setFont("helvetica", "normal");
+            doc.text(splitText, 20, 75);
+            
+            doc.save("CashGuardian_Intelligence_Summary.pdf");
+        }
+
         async function fetchSnapshot() {
             try {
                 const res = await fetch('/api/snapshot');
@@ -286,33 +378,69 @@
                 healthPill.className = 'health-pill ' + (data.netBalance >= 0 ? 'positive' : 'negative');
                 document.getElementById('health-status').innerText = data.netBalance >= 0 ? 'Cash Positive' : 'Cash Deficit';
 
-                // Update dynamic chart
-                if (data.trend) {
-                    updateChart(data.trend);
-                }
+                // Update dynamic charts
+                if (data.trend) updateTrendChart(data.trend, data.comparisonTrend);
+                if (data.breakdown) updateBreakdownChart(data.breakdown);
             } catch (err) { console.error(err); }
         }
 
-        function updateChart(trendData) {
+        function updateTrendChart(trend, comparison) {
             if (!cashflowChart) return;
-            cashflowChart.data.labels = trendData.labels;
-            cashflowChart.data.datasets[0].data = trendData.revenue;
-            cashflowChart.data.datasets[1].data = trendData.expenses;
+            cashflowChart.data.labels = trend.labels;
+            
+            // Current Datasets
+            cashflowChart.data.datasets[0].data = trend.revenue;
+            cashflowChart.data.datasets[1].data = trend.expenses;
+            
+            // Previous Datasets (Comparison)
+            if (comparison) {
+                cashflowChart.data.datasets[2].data = comparison.revenue;
+                cashflowChart.data.datasets[3].data = comparison.expenses;
+                cashflowChart.data.datasets[2].hidden = false;
+                cashflowChart.data.datasets[3].hidden = false;
+            } else {
+                cashflowChart.data.datasets[2].hidden = true;
+                cashflowChart.data.datasets[3].hidden = true;
+            }
+            
             cashflowChart.update();
         }
 
-        function initChart() {
-            const ctx = document.getElementById('cashflow-chart').getContext('2d');
-            cashflowChart = new Chart(ctx, {
+        function updateBreakdownChart(breakdownData) {
+            if (!breakdownChart) return;
+            breakdownChart.data.labels = breakdownData.map(d => d.category);
+            breakdownChart.data.datasets[0].data = breakdownData.map(d => d.total);
+            breakdownChart.update();
+        }
+
+        function initCharts() {
+            const ctxTrend = document.getElementById('cashflow-chart').getContext('2d');
+            cashflowChart = new Chart(ctxTrend, {
                 type: 'line',
                 data: {
                     labels: [],
                     datasets: [
-                        { label: 'Revenue', data: [], borderColor: '#C17E4A', backgroundColor: 'rgba(193, 126, 74, 0.1)', fill: true, tension: 0.4 },
-                        { label: 'Expenses', data: [], borderColor: '#E6A495', borderDash: [5, 5], fill: false, tension: 0.4 }
+                        { label: 'Revenue (Cur)', data: [], borderColor: '#C17E4A', backgroundColor: 'rgba(193, 126, 74, 0.1)', fill: true, tension: 0.4 },
+                        { label: 'Expenses (Cur)', data: [], borderColor: '#E6A495', fill: false, tension: 0.4 },
+                        { label: 'Revenue (Prev)', data: [], borderColor: 'rgba(193, 126, 74, 0.3)', borderDash: [5, 5], fill: false, tension: 0.4, hidden: true },
+                        { label: 'Expenses (Prev)', data: [], borderColor: 'rgba(230, 164, 149, 0.3)', borderDash: [5, 5], fill: false, tension: 0.4, hidden: true }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } }, scales: { y: { display: true, grid: { color: '#F0F0F0' } }, x: { display: true, grid: { display: false } } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }, scales: { y: { display: true, beginAtZero: true }, x: { display: true, grid: { display: false } } } }
+            });
+
+            const ctxPie = document.getElementById('breakdown-chart').getContext('2d');
+            breakdownChart = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#C17E4A', '#E6A495', '#FADBCB', '#F1BCAE', '#D98E73', '#B0705F'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: true, position: 'right', labels: { boxWidth: 15, font: { size: 11 } } } } }
             });
         }
 

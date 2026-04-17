@@ -132,18 +132,22 @@ function fallbackResponse() {
 /**
  * Helper to group transactions into weekly buckets for the trend graph.
  * @param {Array<Object>} transactions - List of transaction objects.
+ * @param {number} weekOffset - Number of weeks to shift back (0 for current, 13 for previous).
  * @returns {{ labels: string[], revenue: number[], expenses: number[] }}
  */
-function calculateWeeklyTrend(transactions) {
+function calculateWeeklyTrend(transactions, weekOffset = 0) {
   if (!transactions.length) return { labels: [], revenue: [], expenses: [] };
 
-  // 1. Find date range
+  // 1. Find the latest relative point
   const dates = transactions.map(t => new Date(t.date));
-  const latest = new Date(Math.max(...dates));
+  const absoluteLatest = new Date(Math.max(...dates));
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const offsetMs = weekOffset * weekMs;
+  
+  const latest = new Date(absoluteLatest.getTime() - offsetMs);
   
   // 2. Generate 13 weeks of labels
   const trend = { labels: [], revenue: [], expenses: [] };
-  const weekMs = 7 * 24 * 60 * 60 * 1000;
 
   for (let i = 12; i >= 0; i--) {
     const weekEnd = new Date(latest.getTime() - (i * weekMs));
@@ -171,7 +175,7 @@ function calculateWeeklyTrend(transactions) {
 /**
  * Builds a global snapshot for AI grounding and UI metrics.
  * @param {Array<Object>|null} customDataset - User uploaded data if available.
- * @returns {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string, externalValidationNotes: string[], trend: object }}
+ * @returns {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string, externalValidationNotes: string[], trend: object, comparisonTrend: object, breakdown: object[] }}
  */
 function getSnapshot(customDataset = null) {
   let snapshot;
@@ -185,6 +189,16 @@ function getSnapshot(customDataset = null) {
       .filter(item => item.amount < 0)
       .reduce((sum, item) => sum + Math.abs(Number(item.amount) || 0), 0);
     
+    // Breakdown for Donut Chart
+    const breakdownMap = customDataset
+      .filter(item => item.type === 'expense')
+      .reduce((acc, item) => {
+        acc[item.category] = (acc[item.category] || 0) + Math.abs(Number(item.amount) || 0);
+        return acc;
+      }, {});
+    
+    const breakdown = Object.entries(breakdownMap).map(([category, total]) => ({ category, total }));
+
     snapshot = {
       netBalance: totalIncome - totalExpenses,
       totalIncome,
@@ -192,9 +206,11 @@ function getSnapshot(customDataset = null) {
       overdueCount: customDataset.filter(item => item.status === 'overdue').length,
       overdueTotal: customDataset.filter(item => item.status === 'overdue').reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
       highRiskClients: ['Scanning Custom Data...'],
-      topExpenseCategory: 'Various',
+      topExpenseCategory: breakdown.length > 0 ? breakdown.sort((a,b) => b.total - a.total)[0].category : 'Various',
       externalValidationNotes: ['Custom dataset active. No external benchmark reference available.'],
-      trend: calculateWeeklyTrend(customDataset)
+      trend: calculateWeeklyTrend(customDataset, 0),
+      comparisonTrend: calculateWeeklyTrend(customDataset, 13),
+      breakdown
     };
   } else {
     // Fallback to Demo (Mehta Wholesale Traders)
@@ -204,8 +220,9 @@ function getSnapshot(customDataset = null) {
     const riskReport = getRiskReport();
     const metrics = require("../data/metrics.json");
 
-    // Pull last 13 weeks from metrics.json for the trend
+    // Pull last 13 weeks and the 13 before that for comparison
     const recentMetrics = metrics.slice(-13);
+    const previousMetrics = metrics.slice(-26, -13);
 
     snapshot = {
       netBalance: balance.netBalance,
@@ -219,10 +236,16 @@ function getSnapshot(customDataset = null) {
         `${item.source} (${item.focus}): ${item.insight}`
       ),
       trend: {
-        labels: recentMetrics.map(m => m.week.split('-').pop()), // "W01", "W02" etc
+        labels: recentMetrics.map(m => m.week.split('-').pop()),
         revenue: recentMetrics.map(m => m.revenue),
         expenses: recentMetrics.map(m => m.expenses)
-      }
+      },
+      comparisonTrend: previousMetrics.length > 0 ? {
+        labels: previousMetrics.map(m => m.week.split('-').pop()),
+        revenue: previousMetrics.map(m => m.revenue),
+        expenses: previousMetrics.map(m => m.expenses)
+      } : null,
+      breakdown: expenseBreakdown.map(b => ({ category: b.category, total: b.total }))
     };
   }
 
