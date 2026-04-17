@@ -371,7 +371,7 @@
                     const isSummary = query.toLowerCase().includes('summarise') || query.toLowerCase().includes('summary');
                     if (isSummary) {
                         lastReportContent = responseText;
-                        responseText += "<br><br><strong>📊 Would you like me to export this summary as a professional PDF? (Type 'yes' to confirm)</strong>";
+                        responseText += "<br><br><strong>Would you like me to export this summary as a professional PDF? (Type 'yes' to confirm)</strong>";
                         awaitingPdfConfirm = true;
                     }
 
@@ -472,8 +472,8 @@
             // Analysis Section
             let cleanText = text
                 .replace(/₹/g, 'Rs. ') 
-                .replace(/####\s/g, '\n\n')
-                .replace(/###\s/g, '\n\n')
+                .replace(/####\s/g, '\n')
+                .replace(/###\s/g, '\n')
                 .replace(/\*\*/g, '')
                 .replace(/\*/g, '- ')
                 .replace(/---/g, '\n--------------------------------------------------\n')
@@ -487,7 +487,7 @@
             doc.setTextColor(...darkBrown);
             doc.setFont("times", "normal");
             doc.setFontSize(11);
-            doc.setLineHeightFactor(1.5);
+            doc.setLineHeightFactor(1.15);
             const splitText = doc.splitTextToSize(cleanText, 170);
             doc.text(splitText, 20, 75);
             
