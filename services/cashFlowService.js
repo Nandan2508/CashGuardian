@@ -251,9 +251,22 @@ function summarizeEntityMetrics(entity, dataset = transactions) {
  */
 function compareEntities(a, b, dataset = transactions) {
   const data = dataset || transactions;
+  const entityA = { name: a, ...summarizeEntityMetrics(a, data) };
+  const entityB = { name: b, ...summarizeEntityMetrics(b, data) };
+
+  // Determine Leader based on Revenue
+  const leader = entityA.revenue > entityB.revenue ? entityA : entityB;
+  const laggard = entityA.revenue > entityB.revenue ? entityB : entityA;
+  const gap = laggard.revenue > 0 ? Math.round(((leader.revenue - laggard.revenue) / laggard.revenue) * 100) : 100;
+
   return {
-    entityA: { name: a, ...summarizeEntityMetrics(a, data) },
-    entityB: { name: b, ...summarizeEntityMetrics(b, data) }
+    entityA,
+    entityB,
+    analysis: {
+      leader: leader.name,
+      gapPct: gap,
+      narrative: `${leader.name} is the current leader in this duel, outperforming ${laggard.name} by ${gap}% in total revenue.`
+    }
   };
 }
 

@@ -198,7 +198,9 @@ async function executeNode(state) {
 
   const systemPrompt = buildSystemPrompt(snapshot) + 
     (lastClient ? `\n\nCONTEXT: You are currently discussing "${lastClient}". If the user uses pronouns like "him", "them", or "that client", they refer to "${lastClient}".` : "") +
-    `\n\nGROUNDING RULE: Answer ONLY using the data provided in the snapshot. Be professional and provide executive-level analysis of any variance drivers or anomalies listed. Do NOT invent numbers, but you MAY discuss the "Why" if it is logically implied by the category and transaction descriptions (e.g., "Emergency Shipment" implies logistics urgency). Accuracy is prioritized over length.`;
+    `\n\nGROUNDING RULE: Answer ONLY using the data provided in the snapshot. Be professional and provide executive-level analysis. ` +
+    `NEVER guess email addresses or suggest unrelated high-risk clients (like Patel) if the requested client is missing from the directory. ` +
+    `If a client is not in the OVERDUE LIST, simply state that they have no overdue invoices. Accuracy is 100% mandatory.`;
 
   const llm = getLLM();
   const result = await llm.invoke([

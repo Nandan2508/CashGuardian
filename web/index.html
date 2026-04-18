@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CashGuardian | Talk to your finances</title>
+    <title>CashGuardian | Talk to Data</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -79,16 +79,16 @@
         .dragging .resizer { background: var(--primary); width: 2px; margin: 0 -1px; }
         .dragging { cursor: col-resize; user-select: none; }
 
-        .chat-area { flex: 1; overflow-y: auto; padding: 16px 48px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
-        .welcome-msg { text-align: center; color: var(--text-muted); font-size: 14px; margin: 20px 0; }
+        .chat-area { flex: 1; overflow-y: auto; padding: 8px 24px; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth; }
+        .welcome-msg { text-align: center; color: var(--text-muted); font-size: 13px; margin: 12px 0; }
 
         .chat-msg { max-width: 80%; display: flex; flex-direction: column; gap: 8px; animation: slideIn 0.3s ease-out both; }
         .chat-msg.user { align-self: flex-end; }
         .chat-msg.ai { align-self: flex-start; }
 
-        .msg-bubble { padding: 8px 16px; font-size: 14px; line-height: 1.4; border-radius: var(--border-radius); position: relative; white-space: pre-wrap; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .msg-bubble { padding: 6px 14px; font-size: 14px; line-height: 1.4; border-radius: var(--border-radius); position: relative; white-space: pre-wrap; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         .user .msg-bubble { background: var(--primary-light); color: var(--text-main); border-bottom-right-radius: 4px; }
-        .ai .msg-bubble { background: white; color: var(--text-main); box-shadow: var(--card-shadow); border-bottom-left-radius: 4px; font-family: 'Cascadia Code', 'Source Code Pro', 'Roboto Mono', 'Ubuntu Mono', 'Courier New', monospace; letter-spacing: -0.02em; }
+        .ai .msg-bubble { background: white; color: var(--text-main); box-shadow: var(--card-shadow); border-bottom-left-radius: 4px; font-family: 'Inter', system-ui, -apple-system, sans-serif; letter-spacing: -0.01em; }
 
         .response-meta { display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--text-muted); padding: 0 4px; }
         .latency-badge { background: #F0F0F0; padding: 2px 6px; border-radius: 4px; }
@@ -102,7 +102,7 @@
         .question-pill { background: white; border: 1px solid #E6E1D6; padding: 6px 14px; border-radius: 18px; font-size: 12px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
         .question-pill:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 
-        .input-bar { padding: 24px 48px 32px; background: var(--bg); display: flex; gap: 12px; }
+        .input-bar { padding: 16px 24px 24px; background: var(--bg); display: flex; gap: 8px; }
         .input-wrapper { flex: 1; position: relative; }
         #query-input { width: 100%; height: 50px; background: white; border: 1px solid #E6E1D6; border-radius: var(--border-radius-sm); padding: 0 20px; font-family: inherit; font-size: 14px; transition: 0.2s; outline: none; }
         #query-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(193, 126, 74, 0.1); }
@@ -190,7 +190,7 @@
                     <span>Upload CSV/JSON</span>
                 </label>
                 <input type="file" id="file-input" accept=".csv,.json">
-                <div class="dataset-status" id="dataset-name">Demo: Mehta Wholesale</div>
+                <div class="dataset-status" id="dataset-name">Demo: Internal Finance</div>
             </div>
         </aside>
 
@@ -205,7 +205,7 @@
             <div class="chat-area" id="chat-history">
                 <div class="welcome-msg">
                     <strong>Hello. I am CashGuardian.</strong><br>
-                    Upload a dataset or ask about the demo business — Mehta Wholesale Traders.
+                    Upload a dataset or ask about your finances.
                 </div>
             </div>
 
@@ -257,9 +257,10 @@
                 </div>
             </div>
 
-            <div class="chart-container" id="duel-card" style="display: none;">
+            <div class="chart-container" id="duel-card" style="display: none; margin-bottom: 24px;">
                 <div class="chart-title"><i class="fas fa-balance-scale"></i> Performance Duel</div>
-                <div class="canvas-wrapper" style="height: 200px;"><canvas id="duelChart"></canvas></div>
+                <div id="duel-narrative" style="font-size: 11px; color: var(--text-muted); background: #FAFAFA; padding: 10px; border-radius: 8px; border-left: 3px solid var(--primary); margin-bottom: 12px; line-height: 1.4;"></div>
+                <div class="canvas-wrapper" style="height: 180px;"><canvas id="duelChart"></canvas></div>
             </div>
 
             <div class="chart-container">
@@ -397,13 +398,12 @@
                         <div class="answer-text">${marked.parse(responseText)}</div>
                         <div class="response-meta"><span class="latency-badge">${data.latencyMs}ms</span><span>Source: ${data.source}</span></div>
                         <div class="transparency-section">
-                            <div class="transparency-toggle" onclick="toggleTransparency(this)">
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg> How was this answered?
+                            <div class="transparency-toggle" onclick="toggleTransparency(this)" style="font-size: 10px; opacity: 0.7;">
+                                <i class="fas fa-chevron-down"></i> Trace: <strong>${data.latencyMs}ms</strong> | <strong>${data.intent || 'Reasoning'}</strong>
                             </div>
-                            <div class="transparency-content">
-                                Intent: <strong>${data.intent || 'General Query'}</strong><br>
-                                Data Grounding: Local dataset context.<br>
-                                Logic: ${data.latencyMs > 500 ? 'AI reasoning + Service call' : 'Deterministic fallback'}
+                            <div class="transparency-content" style="font-size: 10px;">
+                                Logic: ${data.latencyMs > 500 ? 'Agentic Reasoning System' : 'Deterministic Protocol'}<br>
+                                Data Source: ${data.source}
                             </div>
                         </div>
                     `;
@@ -411,6 +411,7 @@
 
                     if (data.duel) {
                         updateDuelChart(data.duel);
+                        document.getElementById('duel-narrative').innerText = data.duel.analysis?.narrative || "Head-to-head comparison active.";
                         document.getElementById('duel-card').style.display = 'block';
                     }
                 }
