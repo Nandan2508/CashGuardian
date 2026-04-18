@@ -606,6 +606,17 @@ async function maybeUseAI(userInput, fallbackText, customDataset = null) {
  * @returns {Promise<string>} Routed response.
  */
 async function handleQuery(userInput, customDataset = null) {
+  // --- GLOBAL SANITIZATION ---
+  // Ensure every row in the custom dataset has numeric amounts and valid dates before any service sees it
+  if (customDataset && Array.isArray(customDataset)) {
+    customDataset = customDataset.map(row => ({
+      ...row,
+      amount: safeNumber(row.amount),
+      date: safeDate(row.date)
+    }));
+  }
+  // ---------------------------
+
   const intent = classifyIntent(userInput);
 
   // If sending a reminder, we should ALWAYS trigger the actual service
@@ -741,10 +752,17 @@ async function handleQuery(userInput, customDataset = null) {
 
   if (intent === INTENTS.COMPARE) {
     const normalized = userInput.toLowerCase();
+    
+    // SMART ROUTING: Determine if this is a month-on-month trend or an entity duel
+    const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december", "jan", "feb", "mar", "apr"];
+    const isPeriodComparison = months.some(m => normalized.includes(m)) || normalized.includes("month") || normalized.includes("week");
+
     if (normalized.includes(" vs ") || normalized.includes(" versus ")) {
       const cleaned = normalized.replace(/.*compare /i, "").replace(/["']/g, "").replace(/\.$/, "");
       const parts = cleaned.split(/ vs | versus /);
-      if (parts.length >= 2) {
+      
+      if (parts.length >= 2 && !isPeriodComparison) {
+        // ENTITY DUEL (e.g. "Alpha Retail vs Beta Logistics")
         const entityA = parts[0].trim();
         const entityB = parts[1].trim();
         const duelData = compareEntities(entityA, entityB, customDataset);
@@ -755,9 +773,12 @@ async function handleQuery(userInput, customDataset = null) {
         return { content: response, duel: duelData };
       }
     }
-    const period = userInput.toLowerCase().includes("month") ? "month" : "week";
+
+    // PERIOD COMPARISON (e.g. "April vs March" or "this month vs last month")
+    const period = normalized.includes("week") ? "week" : "month";
     const comparison = comparePeriods(period, 1, customDataset);
     const response = await maybeUseAI(userInput, formatComparison(comparison), customDataset);
+    
     return {
       content: response,
       trend: comparison.currentTrend,

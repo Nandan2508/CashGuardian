@@ -1,0 +1,273 @@
+date,type,amount,category,description,client,status,dueDate,issueDate
+2026-01-15,income,7805,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-15,2026-01-15
+2026-01-15,expense,3224,utilities,Daily Operational Expense,,paid,2026-01-15,2026-01-15
+2026-01-16,income,8296,sales,Daily Retail Settlement,Beta Logistics,paid,2026-01-16,2026-01-16
+2026-01-16,expense,2271,utilities,Daily Operational Expense,,paid,2026-01-16,2026-01-16
+2026-01-17,income,6490,sales,Daily Retail Settlement,Gamma Services,paid,2026-01-17,2026-01-17
+2026-01-17,expense,2645,utilities,Daily Operational Expense,,paid,2026-01-17,2026-01-17
+2026-01-18,income,14012,sales,Daily Retail Settlement,Alpha Retail,paid,2026-01-18,2026-01-18
+2026-01-18,income,5198,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-18,2026-01-18
+2026-01-18,expense,1387,utilities,Daily Operational Expense,,paid,2026-01-18,2026-01-18
+2026-01-19,income,7234,sales,Daily Retail Settlement,Beta Logistics,paid,2026-01-19,2026-01-19
+2026-01-19,expense,820,utilities,Daily Operational Expense,,paid,2026-01-19,2026-01-19
+2026-01-19,expense,25000,rent,Office Rent Payment,,paid,2026-01-19,2026-01-19
+2026-01-20,income,10612,sales,Daily Retail Settlement,Sigma Traders,paid,2026-01-20,2026-01-20
+2026-01-20,income,16103,sales,Daily Retail Settlement,Sigma Traders,paid,2026-01-20,2026-01-20
+2026-01-20,expense,1683,utilities,Daily Operational Expense,,paid,2026-01-20,2026-01-20
+2026-01-21,income,10274,sales,Daily Retail Settlement,Alpha Retail,paid,2026-01-21,2026-01-21
+2026-01-21,income,11625,sales,Daily Retail Settlement,Alpha Retail,paid,2026-01-21,2026-01-21
+2026-01-21,expense,981,utilities,Daily Operational Expense,,paid,2026-01-21,2026-01-21
+2026-01-21,income,43543,consulting,Invoice 19,Sigma Traders,paid,2026-02-05,2026-01-21
+2026-01-22,income,6733,sales,Daily Retail Settlement,Sigma Traders,paid,2026-01-22,2026-01-22
+2026-01-22,expense,988,utilities,Daily Operational Expense,,paid,2026-01-22,2026-01-22
+2026-01-23,income,13710,sales,Daily Retail Settlement,Sigma Traders,paid,2026-01-23,2026-01-23
+2026-01-23,expense,2746,utilities,Daily Operational Expense,,paid,2026-01-23,2026-01-23
+2026-01-24,income,17727,sales,Daily Retail Settlement,Alpha Retail,paid,2026-01-24,2026-01-24
+2026-01-24,income,19091,sales,Daily Retail Settlement,Beta Logistics,paid,2026-01-24,2026-01-24
+2026-01-24,expense,3344,utilities,Daily Operational Expense,,paid,2026-01-24,2026-01-24
+2026-01-25,income,17507,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-25,2026-01-25
+2026-01-25,expense,1818,utilities,Daily Operational Expense,,paid,2026-01-25,2026-01-25
+2026-01-26,income,16816,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-26,2026-01-26
+2026-01-26,income,10339,sales,Daily Retail Settlement,Alpha Retail,paid,2026-01-26,2026-01-26
+2026-01-26,expense,2132,utilities,Daily Operational Expense,,paid,2026-01-26,2026-01-26
+2026-01-26,expense,25000,rent,Office Rent Payment,,paid,2026-01-26,2026-01-26
+2026-01-27,income,19384,sales,Daily Retail Settlement,Sigma Traders,paid,2026-01-27,2026-01-27
+2026-01-27,income,16265,sales,Daily Retail Settlement,Gamma Services,paid,2026-01-27,2026-01-27
+2026-01-27,expense,659,utilities,Daily Operational Expense,,paid,2026-01-27,2026-01-27
+2026-01-28,income,7103,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-28,2026-01-28
+2026-01-28,expense,1989,utilities,Daily Operational Expense,,paid,2026-01-28,2026-01-28
+2026-01-28,income,45439,consulting,Invoice 38,Sigma Traders,overdue,2026-02-12,2026-01-28
+2026-01-29,income,15334,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-29,2026-01-29
+2026-01-29,expense,2531,utilities,Daily Operational Expense,,paid,2026-01-29,2026-01-29
+2026-01-30,income,12073,sales,Daily Retail Settlement,Gamma Services,paid,2026-01-30,2026-01-30
+2026-01-30,income,14836,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-30,2026-01-30
+2026-01-30,expense,2530,utilities,Daily Operational Expense,,paid,2026-01-30,2026-01-30
+2026-01-31,income,13426,sales,Daily Retail Settlement,Gamma Services,paid,2026-01-31,2026-01-31
+2026-01-31,expense,3454,utilities,Daily Operational Expense,,paid,2026-01-31,2026-01-31
+2026-02-01,income,10324,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-01,2026-02-01
+2026-02-01,expense,1827,utilities,Daily Operational Expense,,paid,2026-02-01,2026-02-01
+2026-02-01,expense,120000,salaries,Staff Salaries Deployment,,paid,2026-02-01,2026-02-01
+2026-02-02,income,16211,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-02,2026-02-02
+2026-02-02,income,15933,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-02,2026-02-02
+2026-02-02,expense,1891,utilities,Daily Operational Expense,,paid,2026-02-02,2026-02-02
+2026-02-02,expense,25000,rent,Office Rent Payment,,paid,2026-02-02,2026-02-02
+2026-02-03,income,15911,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-03,2026-02-03
+2026-02-03,expense,853,utilities,Daily Operational Expense,,paid,2026-02-03,2026-02-03
+2026-02-04,income,12491,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-04,2026-02-04
+2026-02-04,expense,1460,utilities,Daily Operational Expense,,paid,2026-02-04,2026-02-04
+2026-02-04,income,50414,consulting,Invoice 57,Gamma Services,overdue,2026-02-19,2026-02-04
+2026-02-05,income,9794,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-05,2026-02-05
+2026-02-05,expense,2598,utilities,Daily Operational Expense,,paid,2026-02-05,2026-02-05
+2026-02-06,income,19536,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-06,2026-02-06
+2026-02-06,expense,1313,utilities,Daily Operational Expense,,paid,2026-02-06,2026-02-06
+2026-02-07,income,12941,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-07,2026-02-07
+2026-02-07,expense,1669,utilities,Daily Operational Expense,,paid,2026-02-07,2026-02-07
+2026-02-08,income,18675,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-08,2026-02-08
+2026-02-08,income,7357,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-08,2026-02-08
+2026-02-08,expense,1685,utilities,Daily Operational Expense,,paid,2026-02-08,2026-02-08
+2026-02-09,income,12112,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-09,2026-02-09
+2026-02-09,income,14355,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-09,2026-02-09
+2026-02-09,expense,1474,utilities,Daily Operational Expense,,paid,2026-02-09,2026-02-09
+2026-02-09,expense,25000,rent,Office Rent Payment,,paid,2026-02-09,2026-02-09
+2026-02-10,income,6330,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-10,2026-02-10
+2026-02-10,income,11872,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-10,2026-02-10
+2026-02-10,expense,2822,utilities,Daily Operational Expense,,paid,2026-02-10,2026-02-10
+2026-02-11,income,18785,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-11,2026-02-11
+2026-02-11,income,5654,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-11,2026-02-11
+2026-02-11,expense,2414,utilities,Daily Operational Expense,,paid,2026-02-11,2026-02-11
+2026-02-11,income,50673,consulting,Invoice 77,Delta Manufacturing,overdue,2026-02-26,2026-02-11
+2026-02-12,income,16369,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-12,2026-02-12
+2026-02-12,income,18084,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-12,2026-02-12
+2026-02-12,expense,1372,utilities,Daily Operational Expense,,paid,2026-02-12,2026-02-12
+2026-02-13,income,10068,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-13,2026-02-13
+2026-02-13,income,6447,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-13,2026-02-13
+2026-02-13,expense,3297,utilities,Daily Operational Expense,,paid,2026-02-13,2026-02-13
+2026-02-14,income,14300,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-14,2026-02-14
+2026-02-14,income,6877,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-14,2026-02-14
+2026-02-14,expense,1495,utilities,Daily Operational Expense,,paid,2026-02-14,2026-02-14
+2026-02-15,income,19450,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-15,2026-02-15
+2026-02-15,expense,2728,utilities,Daily Operational Expense,,paid,2026-02-15,2026-02-15
+2026-02-16,income,14628,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-16,2026-02-16
+2026-02-16,expense,1734,utilities,Daily Operational Expense,,paid,2026-02-16,2026-02-16
+2026-02-16,expense,25000,rent,Office Rent Payment,,paid,2026-02-16,2026-02-16
+2026-02-17,income,12337,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-17,2026-02-17
+2026-02-17,income,19490,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-17,2026-02-17
+2026-02-17,expense,2393,utilities,Daily Operational Expense,,paid,2026-02-17,2026-02-17
+2026-02-18,income,19580,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-18,2026-02-18
+2026-02-18,income,5123,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-18,2026-02-18
+2026-02-18,expense,1608,utilities,Daily Operational Expense,,paid,2026-02-18,2026-02-18
+2026-02-18,income,27179,consulting,Invoice 98,Gamma Services,overdue,2026-03-05,2026-02-18
+2026-02-19,income,15860,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-19,2026-02-19
+2026-02-19,income,6864,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-19,2026-02-19
+2026-02-19,expense,1697,utilities,Daily Operational Expense,,paid,2026-02-19,2026-02-19
+2026-02-20,income,15977,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-20,2026-02-20
+2026-02-20,expense,1297,utilities,Daily Operational Expense,,paid,2026-02-20,2026-02-20
+2026-02-20,expense,85000,logistics,Surge Logistics - Emergency Shipment,,paid,2026-02-20,2026-02-20
+2026-02-21,income,13185,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-21,2026-02-21
+2026-02-21,expense,772,utilities,Daily Operational Expense,,paid,2026-02-21,2026-02-21
+2026-02-22,income,17836,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-22,2026-02-22
+2026-02-22,expense,1749,utilities,Daily Operational Expense,,paid,2026-02-22,2026-02-22
+2026-02-23,income,11431,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-23,2026-02-23
+2026-02-23,expense,2993,utilities,Daily Operational Expense,,paid,2026-02-23,2026-02-23
+2026-02-23,expense,25000,rent,Office Rent Payment,,paid,2026-02-23,2026-02-23
+2026-02-24,income,16983,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-24,2026-02-24
+2026-02-24,income,19064,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-24,2026-02-24
+2026-02-24,expense,3207,utilities,Daily Operational Expense,,paid,2026-02-24,2026-02-24
+2026-02-25,income,11411,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-25,2026-02-25
+2026-02-25,income,7449,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-25,2026-02-25
+2026-02-25,expense,1057,utilities,Daily Operational Expense,,paid,2026-02-25,2026-02-25
+2026-02-25,income,32150,consulting,Invoice 118,Sigma Traders,overdue,2026-03-12,2026-02-25
+2026-02-26,income,5832,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-26,2026-02-26
+2026-02-26,income,7950,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-26,2026-02-26
+2026-02-26,expense,1955,utilities,Daily Operational Expense,,paid,2026-02-26,2026-02-26
+2026-02-27,income,19918,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-27,2026-02-27
+2026-02-27,expense,2196,utilities,Daily Operational Expense,,paid,2026-02-27,2026-02-27
+2026-02-28,income,10571,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-28,2026-02-28
+2026-02-28,income,13090,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-28,2026-02-28
+2026-02-28,expense,769,utilities,Daily Operational Expense,,paid,2026-02-28,2026-02-28
+2026-03-01,income,6816,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-01,2026-03-01
+2026-03-01,income,13692,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-01,2026-03-01
+2026-03-01,expense,695,utilities,Daily Operational Expense,,paid,2026-03-01,2026-03-01
+2026-03-01,expense,120000,salaries,Staff Salaries Deployment,,paid,2026-03-01,2026-03-01
+2026-03-02,income,13090,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-02,2026-03-02
+2026-03-02,income,19628,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-02,2026-03-02
+2026-03-02,expense,1308,utilities,Daily Operational Expense,,paid,2026-03-02,2026-03-02
+2026-03-02,expense,25000,rent,Office Rent Payment,,paid,2026-03-02,2026-03-02
+2026-03-03,income,16714,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-03,2026-03-03
+2026-03-03,income,19074,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-03,2026-03-03
+2026-03-03,expense,1065,utilities,Daily Operational Expense,,paid,2026-03-03,2026-03-03
+2026-03-04,income,9330,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-04,2026-03-04
+2026-03-04,income,16318,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-04,2026-03-04
+2026-03-04,expense,2592,utilities,Daily Operational Expense,,paid,2026-03-04,2026-03-04
+2026-03-04,income,50751,consulting,Invoice 141,Alpha Retail,paid,2026-03-19,2026-03-04
+2026-03-05,income,19610,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-05,2026-03-05
+2026-03-05,expense,3179,utilities,Daily Operational Expense,,paid,2026-03-05,2026-03-05
+2026-03-06,income,18027,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-06,2026-03-06
+2026-03-06,expense,1939,utilities,Daily Operational Expense,,paid,2026-03-06,2026-03-06
+2026-03-07,income,13593,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-07,2026-03-07
+2026-03-07,expense,1759,utilities,Daily Operational Expense,,paid,2026-03-07,2026-03-07
+2026-03-08,income,18367,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-08,2026-03-08
+2026-03-08,income,13330,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-08,2026-03-08
+2026-03-08,expense,604,utilities,Daily Operational Expense,,paid,2026-03-08,2026-03-08
+2026-03-09,income,15766,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-09,2026-03-09
+2026-03-09,income,10022,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-09,2026-03-09
+2026-03-09,expense,748,utilities,Daily Operational Expense,,paid,2026-03-09,2026-03-09
+2026-03-09,expense,25000,rent,Office Rent Payment,,paid,2026-03-09,2026-03-09
+2026-03-10,income,7187,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-10,2026-03-10
+2026-03-10,income,15128,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-10,2026-03-10
+2026-03-10,expense,1083,utilities,Daily Operational Expense,,paid,2026-03-10,2026-03-10
+2026-03-11,income,11744,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-11,2026-03-11
+2026-03-11,expense,2505,utilities,Daily Operational Expense,,paid,2026-03-11,2026-03-11
+2026-03-11,income,58151,consulting,Invoice 160,Alpha Retail,paid,2026-03-26,2026-03-11
+2026-03-12,income,10301,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-12,2026-03-12
+2026-03-12,expense,2142,utilities,Daily Operational Expense,,paid,2026-03-12,2026-03-12
+2026-03-13,income,6010,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-13,2026-03-13
+2026-03-13,income,18783,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-13,2026-03-13
+2026-03-13,expense,1379,utilities,Daily Operational Expense,,paid,2026-03-13,2026-03-13
+2026-03-14,income,18727,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-14,2026-03-14
+2026-03-14,expense,2107,utilities,Daily Operational Expense,,paid,2026-03-14,2026-03-14
+2026-03-15,income,11490,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-15,2026-03-15
+2026-03-15,income,7334,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-15,2026-03-15
+2026-03-15,expense,763,utilities,Daily Operational Expense,,paid,2026-03-15,2026-03-15
+2026-03-16,income,7791,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-16,2026-03-16
+2026-03-16,income,16452,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-16,2026-03-16
+2026-03-16,expense,2830,utilities,Daily Operational Expense,,paid,2026-03-16,2026-03-16
+2026-03-16,expense,25000,rent,Office Rent Payment,,paid,2026-03-16,2026-03-16
+2026-03-17,income,8696,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-17,2026-03-17
+2026-03-17,expense,2364,utilities,Daily Operational Expense,,paid,2026-03-17,2026-03-17
+2026-03-18,income,11303,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-18,2026-03-18
+2026-03-18,income,5196,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-18,2026-03-18
+2026-03-18,expense,1501,utilities,Daily Operational Expense,,paid,2026-03-18,2026-03-18
+2026-03-18,income,43362,consulting,Invoice 180,Delta Manufacturing,paid,2026-04-02,2026-03-18
+2026-03-19,income,8722,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-19,2026-03-19
+2026-03-19,income,19445,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-19,2026-03-19
+2026-03-19,expense,3107,utilities,Daily Operational Expense,,paid,2026-03-19,2026-03-19
+2026-03-20,income,5603,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-20,2026-03-20
+2026-03-20,income,14089,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-20,2026-03-20
+2026-03-20,expense,2443,utilities,Daily Operational Expense,,paid,2026-03-20,2026-03-20
+2026-03-21,income,14919,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-21,2026-03-21
+2026-03-21,income,13606,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-21,2026-03-21
+2026-03-21,expense,3290,utilities,Daily Operational Expense,,paid,2026-03-21,2026-03-21
+2026-03-22,income,6220,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-22,2026-03-22
+2026-03-22,expense,3396,utilities,Daily Operational Expense,,paid,2026-03-22,2026-03-22
+2026-03-23,income,19383,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-23,2026-03-23
+2026-03-23,income,8156,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-23,2026-03-23
+2026-03-23,expense,3074,utilities,Daily Operational Expense,,paid,2026-03-23,2026-03-23
+2026-03-23,expense,25000,rent,Office Rent Payment,,paid,2026-03-23,2026-03-23
+2026-03-24,income,5887,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-24,2026-03-24
+2026-03-24,expense,1453,utilities,Daily Operational Expense,,paid,2026-03-24,2026-03-24
+2026-03-25,income,17790,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-25,2026-03-25
+2026-03-25,income,5481,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-25,2026-03-25
+2026-03-25,expense,3293,utilities,Daily Operational Expense,,paid,2026-03-25,2026-03-25
+2026-03-25,income,52827,consulting,Invoice 201,Beta Logistics,paid,2026-04-09,2026-03-25
+2026-03-26,income,7413,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-26,2026-03-26
+2026-03-26,income,13588,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-26,2026-03-26
+2026-03-26,expense,2979,utilities,Daily Operational Expense,,paid,2026-03-26,2026-03-26
+2026-03-27,income,18449,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-27,2026-03-27
+2026-03-27,expense,698,utilities,Daily Operational Expense,,paid,2026-03-27,2026-03-27
+2026-03-28,income,16976,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-28,2026-03-28
+2026-03-28,income,9147,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-28,2026-03-28
+2026-03-28,expense,1363,utilities,Daily Operational Expense,,paid,2026-03-28,2026-03-28
+2026-03-29,income,6635,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-29,2026-03-29
+2026-03-29,income,6195,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-29,2026-03-29
+2026-03-29,expense,2394,utilities,Daily Operational Expense,,paid,2026-03-29,2026-03-29
+2026-03-30,income,12895,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-30,2026-03-30
+2026-03-30,income,14847,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-30,2026-03-30
+2026-03-30,expense,2703,utilities,Daily Operational Expense,,paid,2026-03-30,2026-03-30
+2026-03-30,expense,25000,rent,Office Rent Payment,,paid,2026-03-30,2026-03-30
+2026-03-31,income,5584,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-31,2026-03-31
+2026-03-31,expense,1568,utilities,Daily Operational Expense,,paid,2026-03-31,2026-03-31
+2026-04-01,income,8770,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-01,2026-04-01
+2026-04-01,expense,701,utilities,Daily Operational Expense,,paid,2026-04-01,2026-04-01
+2026-04-01,expense,120000,salaries,Staff Salaries Deployment,,paid,2026-04-01,2026-04-01
+2026-04-01,income,39381,consulting,Invoice 222,Sigma Traders,overdue,2026-04-16,2026-04-01
+2026-04-02,income,19502,sales,Daily Retail Settlement,Beta Logistics,paid,2026-04-02,2026-04-02
+2026-04-02,income,5937,sales,Daily Retail Settlement,Alpha Retail,paid,2026-04-02,2026-04-02
+2026-04-02,expense,2929,utilities,Daily Operational Expense,,paid,2026-04-02,2026-04-02
+2026-04-03,income,6013,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-03,2026-04-03
+2026-04-03,income,13863,sales,Daily Retail Settlement,Alpha Retail,paid,2026-04-03,2026-04-03
+2026-04-03,expense,2263,utilities,Daily Operational Expense,,paid,2026-04-03,2026-04-03
+2026-04-04,income,10842,sales,Daily Retail Settlement,Alpha Retail,paid,2026-04-04,2026-04-04
+2026-04-04,expense,1675,utilities,Daily Operational Expense,,paid,2026-04-04,2026-04-04
+2026-04-05,income,6680,sales,Daily Retail Settlement,Gamma Services,paid,2026-04-05,2026-04-05
+2026-04-05,expense,1470,utilities,Daily Operational Expense,,paid,2026-04-05,2026-04-05
+2026-04-06,income,10900,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-06,2026-04-06
+2026-04-06,income,16315,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-06,2026-04-06
+2026-04-06,expense,2442,utilities,Daily Operational Expense,,paid,2026-04-06,2026-04-06
+2026-04-06,expense,25000,rent,Office Rent Payment,,paid,2026-04-06,2026-04-06
+2026-04-07,income,5770,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-07,2026-04-07
+2026-04-07,income,16962,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-07,2026-04-07
+2026-04-07,expense,1746,utilities,Daily Operational Expense,,paid,2026-04-07,2026-04-07
+2026-04-08,income,13006,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-08,2026-04-08
+2026-04-08,income,13176,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-08,2026-04-08
+2026-04-08,expense,616,utilities,Daily Operational Expense,,paid,2026-04-08,2026-04-08
+2026-04-08,income,49267,consulting,Invoice 243,Gamma Services,unpaid,2026-04-23,2026-04-08
+2026-04-09,income,5164,sales,Daily Retail Settlement,Gamma Services,paid,2026-04-09,2026-04-09
+2026-04-09,expense,1439,utilities,Daily Operational Expense,,paid,2026-04-09,2026-04-09
+2026-04-10,income,15988,sales,Daily Retail Settlement,Alpha Retail,paid,2026-04-10,2026-04-10
+2026-04-10,income,5019,sales,Daily Retail Settlement,Gamma Services,paid,2026-04-10,2026-04-10
+2026-04-10,expense,3437,utilities,Daily Operational Expense,,paid,2026-04-10,2026-04-10
+2026-04-11,income,13742,sales,Daily Retail Settlement,Alpha Retail,paid,2026-04-11,2026-04-11
+2026-04-11,expense,2633,utilities,Daily Operational Expense,,paid,2026-04-11,2026-04-11
+2026-04-12,income,16574,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-12,2026-04-12
+2026-04-12,expense,2351,utilities,Daily Operational Expense,,paid,2026-04-12,2026-04-12
+2026-04-13,income,12194,sales,Daily Retail Settlement,Beta Logistics,paid,2026-04-13,2026-04-13
+2026-04-13,income,8242,sales,Daily Retail Settlement,Beta Logistics,paid,2026-04-13,2026-04-13
+2026-04-13,expense,2411,utilities,Daily Operational Expense,,paid,2026-04-13,2026-04-13
+2026-04-13,expense,25000,rent,Office Rent Payment,,paid,2026-04-13,2026-04-13
+2026-04-14,income,14493,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-14,2026-04-14
+2026-04-14,expense,943,utilities,Daily Operational Expense,,paid,2026-04-14,2026-04-14
+2026-04-15,income,8772,sales,Daily Retail Settlement,Beta Logistics,paid,2026-04-15,2026-04-15
+2026-04-15,income,10162,sales,Daily Retail Settlement,Alpha Retail,paid,2026-04-15,2026-04-15
+2026-04-15,expense,3317,utilities,Daily Operational Expense,,paid,2026-04-15,2026-04-15
+2026-04-15,income,67119,consulting,Invoice 262,Gamma Services,unpaid,2026-04-30,2026-04-15
+2026-04-16,income,19720,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-16,2026-04-16
+2026-04-16,income,9828,sales,Daily Retail Settlement,Gamma Services,paid,2026-04-16,2026-04-16
+2026-04-16,expense,2729,utilities,Daily Operational Expense,,paid,2026-04-16,2026-04-16
+2026-04-17,income,19515,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-17,2026-04-17
+2026-04-17,expense,1477,utilities,Daily Operational Expense,,paid,2026-04-17,2026-04-17
+2026-04-18,income,7329,sales,Daily Retail Settlement,Gamma Services,paid,2026-04-18,2026-04-18
+2026-04-18,income,6438,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-18,2026-04-18
+2026-04-18,expense,516,utilities,Daily Operational Expense,,paid,2026-04-18,2026-04-18
+2026-04-19,income,15614,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-19,2026-04-19
+2026-04-19,expense,3052,utilities,Daily Operational Expense,,paid,2026-04-19,2026-04-19
