@@ -1,3 +1,4 @@
+require('dotenv').config();
 const invoices = require("../data/invoices.json");
 const externalValidation = require("../data/externalValidation.json");
 const {
@@ -835,11 +836,11 @@ async function handleQuery(userInput, customDataset = null) {
     const anomalies = detectAnomalies(activeDataset);
     const comparison = comparePeriods("month", 1, activeDataset);
     const snapshot = getSnapshot(activeDataset);
-    
     const systemPrompt = buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: DRIVER & ANOMALY ANALYSIS\n` +
-      `Comparison Variances: ${JSON.stringify(comparison.variances.categories.slice(0, 10))}\n` +
-      `Detected Anomalies: ${JSON.stringify(anomalies.slice(0, 5))}\n` +
+      `Comparison Variances (Income): ${JSON.stringify((comparison.variances.income || []).slice(0, 10))}\n` +
+      `Comparison Variances (Expenses): ${JSON.stringify((comparison.variances.expenses || []).slice(0, 10))}\n` +
+      `Detected Anomalies: ${JSON.stringify((anomalies || []).slice(0, 5))}\n` +
       `### END DATA SOURCE\n\n` +
       `Task: Identify the drivers behind increases or decreases in performance. ` +
       `Highlight the most influential categories (e.g., product, channel, or expense type). ` +
@@ -993,13 +994,6 @@ async function handleQuery(userInput, customDataset = null) {
     };
   }
 
-  // CATCH-ALL FOR CUSTOM DATASETS: If no specific intent matched, use generic AI reasoning
-  if (activeDataset) {
-    const snapshot = getSnapshot(activeDataset);
-    const systemPrompt = buildSystemPrompt(snapshot) + `\n\nAdditionally, here is a sampling of the custom dataset rows:\n${JSON.stringify(activeDataset.slice(0, 10))}`;
-    return callAI(systemPrompt, userInput);
-  }
-
   if (intent === INTENTS.PREDICTION) {
     const forecast = calculate30DayForecast(activeDataset);
     const snapshot = getSnapshot(activeDataset);
@@ -1018,6 +1012,13 @@ async function handleQuery(userInput, customDataset = null) {
 
     const summary = await callAI(systemPrompt, userInput);
     return summary;
+  }
+
+  // CATCH-ALL FOR CUSTOM DATASETS: If no specific intent matched, use generic AI reasoning
+  if (activeDataset) {
+    const snapshot = getSnapshot(activeDataset);
+    const systemPrompt = buildSystemPrompt(snapshot) + `\n\nAdditionally, here is a sampling of the custom dataset rows:\n${JSON.stringify(activeDataset.slice(0, 10))}`;
+    return callAI(systemPrompt, userInput);
   }
 
   return hasAiCredentials()
