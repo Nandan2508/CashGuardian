@@ -84,7 +84,7 @@ Rules:
  * @param {string} userQuery - Raw user input from CLI.
  * @returns {Promise<string>} AI response text.
  */
-async function callAI(systemPrompt, userQuery) {
+async function callAI(systemPrompt, userQuery, customFallback = null) {
   const provider = process.env.AI_PROVIDER || "gemini";
   try {
     if (provider === "gemini") {
@@ -93,7 +93,8 @@ async function callAI(systemPrompt, userQuery) {
     // Default to Groq/OpenAI compatible if not Gemini
     return await callOpenAICompat(systemPrompt, userQuery);
   } catch (error) {
-    return fallbackResponse();
+    console.error("AI Call Error:", error);
+    return customFallback || fallbackResponse();
   }
 }
 
@@ -113,6 +114,12 @@ async function callGemini(systemPrompt, userQuery) {
       generationConfig: { maxOutputTokens: 500, temperature: 0.3 }
     })
   });
+  
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Gemini API error (${response.status}): ${text}`);
+  }
+  
   const data = await response.json();
   return data.candidates[0].content.parts[0].text;
 }
@@ -143,6 +150,12 @@ async function callOpenAICompat(systemPrompt, userQuery) {
       temperature: 0.3
     })
   });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`${process.env.AI_PROVIDER} API error (${response.status}): ${text}`);
+  }
+
   const data = await response.json();
   return data.choices[0].message.content;
 }
@@ -297,6 +310,7 @@ function getSnapshot(customDataset = null) {
       } : null,
       breakdown: expenseBreakdown.map(b => ({ category: b.category, total: b.total })),
       variances: comparePeriods("month").variances,
+      anomalies: detectAnomalies(), // ADDED: Critical for grounding spending queries
       overdueList: overdueInvoices.map(i => ({
         client: i.client,
         amount: i.amount,
@@ -663,12 +677,34 @@ async function handleQuery(userInput, customDataset = null) {
     if (clientName) {
       const invoicesByClient = getInvoicesByClient(clientName, customDataset);
       const overdueInvoice = invoicesByClient.find((invoice) => invoice.status === "overdue");
-      const latePaidCount = invoicesByClient.filter((invoice) => invoice.paymentHistory && invoice.paymentHistory[0] && invoice.paymentHistory[0] > invoice.dueDate).length;
-      return maybeUseAI(
-        userInput,
-        `${clientName} has ${invoicesByClient.length} invoices on record. ${overdueInvoice ? `Current overdue amount: ${formatCurrency(overdueInvoice.amount)}.` : "No current overdue invoice."} ${latePaidCount} previously paid invoices were late.`,
-        customDataset
-      );
+      const paidInvoices = invoicesByClient.filter(i => i.status === 'paid');
+      const latePaidCount = invoicesByClient.filter((invoice) => 
+        invoice.paymentHistory && invoice.paymentHistory[0] && invoice.paymentHistory[0] > invoice.dueDate
+      ).length;
+
+      if (!hasAiCredentials()) {
+        return `${clientName} has ${invoicesByClient.length} invoices on record. ` +
+               `${overdueInvoice ? `Current overdue: ${formatCurrency(overdueInvoice.amount)}.` : "No current overdue."} ` +
+               `${latePaidCount} previously paid invoices were late.`;
+      }
+
+      const snapshot = getSnapshot(customDataset);
+      const fallback = `${clientName} has ${invoicesByClient.length} invoices on record. ` +
+               `${overdueInvoice ? `Current overdue: ${formatCurrency(overdueInvoice.amount)}.` : "No current overdue."} ` +
+               `${latePaidCount} previously paid invoices were late.`;
+
+      const systemPrompt = buildSystemPrompt(snapshot) +
+        `\n\n### CLIENT SPECIFIC HISTORY: ${clientName}\n` +
+        `Total Invoices: ${invoicesByClient.length}\n` +
+        `Paid Invoices: ${paidInvoices.length}\n` +
+        `Late Payments: ${latePaidCount}\n` +
+        `Current Overdue: ${overdueInvoice ? formatCurrency(overdueInvoice.amount) : 'None'}\n` +
+        `Recent Activity: ${JSON.stringify(invoicesByClient.slice(-5))}\n` +
+        `### END CLIENT HISTORY\n\n` +
+        `Task: Answer the user's question about ${clientName} using the history above. ` +
+        `Explicitly mention the total invoice count (${invoicesByClient.length}) and the late payment count (${latePaidCount}) if asked about history or risk.`;
+
+      return callAI(systemPrompt, userInput, fallback);
     }
     return maybeUseAI(userInput, formatOverdueInvoices(getOverdueInvoices(customDataset)), customDataset);
   }
@@ -736,7 +772,18 @@ async function handleQuery(userInput, customDataset = null) {
   }
 
   if (intent === INTENTS.WEEKLY_SUMMARY) {
-    return generateSummary("weekly", customDataset);
+    const ruleBased = await generateSummary("weekly", customDataset);
+    if (!hasAiCredentials()) return ruleBased;
+
+    const snapshot = getSnapshot(customDataset);
+    const systemPrompt = buildSystemPrompt(snapshot) +
+      `\n\n### MANDATORY DATA SOURCE: WEEKLY SUMMARY DATA\n` +
+      `${ruleBased}\n\n` +
+      `Task: Convert the raw data points above into a professional, cohesive executive summary. ` +
+      `Highlight the top revenue source, most critical collection risk, and one actionable recommendation for the coming week. ` +
+      `Include counts and amounts explicitly.`;
+
+    return callAI(systemPrompt, userInput, ruleBased);
   }
 
   if (intent === INTENTS.COMPARE) {

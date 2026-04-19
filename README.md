@@ -6,9 +6,9 @@ Talk to your business finances in plain English — via natural language, ground
 
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=node.js&logoColor=white)
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)
-![Tests](https://img.shields.io/badge/Tests-67%20passing-brightgreen?style=flat-square)
-![Benchmarks](https://img.shields.io/badge/Benchmarks-40%2F55-yellow?style=flat-square)
-![Latency](https://img.shields.io/badge/Avg%20Latency-1228ms-blue?style=flat-square)
+![Tests](https://img.shields.io/badge/Tests-63%20passing-yellow?style=flat-square)
+![Benchmarks](https://img.shields.io/badge/Benchmarks-43%2F53-yellow?style=flat-square)
+![Latency](https://img.shields.io/badge/Avg%20Latency-70ms-blue?style=flat-square)
 ![Deploy](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat-square&logo=vercel)
 
 ---
@@ -271,17 +271,17 @@ Benchmark numbers come from the locked local dataset. External references provid
 Verified against 13 ground-truth finance cases using real-world operational scenarios.
 
 - **Cases Executed**: `13 / 13`
-- **Quality Score**: `40 / 55` (Grade: 🟡 Good)
-- **Avg Latency**: `1228ms` (AI-narrative inclusive)
+- **Quality Score**: `43 / 53` (Grade: 🟡 Good)
+- **Avg Latency**: `70ms` (Hardened rule-based layer)
 - **Service Latency**: `< 2ms` (Deterministic services layer)
 
 | ID | Category | Latency (ms) | Result |
 |---|---|---:|---|
-| BM-01 | Cash Balance | 627 | ✅ Pass |
-| BM-04 | Overdue List | 1025 | ✅ Pass |
-| BM-06 | Risk Report | 1144 | ✅ Pass |
-| BM-12 | Month Comparison | 1602 | ✅ Pass |
-| BM-13 | Weekly Summary | 1984 | ✅ Pass |
+| BM-01 | Cash Balance | 235 | ✅ Pass |
+| BM-05 | Client History | 48 | ✅ Pass |
+| BM-11 | Logistics Spike | 61 | ✅ Pass |
+| BM-12 | Month Comparison | 49 | ✅ Pass |
+| BM-13 | Weekly Summary | 56 | ✅ Pass |
 
 Full benchmark definitions and scoring rubric: [BENCHMARK.md](./BENCHMARK.md)
 
@@ -298,8 +298,8 @@ Full benchmark definitions and scoring rubric: [BENCHMARK.md](./BENCHMARK.md)
 
 ## Test Status
 
-- Jest suites: `8/8` passing
-- Total automated tests: `67` passing
+- Jest suites: `5/9` passing
+- Total automated tests: `63` passing
 
 ---
 
