@@ -203,12 +203,20 @@ function fallbackResponse() {
 
 // Removed local calculateWeeklyTrend - moved to services/cashFlowService.js
 
+let snapshotCache = null;
+let lastDatasetRef = null;
+
 /**
  * Builds a global snapshot for AI grounding and UI metrics.
  * @param {Array<Object>|null} customDataset - User uploaded data if available.
  * @returns {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string, externalValidationNotes: string[], trend: object, comparisonTrend: object, breakdown: object[] }}
  */
 function getSnapshot(customDataset = null) {
+  // CACHE CHECK: If dataset reference hasn't changed and we have a cache, return it
+  if (customDataset === lastDatasetRef && snapshotCache) {
+    return snapshotCache;
+  }
+
   let snapshot;
 
   // If we have a custom dataset, derive snapshot from it
@@ -388,6 +396,10 @@ function getSnapshot(customDataset = null) {
       contacts: require("../data/clientContacts.json")
     };
   }
+
+  // Update Cache
+  snapshotCache = snapshot;
+  lastDatasetRef = customDataset;
 
   return snapshot;
 }
