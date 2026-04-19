@@ -363,7 +363,40 @@ async function* handleStream(userInput, customDataset = null, history = []) {
     const clientFromQuery = extractClientName(userInput, customDataset);
     const resolvedClient = clientFromQuery || lastClient;
 
-    // 2. Build the system prompt
+    // 2. High-Priority Side-Effect: Send Reminder
+    if (intent === INTENTS.SEND_REMINDER) {
+      if (!resolvedClient) {
+        yield { type: 'text', content: "Please specify which client should receive the reminder." };
+        return;
+      }
+
+      const dataset = customDataset || require("../data/transactions.json");
+      const overdueRow = dataset.find(item => {
+        const clientKey = Object.keys(item).find(k => k.toLowerCase() === 'client' || k.toLowerCase() === 'customer');
+        return clientKey && item[clientKey] && item[clientKey].toLowerCase() === resolvedClient.toLowerCase() && (item.status === 'overdue' || item.amount < 0);
+      });
+
+      if (!overdueRow) {
+        yield { type: 'text', content: `No overdue records found for ${resolvedClient} in the active dataset.` };
+        return;
+      }
+
+      const result = await sendPaymentReminder({
+        client: resolvedClient,
+        amount: Math.abs(overdueRow.amount || 0),
+        daysOverdue: overdueRow.daysOverdue || 7,
+        invoiceId: overdueRow.id || overdueRow.invoiceId || 'N/A'
+      }, customDataset);
+
+      yield { 
+        type: 'text', 
+        content: result.alert,
+        intent 
+      };
+      return;
+    }
+
+    // 3. Build the system prompt for narrative intents
     const systemPrompt = buildSystemPrompt(snapshot) + 
       (resolvedClient ? `\n\nCONTEXT: You are currently discussing "${resolvedClient}".` : "") +
       `\n\nGROUNDING RULE: Answer ONLY using the snapshot data. Accuracy is 100% mandatory.`;
