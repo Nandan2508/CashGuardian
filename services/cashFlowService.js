@@ -211,18 +211,25 @@ function summarizeByCategory(items) {
  * @param {Array<Object>} dataset - Optional transaction set.
  * @returns {object} Aggregated metrics.
  */
-function summarizeEntityMetrics(entity, dataset = transactions) {
+function summarizeEntityMetrics(entity, dataset = transactions, windowDays = 90) {
   const { safeNumber, safeDate } = require("../utils/formatter");
   const data = dataset || transactions;
   const norm = entity.trim().toLowerCase();
   
-  const matches = data.filter(t => 
-    (t.client && t.client.toLowerCase().includes(norm)) ||
-    (t.category && t.category.toLowerCase().includes(norm)) ||
-    (t.region && t.region.toLowerCase().includes(norm)) ||
-    (t.channel && t.channel.toLowerCase().includes(norm)) ||
-    (t.description && t.description.toLowerCase().includes(norm))
-  );
+  const latestDateInSet = getLatestTransactionDate(data);
+  const cutoffDate = new Date(latestDateInSet);
+  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - windowDays);
+
+  const matches = data.filter(t => {
+    const d = safeDate(t.date);
+    if (d < cutoffDate) return false;
+    
+    return (t.client && t.client.toLowerCase().includes(norm)) ||
+      (t.category && t.category.toLowerCase().includes(norm)) ||
+      (t.region && t.region.toLowerCase().includes(norm)) ||
+      (t.channel && t.channel.toLowerCase().includes(norm)) ||
+      (t.description && t.description.toLowerCase().includes(norm));
+  });
 
   const revenue = matches.filter(t => t.type === 'income' || t.type === 'sales').reduce((s,t) => s + safeNumber(t.amount), 0);
   const costs = matches.filter(t => t.type === 'expense' || t.amount < 0 || t.type === 'outgo').reduce((s,t) => s + Math.abs(safeNumber(t.amount)), 0);

@@ -42,7 +42,7 @@ function buildSystemPrompt(snapshot) {
   let duelSection = "";
   if (snapshot.duel) {
     const { entityA, entityB, analysis } = snapshot.duel;
-    duelSection = `\n=== PERFORMANCE DUEL GROUNDING (Long-Term Head-to-Head) ===\n` +
+    duelSection = `\n=== PERFORMANCE DUEL GROUNDING (H2H - Last 90 Days) ===\n` +
       `Entity A [${entityA.name}]: Revenue ₹${entityA.revenue.toLocaleString()}, Costs ₹${entityA.costs.toLocaleString()}, Volume ${entityA.volume}\n` +
       `Entity B [${entityB.name}]: Revenue ₹${entityB.revenue.toLocaleString()}, Costs ₹${entityB.costs.toLocaleString()}, Volume ${entityB.volume}\n` +
       `Calculated Gap: ${analysis.gapPct}% revenue lead for ${analysis.leader}\n` +
