@@ -14,7 +14,7 @@ const path = require('path');
 dotenv.config();
 
 const { getSnapshot } = require('./agent/queryAgent');
-const { handleQuery } = require('./agent/langChainAgent'); // Migrated to LangGraph
+const { handleQuery, handleStream } = require('./agent/langChainAgent'); // Migrated to LangGraph
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -102,6 +102,42 @@ app.post('/api/query', async (req, res) => {
       details: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
+  }
+});
+
+// ─── API: QUERY STREAM ─────────────────────────────────────────────────────
+app.post('/api/query/stream', async (req, res) => {
+  const { query, history } = req.body;
+  if (!query) return res.status(400).json({ error: 'Query required' });
+
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering for Vercel/Nginx
+
+  const start = Date.now();
+
+  try {
+    const stream = handleStream(query, activeDataset, history || []);
+    for await (const chunk of stream) {
+      if (chunk.type === 'error') {
+        res.write(`data: ${JSON.stringify({ error: chunk.content })}\n\n`);
+      } else {
+        res.write(`data: ${JSON.stringify({
+          text: chunk.content,
+          intent: chunk.intent,
+          duel: chunk.duel,
+          trend: chunk.trend,
+          latencyMs: Date.now() - start
+        })}\n\n`);
+      }
+    }
+  } catch (error) {
+    console.error('❌ Stream Error:', error);
+    res.write(`data: ${JSON.stringify({ error: 'Stream interrupted' })}\n\n`);
+  } finally {
+    res.end();
   }
 });
 

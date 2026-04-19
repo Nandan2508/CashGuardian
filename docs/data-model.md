@@ -30,6 +30,9 @@ All income and expense transactions for the last 90 days.
 | `category` | string | See categories below |
 | `description` | string | Human-readable label |
 | `client` | string \| null | Client name for income; `null` for expenses |
+| `region` | string | Geographic region (North, South, East, West) |
+| `channel` | string | Sales channel (Wholesale, Retail, Digital, Export) |
+| `email` | string | Contact email address for the client |
 
 ### Income categories
 

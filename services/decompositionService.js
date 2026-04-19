@@ -4,11 +4,13 @@ const transactions = require("../data/transactions.json");
  * Decomposes a subset of transactions into its components by a grouping field.
  * @param {string} type - 'income' or 'expense'.
  * @param {string|null} categoryFilter - Optional specific category to filter by (e.g., 'sales').
- * @param {string} groupField - Field to group by ('category' or 'client').
+ * @param {string} groupField - Field to group by ('category', 'client', 'region', 'channel').
+ * @param {Array<Object>} [dataset] - Optional dataset to analyze.
  * @returns {object} Decomposition result including totals, components, and insights.
  */
-function decomposeTransactions(type, categoryFilter = null, groupField = "category") {
-  let filtered = transactions.filter((t) => t.type === type);
+function decomposeTransactions(type, categoryFilter = null, groupField = "category", dataset = null) {
+  const data = dataset || transactions;
+  let filtered = data.filter((t) => t.type === type);
 
   if (categoryFilter) {
     filtered = filtered.filter(

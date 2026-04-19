@@ -140,12 +140,14 @@ async function executeNode(state) {
       decompGroup = "client";
     }
 
-    if (norm.includes("cost") || norm.includes("expense") || norm.includes("spending")) {
-      decompType = "expense";
-      decompGroup = "category";
+    if (norm.includes("region") || norm.includes("location") || norm.includes("area")) {
+      decompGroup = "region";
+    }
+    if (norm.includes("channel") || norm.includes("medium") || norm.includes("method")) {
+      decompGroup = "channel";
     }
 
-    const result = decomposeTransactions(decompType, decompFilter, decompGroup);
+    const result = decomposeTransactions(decompType, decompFilter, decompGroup, activeDataset);
     const table = formatDecompositionTable(result);
 
     const systemPrompt =
@@ -162,7 +164,7 @@ async function executeNode(state) {
     const resultAI = await llm.invoke([new SystemMessage(systemPrompt), ...messages]);
 
     return {
-      response: `${resultAI.content.trim()}\n${table}`,
+      response: resultAI.content.trim(),
       duel: null,
       trend: null,
       comparisonTrend: null
@@ -335,7 +337,63 @@ async function handleQuery(userInput, customDataset = null, history = []) {
   }
 }
 
+/**
+ * Streaming entry point for the LangGraph Agent.
+ * @param {string} userInput - The user's query.
+ * @param {Array<Object>} customDataset - Uploaded data.
+ * @param {Array} history - Previous messages.
+ */
+async function* handleStream(userInput, customDataset = null, history = []) {
+  try {
+    const messages = history.map(m => m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content));
+    messages.push(new HumanMessage(userInput));
+
+    let lastClient = null;
+    for (let i = history.length - 1; i >= 0; i--) {
+      const match = extractClientName(history[i].content, customDataset);
+      if (match) {
+        lastClient = match;
+        break;
+      }
+    }
+
+    // 1. Initial Processing (Snapshot + Intent)
+    const snapshot = getSnapshot(customDataset);
+    const intent = classifyIntent(userInput);
+    const clientFromQuery = extractClientName(userInput, customDataset);
+    const resolvedClient = clientFromQuery || lastClient;
+
+    // 2. Build the system prompt
+    const systemPrompt = buildSystemPrompt(snapshot) + 
+      (resolvedClient ? `\n\nCONTEXT: You are currently discussing "${resolvedClient}".` : "") +
+      `\n\nGROUNDING RULE: Answer ONLY using the snapshot data. Accuracy is 100% mandatory.`;
+
+    // 3. Stream from LLM
+    const llm = getLLM();
+    const stream = await llm.stream([
+      new SystemMessage(systemPrompt),
+      ...messages
+    ]);
+
+    for await (const chunk of stream) {
+      if (chunk.content) {
+        yield { 
+          type: 'text',
+          content: chunk.content,
+          intent,
+          duel: snapshot.duel,
+          trend: snapshot.periodComparison ? snapshot.periodComparison.currentTrend : null
+        };
+      }
+    }
+  } catch (error) {
+    console.error("[LangGraph Stream Error]", error);
+    yield { type: 'error', content: "Streaming error occurred." };
+  }
+}
+
 module.exports = {
   handleQuery,
+  handleStream,
   processQuery: handleQuery
 };

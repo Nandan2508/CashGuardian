@@ -13,6 +13,7 @@ const {
   getLatestTransactionDate,
   getTransactionsInRange,
   getCategoryVariances,
+  summarizeTransactions,
   calculateWeeklyTrend
 } = require("../services/cashFlowService");
 const {
@@ -36,7 +37,25 @@ const { formatCurrency, safeDate, safeNumber } = require("../utils/formatter");
 function buildSystemPrompt(snapshot) {
   const validationNotes = snapshot.externalValidationNotes.map((line) => `- ${line}`).join("\n");
   const anomalies = (snapshot.anomalies || []).map((a) => `- CRITICAL: ${a.explanation}`).join("\n");
+  const variances = snapshot.variances;
   
+  let duelSection = "";
+  if (snapshot.duel) {
+    const { entityA, entityB, analysis } = snapshot.duel;
+    duelSection = `\n=== PERFORMANCE DUEL GROUNDING (Long-Term Head-to-Head) ===\n` +
+      `Entity A [${entityA.name}]: Revenue ₹${entityA.revenue.toLocaleString()}, Costs ₹${entityA.costs.toLocaleString()}, Volume ${entityA.volume}\n` +
+      `Entity B [${entityB.name}]: Revenue ₹${entityB.revenue.toLocaleString()}, Costs ₹${entityB.costs.toLocaleString()}, Volume ${entityB.volume}\n` +
+      `Calculated Gap: ${analysis.gapPct}% revenue lead for ${analysis.leader}\n` +
+      `============================================================\n`;
+  }
+
+  let popSection = "No comparison data available.";
+  if (variances && variances.income) {
+    popSection = `Current Block (30d): Income ₹${variances.income.current.toLocaleString()}, Expenses ₹${variances.expenses.current.toLocaleString()}
+Previous Block (30d): Income ₹${variances.income.previous.toLocaleString()}, Expenses ₹${variances.expenses.previous.toLocaleString()}
+Deltas: Income ${variances.income.delta >= 0 ? '+' : ''}${variances.income.delta.toLocaleString()} (${variances.income.pct}%), Expenses ${variances.expenses.delta >= 0 ? '+' : ''}${variances.expenses.delta.toLocaleString()} (${variances.expenses.pct}%)`;
+  }
+
   return `You are CashGuardian, an advanced financial reasoning agent.
 Today is ${new Date().toDateString()}.
 
@@ -52,28 +71,40 @@ Total Expenses (90d):  ₹${snapshot.totalExpenses.toLocaleString("en-IN")}
 Overdue Invoices:      ${snapshot.overdueCount} invoices worth ₹${snapshot.overdueTotal.toLocaleString("en-IN")}
 High-Risk Clients:     ${snapshot.highRiskClients.join(", ")}
 Top Expense Category:  ${snapshot.topExpenseCategory}
+Operational Regions:   ${snapshot.regions || 'All'}
+Active Channels:       ${snapshot.channels || 'N/A'}
 ===========================
+
+=== PERIOD-ON-PERIOD PERFORMANCE (Last 30d vs Prior 30d) ===
+${popSection}
+===========================================================
 
 === IDENTIFIED ANOMALIES & ALERTS ===
 ${anomalies || "No critical anomalies detected in recent spending patterns."}
 =====================================
-
+${duelSection}
 === EXTERNAL VALIDATION REFERENCES ===
 ${validationNotes}
 =====================================
 
-=== CONTACT DIRECTORY (FOR EMAILS/REMINDERS) ===
-${JSON.stringify(snapshot.contacts || {}, null, 2)}
+=== TOP TRANSACTION DRIVERS (FOR ROOT CAUSE) ===
+${(snapshot.topDrivers || []).join('\n')}
 ================================================
 
-=== OVERDUE LIST (DETAIL) ===
-${JSON.stringify(snapshot.overdueList || [], null, 2)}
+=== CONTACT DIRECTORY (TOP 5) ===
+${JSON.stringify(Object.fromEntries(Object.entries(snapshot.contacts || {}).slice(0, 5)), null, 2)}
+================================================
+
+=== OVERDUE LIST (TOP 3) ===
+${JSON.stringify((snapshot.overdueList || []).slice(0, 3), null, 2)}
 =============================
 
 Rules:
 - Format money as ₹X,XX,XXX (Indian style).
 - Use Markdown headings (####) for structure.
-- Always identify the source of your information (e.g., "According to recent transaction logs...").
+- **Narrative Consistency**: If a PERFORMANCE DUEL GROUNDING section is present, prioritize its long-term totals (Entity A vs Entity B) over short-term "Transaction Drivers".
+- **Communication Style**: Do NOT mention the names of the source sections (e.g., avoid "According to the TOP TRANSACTION DRIVERS..."). Instead, use phrases like "Our historical data shows..." or "Based on current performance...".
+- Always identify the general source of your information (e.g., "According to recent transaction logs...").
 ---
 `;
 }
@@ -172,12 +203,20 @@ function fallbackResponse() {
 
 // Removed local calculateWeeklyTrend - moved to services/cashFlowService.js
 
+let snapshotCache = null;
+let lastDatasetRef = null;
+
 /**
  * Builds a global snapshot for AI grounding and UI metrics.
  * @param {Array<Object>|null} customDataset - User uploaded data if available.
  * @returns {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string, externalValidationNotes: string[], trend: object, comparisonTrend: object, breakdown: object[] }}
  */
 function getSnapshot(customDataset = null) {
+  // CACHE CHECK: If dataset reference hasn't changed and we have a cache, return it
+  if (customDataset === lastDatasetRef && snapshotCache) {
+    return snapshotCache;
+  }
+
   let snapshot;
 
   // If we have a custom dataset, derive snapshot from it
@@ -186,7 +225,9 @@ function getSnapshot(customDataset = null) {
     const cleanedData = customDataset.map(item => ({
       ...item,
       amount: safeNumber(item.amount),
-      date: item.date // Keep as string; services expect ISO strings
+      date: item.date,
+      region: String(item.region || 'All').trim(),
+      channel: String(item.channel || 'Misc').trim()
     }));
 
     const totalIncome = cleanedData
@@ -216,7 +257,25 @@ function getSnapshot(customDataset = null) {
 
     const currentInterval = getTransactionsInRange(midPoint, latestDate, cleanedData);
     const prevInterval = getTransactionsInRange(startPoint, midPoint, cleanedData);
-    const variances = getCategoryVariances(currentInterval, prevInterval);
+    
+    const currentSummary = summarizeTransactions(currentInterval);
+    const prevSummary = summarizeTransactions(prevInterval);
+    
+    const variances = {
+      income: {
+        current: currentSummary.income,
+        previous: prevSummary.income,
+        delta: currentSummary.income - prevSummary.income,
+        pct: prevSummary.income !== 0 ? Math.round(((currentSummary.income - prevSummary.income) / prevSummary.income) * 100) : 0
+      },
+      expenses: {
+        current: currentSummary.expenses,
+        previous: prevSummary.expenses,
+        delta: currentSummary.expenses - prevSummary.expenses,
+        pct: prevSummary.expenses !== 0 ? Math.round(((currentSummary.expenses - prevSummary.expenses) / prevSummary.expenses) * 100) : 0
+      },
+      categories: getCategoryVariances(currentInterval, prevInterval)
+    };
 
     const { detectAnomalies } = require("../services/anomalyService");
     const activeAnomalies = detectAnomalies(cleanedData);
@@ -252,6 +311,8 @@ function getSnapshot(customDataset = null) {
       overdueTotal: overdueDeduplicated.reduce((sum, item) => sum + item.amount, 0),
       highRiskClients: highRiskClients.length > 0 ? highRiskClients : ['None'],
       topExpenseCategory: breakdown.length > 0 ? breakdown.sort((a, b) => b.total - a.total)[0].category : 'Various',
+      regions: [...new Set(cleanedData.map(d => d.region))].join(', '),
+      channels: [...new Set(cleanedData.map(d => d.channel))].join(', '),
       externalValidationNotes: [
         'Custom dataset active. Analysis based on user-provided transactional boundaries.',
         ...activeAnomalies.map(a => `ANOMALY DETECTED: ${a.explanation}`)
@@ -266,6 +327,7 @@ function getSnapshot(customDataset = null) {
         amount: i.amount,
         dueDate: i.dueDate || i.date || 'N/A'
       })),
+      topDrivers: currentInterval.sort((a,b) => b.amount - a.amount).slice(0, 5).map(i => `${i.type === 'income' ? 'IN' : 'OUT'}: ${i.description} (₹${i.amount.toLocaleString()})`),
       contacts: cleanedData.reduce((acc, row) => {
         const clientKey = Object.keys(row).find(k => k.toLowerCase() === 'client' || k.toLowerCase() === 'customer');
         const emailKey = Object.keys(row).find(k => k.toLowerCase().includes('email') || k.toLowerCase() === 'contact');
@@ -286,6 +348,7 @@ function getSnapshot(customDataset = null) {
     // Pull last 13 weeks and the 13 before that for comparison
     const recentMetrics = metrics.slice(-13);
     const previousMetrics = metrics.slice(-26, -13);
+    const comparison = comparePeriods("month", 1);
 
     snapshot = {
       netBalance: balance.netBalance,
@@ -309,7 +372,21 @@ function getSnapshot(customDataset = null) {
         expenses: previousMetrics.map(m => m.expenses)
       } : null,
       breakdown: expenseBreakdown.map(b => ({ category: b.category, total: b.total })),
-      variances: comparePeriods("month").variances,
+      variances: {
+        income: {
+          current: comparison.current.income,
+          previous: comparison.previous.income,
+          delta: comparison.deltas.income,
+          pct: Math.round((comparison.deltas.income / (comparison.previous.income || 1)) * 100)
+        },
+        expenses: {
+          current: comparison.current.expenses,
+          previous: comparison.previous.expenses,
+          delta: comparison.deltas.expenses,
+          pct: Math.round((comparison.deltas.expenses / (comparison.previous.expenses || 1)) * 100)
+        },
+        categories: comparison.variances
+      },
       anomalies: detectAnomalies(), // ADDED: Critical for grounding spending queries
       overdueList: overdueInvoices.map(i => ({
         client: i.client,
@@ -319,6 +396,10 @@ function getSnapshot(customDataset = null) {
       contacts: require("../data/clientContacts.json")
     };
   }
+
+  // Update Cache
+  snapshotCache = snapshot;
+  lastDatasetRef = customDataset;
 
   return snapshot;
 }
@@ -620,6 +701,17 @@ async function maybeUseAI(userInput, fallbackText, customDataset = null) {
  * @returns {Promise<string>} Routed response.
  */
 async function handleQuery(userInput, customDataset = null) {
+  // PRE-CLEAN: Ensure custom dataset is sanitized for all services
+  const activeDataset = (customDataset && customDataset.length > 0) 
+    ? customDataset.map(item => ({
+        ...item,
+        amount: safeNumber(item.amount),
+        type: String(item.type || '').trim().toLowerCase(),
+        category: String(item.category || '').trim().toLowerCase(),
+        client: String(item.client || '').trim()
+      }))
+    : null;
+
   const intent = classifyIntent(userInput);
 
   // If sending a reminder, we should ALWAYS trigger the actual service
@@ -628,7 +720,7 @@ async function handleQuery(userInput, customDataset = null) {
     if (!clientName) return "Please specify which client should receive the reminder.";
 
     // Find the invoice in the current dataset (custom or demo)
-    const dataset = customDataset || require("../data/transactions.json");
+    const dataset = activeDataset || require("../data/transactions.json");
     const overdueRow = dataset.find(item => item.client === clientName && (item.status === 'overdue' || item.amount < 0));
 
     if (!overdueRow) return `No overdue records found for ${clientName} in the active dataset.`;
@@ -638,44 +730,39 @@ async function handleQuery(userInput, customDataset = null) {
       amount: Math.abs(overdueRow.amount),
       daysOverdue: overdueRow.daysOverdue || 7,
       invoiceId: overdueRow.id || overdueRow.invoiceId || 'N/A'
-    }, customDataset);
+    }, activeDataset);
 
     return result.alert;
   }
 
   // For other intents with a custom dataset, use AI reasoning with the data context
-  if (customDataset) {
-    const snapshot = getSnapshot(customDataset);
-    const systemPrompt = buildSystemPrompt(snapshot) + `\n\nAdditionally, here is a sampling of the custom dataset rows:\n${JSON.stringify(customDataset.slice(0, 10))}`;
-    return callAI(systemPrompt, userInput);
-  }
 
   if (intent === INTENTS.HELP) {
     return getHelpText();
   }
 
   if (intent === INTENTS.CASH_BALANCE) {
-    const balance = getCashBalance(customDataset);
+    const balance = getCashBalance(activeDataset);
     return maybeUseAI(
       userInput,
       `Current net cash balance is ${formatCurrency(balance.netBalance)}.\nIncome: ${formatCurrency(balance.totalIncome)} | Expenses: ${formatCurrency(balance.totalExpenses)}`,
-      customDataset
+      activeDataset
     );
   }
 
   if (intent === INTENTS.CASH_SUMMARY) {
-    const summary = getCashSummary(90, customDataset);
+    const summary = getCashSummary(90, activeDataset);
     return maybeUseAI(
       userInput,
       `Over the latest tracked period, income was ${formatCurrency(summary.income)} and expenses were ${formatCurrency(summary.expenses)}.\nNet cash flow was ${formatCurrency(summary.net)}, with ${summary.topExpenseCategory} as the top expense category.`,
-      customDataset
+      activeDataset
     );
   }
 
   if (intent === INTENTS.OVERDUE_INVOICES) {
-    const clientName = extractClientName(userInput, customDataset);
+    const clientName = extractClientName(userInput, activeDataset);
     if (clientName) {
-      const invoicesByClient = getInvoicesByClient(clientName, customDataset);
+      const invoicesByClient = getInvoicesByClient(clientName, activeDataset);
       const overdueInvoice = invoicesByClient.find((invoice) => invoice.status === "overdue");
       const paidInvoices = invoicesByClient.filter(i => i.status === 'paid');
       const latePaidCount = invoicesByClient.filter((invoice) => 
@@ -688,7 +775,7 @@ async function handleQuery(userInput, customDataset = null) {
                `${latePaidCount} previously paid invoices were late.`;
       }
 
-      const snapshot = getSnapshot(customDataset);
+      const snapshot = getSnapshot(activeDataset);
       const fallback = `${clientName} has ${invoicesByClient.length} invoices on record. ` +
                `${overdueInvoice ? `Current overdue: ${formatCurrency(overdueInvoice.amount)}.` : "No current overdue."} ` +
                `${latePaidCount} previously paid invoices were late.`;
@@ -706,31 +793,44 @@ async function handleQuery(userInput, customDataset = null) {
 
       return callAI(systemPrompt, userInput, fallback);
     }
-    return maybeUseAI(userInput, formatOverdueInvoices(getOverdueInvoices(customDataset)), customDataset);
+    return maybeUseAI(userInput, formatOverdueInvoices(getOverdueInvoices(activeDataset)), activeDataset);
   }
 
   if (intent === INTENTS.RISK_CLIENTS) {
-    const clientName = extractClientName(userInput, customDataset);
+    const clientName = extractClientName(userInput, activeDataset);
     if (clientName) {
-      const risk = getClientRisk(clientName, customDataset);
+      const risk = getClientRisk(clientName, activeDataset);
       if (!risk) {
         return `No risk history found for ${clientName}.`;
       }
       return maybeUseAI(
         userInput,
         `${risk.client} is ${risk.riskLevel} risk with score ${risk.riskScore} and ${formatCurrency(risk.overdueAmount)} currently overdue. ${risk.recommendation}.`,
-        customDataset
+        activeDataset
       );
     }
-    return maybeUseAI(userInput, formatRiskReport(getRiskReport(customDataset)), customDataset);
+    return maybeUseAI(userInput, formatRiskReport(getRiskReport(activeDataset)), activeDataset);
   }
 
   if (intent === INTENTS.EXPENSE_BREAKDOWN) {
-    return maybeUseAI(userInput, formatExpenseBreakdown(getExpenseBreakdown(customDataset)), customDataset);
+    return maybeUseAI(userInput, formatExpenseBreakdown(getExpenseBreakdown(activeDataset)), activeDataset);
   }
 
   if (intent === INTENTS.ANOMALY) {
-    return maybeUseAI(userInput, formatAnomalies(detectAnomalies(customDataset)), customDataset);
+    const anomalies = detectAnomalies(activeDataset);
+    const comparison = comparePeriods("month", 1, activeDataset);
+    const snapshot = getSnapshot(activeDataset);
+    
+    const systemPrompt = buildSystemPrompt(snapshot) +
+      `\n\n### MANDATORY DATA SOURCE: DRIVER & ANOMALY ANALYSIS\n` +
+      `Comparison Variances: ${JSON.stringify(comparison.variances.categories.slice(0, 10))}\n` +
+      `Detected Anomalies: ${JSON.stringify(anomalies.slice(0, 5))}\n` +
+      `### END DATA SOURCE\n\n` +
+      `Task: Identify the drivers behind increases or decreases in performance. ` +
+      `Highlight the most influential categories (e.g., product, channel, or expense type). ` +
+      `Provide clear, concise explanations in everyday language. Reference the specific data sources.`;
+
+    return callAI(systemPrompt, userInput, formatAnomalies(anomalies));
   }
 
   if (intent === INTENTS.DECOMPOSITION) {
@@ -750,38 +850,48 @@ async function handleQuery(userInput, customDataset = null) {
       group = "category";
     }
 
-    const result = decomposeTransactions(type, filter, group, customDataset);
+    // Dynamic grouping override
+    if (norm.includes("region") || norm.includes("location") || norm.includes("area")) {
+      group = "region";
+    }
+    if (norm.includes("channel") || norm.includes("medium") || norm.includes("method")) {
+      group = "channel";
+    }
+
+    const result = decomposeTransactions(type, filter, group, activeDataset);
     const table = formatDecompositionTable(result);
 
     if (!hasAiCredentials()) {
       return `🔴 AI_API_KEY not set. Add it to .env (see AI_PROVIDER_SETUP.md)\n\n${table}`;
     }
 
-    const snapshot = getSnapshot(customDataset);
+    const snapshot = getSnapshot(activeDataset);
     const systemPrompt = buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: TARGET DECOMPOSITION\n` +
       `You MUST explain the following components of the focus area "${result.target}":\n` +
       `Total: ${formatCurrency(result.total)}\n` +
-      `Breakdown: ${JSON.stringify(result.components)}\n` +
+      `Breakdown: ${JSON.stringify(result.components.slice(0, 10))}\n` +
       `Statistically relevant patterns: ${result.insights.join(", ") || "None detected"}\n` +
       `### END DATA SOURCE\n\n` +
-      "Task: Provide a strategic executive narrative of the decomposition data above. Highlight the top contributor and explain any concentration risks or outliers found in the statistically relevant patterns. Ignore other snapshot data if it contradicts the Target Decomposition breakdown.";
+      `Task: Decompose the number into its core components. ` +
+      `Surface patterns like concentration (is one client 40% of the total?) or outliers. ` +
+      `Provide both a structured narrative and refer to the table below. Be leadership-ready.`;
 
     const summary = await callAI(systemPrompt, userInput);
     return `${summary}\n${table}`;
   }
 
   if (intent === INTENTS.WEEKLY_SUMMARY) {
-    const ruleBased = await generateSummary("weekly", customDataset);
+    const ruleBased = await generateSummary("weekly", activeDataset);
     if (!hasAiCredentials()) return ruleBased;
 
-    const snapshot = getSnapshot(customDataset);
+    const snapshot = getSnapshot(activeDataset);
     const systemPrompt = buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: WEEKLY SUMMARY DATA\n` +
       `${ruleBased}\n\n` +
-      `Task: Convert the raw data points above into a professional, cohesive executive summary. ` +
-      `Highlight the top revenue source, most critical collection risk, and one actionable recommendation for the coming week. ` +
-      `Include counts and amounts explicitly.`;
+      `Task: Scan the dataset for trends, anomalies, and important shifts for the latest week. ` +
+      `Produce a concise update for leadership. Avoid noise—focus on what truly matters. ` +
+      `Provide specific source references for your claims.`;
 
     return callAI(systemPrompt, userInput, ruleBased);
   }
@@ -801,9 +911,9 @@ async function handleQuery(userInput, customDataset = null) {
         // ENTITY DUEL (e.g. "Alpha Retail vs Beta Logistics")
         const entityA = parts[0].trim();
         const entityB = parts[1].trim();
-        const duelData = compareEntities(entityA, entityB, customDataset);
+        const duelData = compareEntities(entityA, entityB, activeDataset);
 
-        const snapshot = getSnapshot(customDataset);
+        const snapshot = getSnapshot(activeDataset);
         snapshot.duel = duelData;
         const response = await callAI(buildSystemPrompt(snapshot), userInput);
         return { content: response, duel: duelData };
@@ -811,9 +921,55 @@ async function handleQuery(userInput, customDataset = null) {
     }
 
     // PERIOD COMPARISON (e.g. "April vs March" or "this month vs last month")
-    const period = normalized.includes("week") ? "week" : "month";
-    const comparison = comparePeriods(period, 1, customDataset);
-    const response = await maybeUseAI(userInput, formatComparison(comparison), customDataset);
+    const monthMap = {
+      january: 0, feb: 1, february: 1, mar: 2, march: 2, apr: 3, april: 3, 
+      may: 4, june: 5, july: 6, august: 7, september: 8, october: 9, november: 10, december: 11, jan: 0
+    };
+
+    const getMonthRange = (name) => {
+      const clean = name.toLowerCase().replace(/.*compare /i, "").trim();
+      const idx = monthMap[clean];
+      if (idx === undefined) return null;
+      return {
+        start: new Date(Date.UTC(2026, idx, 1)),
+        end: new Date(Date.UTC(2026, idx + 1, 0, 23, 59, 59))
+      };
+    };
+
+    let comparison;
+    if (normalized.includes(" vs ") || normalized.includes(" versus ")) {
+      const parts = normalized.split(/ vs | versus /);
+      const rangeA = getMonthRange(parts[0]);
+      const rangeB = getMonthRange(parts[1]);
+
+      if (rangeA && rangeB) {
+        comparison = comparePeriods({
+          target: rangeA,
+          baseline: rangeB,
+          name: `${parts[0].replace(/.*compare /i, "").trim()} vs ${parts[1].trim()}`
+        }, 1, activeDataset);
+      }
+    }
+
+    if (!comparison) {
+      const period = normalized.includes("week") ? "week" : "month";
+      comparison = comparePeriods(period, 1, activeDataset);
+    }
+
+    const snapshot = getSnapshot(activeDataset);
+    const systemPrompt = buildSystemPrompt(snapshot) +
+      `\n\n### MANDATORY DATA SOURCE: PERIOD COMPARISON\n` +
+      `Target Period (${comparison.current.period}): Income ${formatCurrency(comparison.current.income)}, Expenses ${formatCurrency(comparison.current.expenses)}\n` +
+      `Baseline Period (${comparison.previous.period}): Income ${formatCurrency(comparison.previous.income)}, Expenses ${formatCurrency(comparison.previous.expenses)}\n` +
+      `Deltas: Income ${formatCurrency(comparison.deltas.income)}, Expenses ${formatCurrency(comparison.deltas.expenses)}, Net ${formatCurrency(comparison.deltas.net)}\n` +
+      `Summary: ${comparison.narrative}\n` +
+      `### END DATA SOURCE\n\n` +
+      `Task: Generate a high-impact comparison (visual + text). ` +
+      `Identify statistically relevant differences. ` +
+      `Use phrases like "Product A grown by X%, outperforming Y" or "Revenue decreased due to Z". ` +
+      `Disambiguate the periods explicitly.`;
+
+    const response = await callAI(systemPrompt, userInput, formatComparison(comparison));
     
     return {
       content: response,
@@ -822,9 +978,16 @@ async function handleQuery(userInput, customDataset = null) {
     };
   }
 
+  // CATCH-ALL FOR CUSTOM DATASETS: If no specific intent matched, use generic AI reasoning
+  if (activeDataset) {
+    const snapshot = getSnapshot(activeDataset);
+    const systemPrompt = buildSystemPrompt(snapshot) + `\n\nAdditionally, here is a sampling of the custom dataset rows:\n${JSON.stringify(activeDataset.slice(0, 10))}`;
+    return callAI(systemPrompt, userInput);
+  }
+
   if (intent === INTENTS.PREDICTION) {
-    const forecast = calculate30DayForecast(customDataset);
-    const snapshot = getSnapshot(customDataset);
+    const forecast = calculate30DayForecast(activeDataset);
+    const snapshot = getSnapshot(activeDataset);
     const systemPrompt = buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: 30-DAY FORECAST\n` +
       `Match the user's focus on the next 30 days using these components:\n` +
@@ -843,7 +1006,7 @@ async function handleQuery(userInput, customDataset = null) {
   }
 
   return hasAiCredentials()
-    ? callAI(buildSystemPrompt(getSnapshot(customDataset)), userInput)
+    ? callAI(buildSystemPrompt(getSnapshot(activeDataset)), userInput)
     : "🔴 AI_API_KEY not set. Add it to .env (see AI_PROVIDER_SETUP.md)";
 }
 

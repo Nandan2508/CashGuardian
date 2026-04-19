@@ -1,270 +1,276 @@
-date,type,amount,category,description,client,status,dueDate,issueDate,email
-2026-01-15,income,15830,sales,Daily Retail Settlement,Sigma Traders,paid,2026-01-15,2026-01-15,nandan.nv358@gmail.com
-2026-01-15,expense,1106,utilities,Daily Operational Expense,,paid,2026-01-15,2026-01-15,
-2026-01-16,income,6262,sales,Daily Retail Settlement,Gamma Services,paid,2026-01-16,2026-01-16,krishanmalhotra2005@gmail.com
-2026-01-16,expense,1860,utilities,Daily Operational Expense,,paid,2026-01-16,2026-01-16,
-2026-01-17,income,8240,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-17,2026-01-17,nverma_be23@thapar.edu
-2026-01-17,expense,3311,utilities,Daily Operational Expense,,paid,2026-01-17,2026-01-17,
-2026-01-18,income,14573,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-18,2026-01-18,nverma_be23@thapar.edu
-2026-01-18,expense,2385,utilities,Daily Operational Expense,,paid,2026-01-18,2026-01-18,
-2026-01-19,income,13262,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-19,2026-01-19,nverma_be23@thapar.edu
-2026-01-19,expense,941,utilities,Daily Operational Expense,,paid,2026-01-19,2026-01-19,
-2026-01-19,expense,25000,rent,Office Rent Payment,,paid,2026-01-19,2026-01-19,
-2026-01-20,income,9770,sales,Daily Retail Settlement,Beta Logistics,paid,2026-01-20,2026-01-20,krishanmalhotra2005@gmail.com
-2026-01-20,expense,2288,utilities,Daily Operational Expense,,paid,2026-01-20,2026-01-20,
-2026-01-21,income,7886,sales,Daily Retail Settlement,Sigma Traders,paid,2026-01-21,2026-01-21,nandan.nv358@gmail.com
-2026-01-21,expense,2481,utilities,Daily Operational Expense,,paid,2026-01-21,2026-01-21,
-2026-01-21,income,43116,consulting,Invoice 16,Sigma Traders,overdue,2026-02-05,2026-01-21,nandan.nv358@gmail.com
-2026-01-22,income,16209,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-22,2026-01-22,nverma_be23@thapar.edu
-2026-01-22,income,5983,sales,Daily Retail Settlement,Alpha Retail,paid,2026-01-22,2026-01-22,nandan.nv358@gmail.com
-2026-01-22,expense,2412,utilities,Daily Operational Expense,,paid,2026-01-22,2026-01-22,
-2026-01-23,income,11930,sales,Daily Retail Settlement,Sigma Traders,paid,2026-01-23,2026-01-23,nandan.nv358@gmail.com
-2026-01-23,expense,3320,utilities,Daily Operational Expense,,paid,2026-01-23,2026-01-23,
-2026-01-24,income,15349,sales,Daily Retail Settlement,Gamma Services,paid,2026-01-24,2026-01-24,krishanmalhotra2005@gmail.com
-2026-01-24,expense,3394,utilities,Daily Operational Expense,,paid,2026-01-24,2026-01-24,
-2026-01-25,income,18806,sales,Daily Retail Settlement,Alpha Retail,paid,2026-01-25,2026-01-25,nandan.nv358@gmail.com
-2026-01-25,income,13846,sales,Daily Retail Settlement,Gamma Services,paid,2026-01-25,2026-01-25,krishanmalhotra2005@gmail.com
-2026-01-25,expense,2752,utilities,Daily Operational Expense,,paid,2026-01-25,2026-01-25,
-2026-01-26,income,7085,sales,Daily Retail Settlement,Beta Logistics,paid,2026-01-26,2026-01-26,krishanmalhotra2005@gmail.com
-2026-01-26,income,7559,sales,Daily Retail Settlement,Sigma Traders,paid,2026-01-26,2026-01-26,nandan.nv358@gmail.com
-2026-01-26,expense,2576,utilities,Daily Operational Expense,,paid,2026-01-26,2026-01-26,
-2026-01-26,expense,25000,rent,Office Rent Payment,,paid,2026-01-26,2026-01-26,
-2026-01-27,income,8535,sales,Daily Retail Settlement,Alpha Retail,paid,2026-01-27,2026-01-27,nandan.nv358@gmail.com
-2026-01-27,expense,3334,utilities,Daily Operational Expense,,paid,2026-01-27,2026-01-27,
-2026-01-28,income,17529,sales,Daily Retail Settlement,Sigma Traders,paid,2026-01-28,2026-01-28,nandan.nv358@gmail.com
-2026-01-28,income,16267,sales,Daily Retail Settlement,Alpha Retail,paid,2026-01-28,2026-01-28,nandan.nv358@gmail.com
-2026-01-28,expense,1442,utilities,Daily Operational Expense,,paid,2026-01-28,2026-01-28,
-2026-01-28,income,43245,consulting,Invoice 36,Sigma Traders,paid,2026-02-12,2026-01-28,nandan.nv358@gmail.com
-2026-01-29,income,5164,sales,Daily Retail Settlement,Beta Logistics,paid,2026-01-29,2026-01-29,krishanmalhotra2005@gmail.com
-2026-01-29,income,12390,sales,Daily Retail Settlement,Alpha Retail,paid,2026-01-29,2026-01-29,nandan.nv358@gmail.com
-2026-01-29,expense,3228,utilities,Daily Operational Expense,,paid,2026-01-29,2026-01-29,
-2026-01-30,income,11935,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-30,2026-01-30,nverma_be23@thapar.edu
-2026-01-30,expense,2345,utilities,Daily Operational Expense,,paid,2026-01-30,2026-01-30,
-2026-01-31,income,7465,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-01-31,2026-01-31,nverma_be23@thapar.edu
-2026-01-31,expense,1072,utilities,Daily Operational Expense,,paid,2026-01-31,2026-01-31,
-2026-02-01,income,17832,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-01,2026-02-01,krishanmalhotra2005@gmail.com
-2026-02-01,income,7230,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-01,2026-02-01,nandan.nv358@gmail.com
-2026-02-01,expense,576,utilities,Daily Operational Expense,,paid,2026-02-01,2026-02-01,
-2026-02-01,expense,120000,salaries,Staff Salaries Deployment,,paid,2026-02-01,2026-02-01,
-2026-02-02,income,7632,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-02,2026-02-02,nandan.nv358@gmail.com
-2026-02-02,income,5608,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-02,2026-02-02,nandan.nv358@gmail.com
-2026-02-02,expense,3310,utilities,Daily Operational Expense,,paid,2026-02-02,2026-02-02,
-2026-02-02,expense,25000,rent,Office Rent Payment,,paid,2026-02-02,2026-02-02,
-2026-02-03,income,7176,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-03,2026-02-03,nandan.nv358@gmail.com
-2026-02-03,expense,2076,utilities,Daily Operational Expense,,paid,2026-02-03,2026-02-03,
-2026-02-04,income,19532,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-04,2026-02-04,krishanmalhotra2005@gmail.com
-2026-02-04,income,10174,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-04,2026-02-04,krishanmalhotra2005@gmail.com
-2026-02-04,expense,2005,utilities,Daily Operational Expense,,paid,2026-02-04,2026-02-04,
-2026-02-04,income,24020,consulting,Invoice 57,Alpha Retail,paid,2026-02-19,2026-02-04,nandan.nv358@gmail.com
-2026-02-05,income,5856,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-05,2026-02-05,nverma_be23@thapar.edu
-2026-02-05,income,6410,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-05,2026-02-05,krishanmalhotra2005@gmail.com
-2026-02-05,expense,2173,utilities,Daily Operational Expense,,paid,2026-02-05,2026-02-05,
-2026-02-06,income,13579,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-06,2026-02-06,nverma_be23@thapar.edu
-2026-02-06,expense,1812,utilities,Daily Operational Expense,,paid,2026-02-06,2026-02-06,
-2026-02-07,income,9768,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-07,2026-02-07,krishanmalhotra2005@gmail.com
-2026-02-07,income,12724,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-07,2026-02-07,krishanmalhotra2005@gmail.com
-2026-02-07,expense,2197,utilities,Daily Operational Expense,,paid,2026-02-07,2026-02-07,
-2026-02-08,income,18366,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-08,2026-02-08,nverma_be23@thapar.edu
-2026-02-08,expense,2426,utilities,Daily Operational Expense,,paid,2026-02-08,2026-02-08,
-2026-02-09,income,17337,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-09,2026-02-09,nverma_be23@thapar.edu
-2026-02-09,income,17918,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-09,2026-02-09,krishanmalhotra2005@gmail.com
-2026-02-09,expense,646,utilities,Daily Operational Expense,,paid,2026-02-09,2026-02-09,
-2026-02-09,expense,25000,rent,Office Rent Payment,,paid,2026-02-09,2026-02-09,
-2026-02-10,income,5657,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-10,2026-02-10,krishanmalhotra2005@gmail.com
-2026-02-10,income,19547,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-10,2026-02-10,krishanmalhotra2005@gmail.com
-2026-02-10,expense,2302,utilities,Daily Operational Expense,,paid,2026-02-10,2026-02-10,
-2026-02-11,income,14576,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-11,2026-02-11,nandan.nv358@gmail.com
-2026-02-11,expense,3056,utilities,Daily Operational Expense,,paid,2026-02-11,2026-02-11,
-2026-02-11,income,36587,consulting,Invoice 77,Gamma Services,paid,2026-02-26,2026-02-11,krishanmalhotra2005@gmail.com
-2026-02-12,income,6603,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-12,2026-02-12,nandan.nv358@gmail.com
-2026-02-12,income,11206,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-12,2026-02-12,nverma_be23@thapar.edu
-2026-02-12,expense,1976,utilities,Daily Operational Expense,,paid,2026-02-12,2026-02-12,
-2026-02-13,income,6406,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-13,2026-02-13,krishanmalhotra2005@gmail.com
-2026-02-13,income,6529,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-13,2026-02-13,krishanmalhotra2005@gmail.com
-2026-02-13,expense,1279,utilities,Daily Operational Expense,,paid,2026-02-13,2026-02-13,
-2026-02-14,income,16660,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-14,2026-02-14,nverma_be23@thapar.edu
-2026-02-14,expense,3261,utilities,Daily Operational Expense,,paid,2026-02-14,2026-02-14,
-2026-02-15,income,19467,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-15,2026-02-15,nandan.nv358@gmail.com
-2026-02-15,income,5910,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-15,2026-02-15,krishanmalhotra2005@gmail.com
-2026-02-15,expense,1664,utilities,Daily Operational Expense,,paid,2026-02-15,2026-02-15,
-2026-02-16,income,6569,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-16,2026-02-16,nandan.nv358@gmail.com
-2026-02-16,income,10656,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-16,2026-02-16,nverma_be23@thapar.edu
-2026-02-16,expense,1292,utilities,Daily Operational Expense,,paid,2026-02-16,2026-02-16,
-2026-02-16,expense,25000,rent,Office Rent Payment,,paid,2026-02-16,2026-02-16,
-2026-02-17,income,5721,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-17,2026-02-17,krishanmalhotra2005@gmail.com
-2026-02-17,income,18170,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-17,2026-02-17,nandan.nv358@gmail.com
-2026-02-17,expense,1578,utilities,Daily Operational Expense,,paid,2026-02-17,2026-02-17,
-2026-02-18,income,5367,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-18,2026-02-18,nandan.nv358@gmail.com
-2026-02-18,income,7493,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-18,2026-02-18,nandan.nv358@gmail.com
-2026-02-18,expense,2323,utilities,Daily Operational Expense,,paid,2026-02-18,2026-02-18,
-2026-02-18,income,33516,consulting,Invoice 99,Delta Manufacturing,overdue,2026-03-05,2026-02-18,nverma_be23@thapar.edu
-2026-02-19,income,16106,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-19,2026-02-19,nandan.nv358@gmail.com
-2026-02-19,expense,2668,utilities,Daily Operational Expense,,paid,2026-02-19,2026-02-19,
-2026-02-20,income,8435,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-20,2026-02-20,krishanmalhotra2005@gmail.com
-2026-02-20,income,6355,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-20,2026-02-20,nandan.nv358@gmail.com
-2026-02-20,expense,2988,utilities,Daily Operational Expense,,paid,2026-02-20,2026-02-20,
-2026-02-20,expense,85000,logistics,Surge Logistics - Emergency Shipment,,paid,2026-02-20,2026-02-20,
-2026-02-21,income,18094,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-21,2026-02-21,nandan.nv358@gmail.com
-2026-02-21,income,12752,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-21,2026-02-21,nandan.nv358@gmail.com
-2026-02-21,expense,1021,utilities,Daily Operational Expense,,paid,2026-02-21,2026-02-21,
-2026-02-22,income,6219,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-22,2026-02-22,krishanmalhotra2005@gmail.com
-2026-02-22,income,18814,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-02-22,2026-02-22,nverma_be23@thapar.edu
-2026-02-22,expense,2500,utilities,Daily Operational Expense,,paid,2026-02-22,2026-02-22,
-2026-02-23,income,13132,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-23,2026-02-23,krishanmalhotra2005@gmail.com
-2026-02-23,income,18535,sales,Daily Retail Settlement,Alpha Retail,paid,2026-02-23,2026-02-23,nandan.nv358@gmail.com
-2026-02-23,expense,1003,utilities,Daily Operational Expense,,paid,2026-02-23,2026-02-23,
-2026-02-23,expense,25000,rent,Office Rent Payment,,paid,2026-02-23,2026-02-23,
-2026-02-24,income,13620,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-24,2026-02-24,krishanmalhotra2005@gmail.com
-2026-02-24,expense,1690,utilities,Daily Operational Expense,,paid,2026-02-24,2026-02-24,
-2026-02-25,income,6779,sales,Daily Retail Settlement,Beta Logistics,paid,2026-02-25,2026-02-25,krishanmalhotra2005@gmail.com
-2026-02-25,expense,2208,utilities,Daily Operational Expense,,paid,2026-02-25,2026-02-25,
-2026-02-25,income,41276,consulting,Invoice 120,Delta Manufacturing,overdue,2026-03-12,2026-02-25,nverma_be23@thapar.edu
-2026-02-26,income,7785,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-26,2026-02-26,nandan.nv358@gmail.com
-2026-02-26,income,12225,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-26,2026-02-26,nandan.nv358@gmail.com
-2026-02-26,expense,914,utilities,Daily Operational Expense,,paid,2026-02-26,2026-02-26,
-2026-02-27,income,8229,sales,Daily Retail Settlement,Sigma Traders,paid,2026-02-27,2026-02-27,nandan.nv358@gmail.com
-2026-02-27,expense,3205,utilities,Daily Operational Expense,,paid,2026-02-27,2026-02-27,
-2026-02-28,income,5761,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-28,2026-02-28,krishanmalhotra2005@gmail.com
-2026-02-28,income,10312,sales,Daily Retail Settlement,Gamma Services,paid,2026-02-28,2026-02-28,krishanmalhotra2005@gmail.com
-2026-02-28,expense,1990,utilities,Daily Operational Expense,,paid,2026-02-28,2026-02-28,
-2026-03-01,income,14199,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-01,2026-03-01,krishanmalhotra2005@gmail.com
-2026-03-01,expense,3227,utilities,Daily Operational Expense,,paid,2026-03-01,2026-03-01,
-2026-03-01,expense,120000,salaries,Staff Salaries Deployment,,paid,2026-03-01,2026-03-01,
-2026-03-02,income,10413,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-02,2026-03-02,krishanmalhotra2005@gmail.com
-2026-03-02,expense,2676,utilities,Daily Operational Expense,,paid,2026-03-02,2026-03-02,
-2026-03-02,expense,25000,rent,Office Rent Payment,,paid,2026-03-02,2026-03-02,
-2026-03-03,income,8791,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-03,2026-03-03,nandan.nv358@gmail.com
-2026-03-03,income,5865,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-03,2026-03-03,nandan.nv358@gmail.com
-2026-03-03,expense,3253,utilities,Daily Operational Expense,,paid,2026-03-03,2026-03-03,
-2026-03-04,income,12985,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-04,2026-03-04,nandan.nv358@gmail.com
-2026-03-04,expense,2581,utilities,Daily Operational Expense,,paid,2026-03-04,2026-03-04,
-2026-03-04,income,38388,consulting,Invoice 140,Sigma Traders,paid,2026-03-19,2026-03-04,nandan.nv358@gmail.com
-2026-03-05,income,9841,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-05,2026-03-05,nverma_be23@thapar.edu
-2026-03-05,expense,1054,utilities,Daily Operational Expense,,paid,2026-03-05,2026-03-05,
-2026-03-06,income,14600,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-06,2026-03-06,nandan.nv358@gmail.com
-2026-03-06,expense,2882,utilities,Daily Operational Expense,,paid,2026-03-06,2026-03-06,
-2026-03-07,income,8858,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-07,2026-03-07,nandan.nv358@gmail.com
-2026-03-07,income,17833,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-07,2026-03-07,nverma_be23@thapar.edu
-2026-03-07,expense,3325,utilities,Daily Operational Expense,,paid,2026-03-07,2026-03-07,
-2026-03-08,income,10137,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-08,2026-03-08,nandan.nv358@gmail.com
-2026-03-08,expense,1651,utilities,Daily Operational Expense,,paid,2026-03-08,2026-03-08,
-2026-03-09,income,14682,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-09,2026-03-09,krishanmalhotra2005@gmail.com
-2026-03-09,expense,3370,utilities,Daily Operational Expense,,paid,2026-03-09,2026-03-09,
-2026-03-09,expense,25000,rent,Office Rent Payment,,paid,2026-03-09,2026-03-09,
-2026-03-10,income,6282,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-10,2026-03-10,krishanmalhotra2005@gmail.com
-2026-03-10,income,8203,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-10,2026-03-10,krishanmalhotra2005@gmail.com
-2026-03-10,expense,3303,utilities,Daily Operational Expense,,paid,2026-03-10,2026-03-10,
-2026-03-11,income,8051,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-11,2026-03-11,krishanmalhotra2005@gmail.com
-2026-03-11,expense,1734,utilities,Daily Operational Expense,,paid,2026-03-11,2026-03-11,
-2026-03-11,income,38411,consulting,Invoice 158,Delta Manufacturing,overdue,2026-03-26,2026-03-11,nverma_be23@thapar.edu
-2026-03-12,income,16974,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-12,2026-03-12,nverma_be23@thapar.edu
-2026-03-12,income,6519,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-12,2026-03-12,nandan.nv358@gmail.com
-2026-03-12,expense,1817,utilities,Daily Operational Expense,,paid,2026-03-12,2026-03-12,
-2026-03-13,income,9210,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-13,2026-03-13,krishanmalhotra2005@gmail.com
-2026-03-13,income,10014,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-13,2026-03-13,krishanmalhotra2005@gmail.com
-2026-03-13,expense,2049,utilities,Daily Operational Expense,,paid,2026-03-13,2026-03-13,
-2026-03-14,income,18692,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-14,2026-03-14,krishanmalhotra2005@gmail.com
-2026-03-14,expense,2460,utilities,Daily Operational Expense,,paid,2026-03-14,2026-03-14,
-2026-03-15,income,8812,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-15,2026-03-15,krishanmalhotra2005@gmail.com
-2026-03-15,income,17654,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-15,2026-03-15,nandan.nv358@gmail.com
-2026-03-15,expense,3028,utilities,Daily Operational Expense,,paid,2026-03-15,2026-03-15,
-2026-03-16,income,12070,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-16,2026-03-16,krishanmalhotra2005@gmail.com
-2026-03-16,income,18513,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-16,2026-03-16,krishanmalhotra2005@gmail.com
-2026-03-16,expense,2322,utilities,Daily Operational Expense,,paid,2026-03-16,2026-03-16,
-2026-03-16,expense,25000,rent,Office Rent Payment,,paid,2026-03-16,2026-03-16,
-2026-03-17,income,8501,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-17,2026-03-17,krishanmalhotra2005@gmail.com
-2026-03-17,income,19343,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-17,2026-03-17,nandan.nv358@gmail.com
-2026-03-17,expense,1272,utilities,Daily Operational Expense,,paid,2026-03-17,2026-03-17,
-2026-03-18,income,14821,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-18,2026-03-18,krishanmalhotra2005@gmail.com
-2026-03-18,expense,1905,utilities,Daily Operational Expense,,paid,2026-03-18,2026-03-18,
-2026-03-18,income,57502,consulting,Invoice 179,Alpha Retail,paid,2026-04-02,2026-03-18,nandan.nv358@gmail.com
-2026-03-19,income,5224,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-19,2026-03-19,krishanmalhotra2005@gmail.com
-2026-03-19,income,18048,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-19,2026-03-19,nverma_be23@thapar.edu
-2026-03-19,expense,2522,utilities,Daily Operational Expense,,paid,2026-03-19,2026-03-19,
-2026-03-20,income,18439,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-20,2026-03-20,nverma_be23@thapar.edu
-2026-03-20,expense,718,utilities,Daily Operational Expense,,paid,2026-03-20,2026-03-20,
-2026-03-21,income,15860,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-21,2026-03-21,nandan.nv358@gmail.com
-2026-03-21,income,15495,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-21,2026-03-21,nandan.nv358@gmail.com
-2026-03-21,expense,1444,utilities,Daily Operational Expense,,paid,2026-03-21,2026-03-21,
-2026-03-22,income,7118,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-22,2026-03-22,krishanmalhotra2005@gmail.com
-2026-03-22,income,9665,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-22,2026-03-22,krishanmalhotra2005@gmail.com
-2026-03-22,expense,2755,utilities,Daily Operational Expense,,paid,2026-03-22,2026-03-22,
-2026-03-23,income,15659,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-23,2026-03-23,nandan.nv358@gmail.com
-2026-03-23,expense,1648,utilities,Daily Operational Expense,,paid,2026-03-23,2026-03-23,
-2026-03-23,expense,25000,rent,Office Rent Payment,,paid,2026-03-23,2026-03-23,
-2026-03-24,income,18521,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-24,2026-03-24,krishanmalhotra2005@gmail.com
-2026-03-24,income,19794,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-24,2026-03-24,nandan.nv358@gmail.com
-2026-03-24,expense,1481,utilities,Daily Operational Expense,,paid,2026-03-24,2026-03-24,
-2026-03-25,income,11478,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-25,2026-03-25,krishanmalhotra2005@gmail.com
-2026-03-25,income,19309,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-25,2026-03-25,nverma_be23@thapar.edu
-2026-03-25,expense,2377,utilities,Daily Operational Expense,,paid,2026-03-25,2026-03-25,
-2026-03-25,income,62664,consulting,Invoice 200,Gamma Services,paid,2026-04-09,2026-03-25,krishanmalhotra2005@gmail.com
-2026-03-26,income,17160,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-26,2026-03-26,nverma_be23@thapar.edu
-2026-03-26,income,8892,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-26,2026-03-26,nandan.nv358@gmail.com
-2026-03-26,expense,536,utilities,Daily Operational Expense,,paid,2026-03-26,2026-03-26,
-2026-03-27,income,17250,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-27,2026-03-27,krishanmalhotra2005@gmail.com
-2026-03-27,expense,948,utilities,Daily Operational Expense,,paid,2026-03-27,2026-03-27,
-2026-03-28,income,9578,sales,Daily Retail Settlement,Beta Logistics,paid,2026-03-28,2026-03-28,krishanmalhotra2005@gmail.com
-2026-03-28,income,18187,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-28,2026-03-28,nverma_be23@thapar.edu
-2026-03-28,expense,1049,utilities,Daily Operational Expense,,paid,2026-03-28,2026-03-28,
-2026-03-29,income,12423,sales,Daily Retail Settlement,Alpha Retail,paid,2026-03-29,2026-03-29,nandan.nv358@gmail.com
-2026-03-29,income,9810,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-29,2026-03-29,nverma_be23@thapar.edu
-2026-03-29,expense,523,utilities,Daily Operational Expense,,paid,2026-03-29,2026-03-29,
-2026-03-30,income,17567,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-03-30,2026-03-30,nverma_be23@thapar.edu
-2026-03-30,expense,882,utilities,Daily Operational Expense,,paid,2026-03-30,2026-03-30,
-2026-03-30,expense,25000,rent,Office Rent Payment,,paid,2026-03-30,2026-03-30,
-2026-03-31,income,7119,sales,Daily Retail Settlement,Gamma Services,paid,2026-03-31,2026-03-31,krishanmalhotra2005@gmail.com
-2026-03-31,income,19572,sales,Daily Retail Settlement,Sigma Traders,paid,2026-03-31,2026-03-31,nandan.nv358@gmail.com
-2026-03-31,expense,1793,utilities,Daily Operational Expense,,paid,2026-03-31,2026-03-31,
-2026-04-01,income,15682,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-01,2026-04-01,nverma_be23@thapar.edu
-2026-04-01,expense,3284,utilities,Daily Operational Expense,,paid,2026-04-01,2026-04-01,
-2026-04-01,expense,120000,salaries,Staff Salaries Deployment,,paid,2026-04-01,2026-04-01,
-2026-04-01,income,35280,consulting,Invoice 221,Alpha Retail,paid,2026-04-16,2026-04-01,nandan.nv358@gmail.com
-2026-04-02,income,5895,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-02,2026-04-02,nverma_be23@thapar.edu
-2026-04-02,expense,3262,utilities,Daily Operational Expense,,paid,2026-04-02,2026-04-02,
-2026-04-03,income,15489,sales,Daily Retail Settlement,Beta Logistics,paid,2026-04-03,2026-04-03,krishanmalhotra2005@gmail.com
-2026-04-03,income,7030,sales,Daily Retail Settlement,Alpha Retail,paid,2026-04-03,2026-04-03,nandan.nv358@gmail.com
-2026-04-03,expense,3469,utilities,Daily Operational Expense,,paid,2026-04-03,2026-04-03,
-2026-04-04,income,15491,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-04,2026-04-04,nandan.nv358@gmail.com
-2026-04-04,expense,3010,utilities,Daily Operational Expense,,paid,2026-04-04,2026-04-04,
-2026-04-05,income,11349,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-05,2026-04-05,nandan.nv358@gmail.com
-2026-04-05,income,13286,sales,Daily Retail Settlement,Beta Logistics,paid,2026-04-05,2026-04-05,krishanmalhotra2005@gmail.com
-2026-04-05,expense,1247,utilities,Daily Operational Expense,,paid,2026-04-05,2026-04-05,
-2026-04-06,income,17887,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-06,2026-04-06,nverma_be23@thapar.edu
-2026-04-06,expense,2108,utilities,Daily Operational Expense,,paid,2026-04-06,2026-04-06,
-2026-04-06,expense,25000,rent,Office Rent Payment,,paid,2026-04-06,2026-04-06,
-2026-04-07,income,7209,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-07,2026-04-07,nandan.nv358@gmail.com
-2026-04-07,expense,2012,utilities,Daily Operational Expense,,paid,2026-04-07,2026-04-07,
-2026-04-08,income,5671,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-08,2026-04-08,nandan.nv358@gmail.com
-2026-04-08,income,12621,sales,Daily Retail Settlement,Gamma Services,paid,2026-04-08,2026-04-08,krishanmalhotra2005@gmail.com
-2026-04-08,expense,1836,utilities,Daily Operational Expense,,paid,2026-04-08,2026-04-08,
-2026-04-08,income,55338,consulting,Invoice 240,Delta Manufacturing,unpaid,2026-04-23,2026-04-08,nverma_be23@thapar.edu
-2026-04-09,income,13731,sales,Daily Retail Settlement,Gamma Services,paid,2026-04-09,2026-04-09,krishanmalhotra2005@gmail.com
-2026-04-09,expense,2277,utilities,Daily Operational Expense,,paid,2026-04-09,2026-04-09,
-2026-04-10,income,7906,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-10,2026-04-10,nverma_be23@thapar.edu
-2026-04-10,expense,2397,utilities,Daily Operational Expense,,paid,2026-04-10,2026-04-10,
-2026-04-11,income,6292,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-11,2026-04-11,nverma_be23@thapar.edu
-2026-04-11,expense,1846,utilities,Daily Operational Expense,,paid,2026-04-11,2026-04-11,
-2026-04-12,income,8666,sales,Daily Retail Settlement,Beta Logistics,paid,2026-04-12,2026-04-12,krishanmalhotra2005@gmail.com
-2026-04-12,income,11355,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-12,2026-04-12,nandan.nv358@gmail.com
-2026-04-12,expense,956,utilities,Daily Operational Expense,,paid,2026-04-12,2026-04-12,
-2026-04-13,income,15106,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-13,2026-04-13,nandan.nv358@gmail.com
-2026-04-13,income,5865,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-13,2026-04-13,nverma_be23@thapar.edu
-2026-04-13,expense,2389,utilities,Daily Operational Expense,,paid,2026-04-13,2026-04-13,
-2026-04-13,expense,25000,rent,Office Rent Payment,,paid,2026-04-13,2026-04-13,
-2026-04-14,income,14138,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-14,2026-04-14,nverma_be23@thapar.edu
-2026-04-14,income,13742,sales,Daily Retail Settlement,Alpha Retail,paid,2026-04-14,2026-04-14,nandan.nv358@gmail.com
-2026-04-14,expense,3067,utilities,Daily Operational Expense,,paid,2026-04-14,2026-04-14,
-2026-04-15,income,12217,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-15,2026-04-15,nandan.nv358@gmail.com
-2026-04-15,expense,2976,utilities,Daily Operational Expense,,paid,2026-04-15,2026-04-15,
-2026-04-15,income,37333,consulting,Invoice 259,Sigma Traders,unpaid,2026-04-30,2026-04-15,nandan.nv358@gmail.com
-2026-04-16,income,18606,sales,Daily Retail Settlement,Beta Logistics,paid,2026-04-16,2026-04-16,krishanmalhotra2005@gmail.com
-2026-04-16,income,12251,sales,Daily Retail Settlement,Gamma Services,paid,2026-04-16,2026-04-16,krishanmalhotra2005@gmail.com
-2026-04-16,expense,2087,utilities,Daily Operational Expense,,paid,2026-04-16,2026-04-16,
-2026-04-17,income,7735,sales,Daily Retail Settlement,Delta Manufacturing,paid,2026-04-17,2026-04-17,nverma_be23@thapar.edu
-2026-04-17,expense,2227,utilities,Daily Operational Expense,,paid,2026-04-17,2026-04-17,
-2026-04-18,income,10751,sales,Daily Retail Settlement,Sigma Traders,paid,2026-04-18,2026-04-18,nandan.nv358@gmail.com
-2026-04-18,expense,1900,utilities,Daily Operational Expense,,paid,2026-04-18,2026-04-18,
-2026-04-19,income,7615,sales,Daily Retail Settlement,Gamma Services,paid,2026-04-19,2026-04-19,krishanmalhotra2005@gmail.com
-2026-04-19,income,11643,sales,Daily Retail Settlement,Gamma Services,paid,2026-04-19,2026-04-19,krishanmalhotra2005@gmail.com
-2026-04-19,expense,2563,utilities,Daily Operational Expense,,paid,2026-04-19,2026-04-19,
+﻿"date","type","amount","category","description","client","status","dueDate","issueDate","email"
+"2026-01-15","income","15830","sales","Daily Retail Settlement","Sigma Traders","paid","2026-01-15","2026-01-15","nandan.nv358@gmail.com"
+"2026-01-15","expense","1106","utilities","Daily Operational Expense","","paid","2026-01-15","2026-01-15","admin@cashguardian.local"
+"2026-01-16","income","6262","sales","Daily Retail Settlement","Gamma Services","paid","2026-01-16","2026-01-16","krishanmalhotra2005@gmail.com"
+"2026-01-16","expense","1860","utilities","Daily Operational Expense","","paid","2026-01-16","2026-01-16","admin@cashguardian.local"
+"2026-01-17","income","8240","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-01-17","2026-01-17","nverma_be23@thapar.edu"
+"2026-01-17","expense","3311","utilities","Daily Operational Expense","","paid","2026-01-17","2026-01-17","admin@cashguardian.local"
+"2026-01-18","income","14573","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-01-18","2026-01-18","nverma_be23@thapar.edu"
+"2026-01-18","expense","2385","utilities","Daily Operational Expense","","paid","2026-01-18","2026-01-18","admin@cashguardian.local"
+"2026-01-19","income","13262","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-01-19","2026-01-19","nverma_be23@thapar.edu"
+"2026-01-19","expense","941","utilities","Daily Operational Expense","","paid","2026-01-19","2026-01-19","admin@cashguardian.local"
+"2026-01-19","expense","25000","rent","Office Rent Payment","","paid","2026-01-19","2026-01-19","admin@cashguardian.local"
+"2026-01-20","income","9770","sales","Daily Retail Settlement","Beta Logistics","paid","2026-01-20","2026-01-20","krishanmalhotra2005@gmail.com"
+"2026-01-20","expense","2288","utilities","Daily Operational Expense","","paid","2026-01-20","2026-01-20","admin@cashguardian.local"
+"2026-01-21","income","7886","sales","Daily Retail Settlement","Sigma Traders","paid","2026-01-21","2026-01-21","nandan.nv358@gmail.com"
+"2026-01-21","expense","2481","utilities","Daily Operational Expense","","paid","2026-01-21","2026-01-21","admin@cashguardian.local"
+"2026-01-21","income","43116","consulting","Invoice 16","Sigma Traders","overdue","2026-02-05","2026-01-21","nandan.nv358@gmail.com"
+"2026-01-22","income","16209","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-01-22","2026-01-22","nverma_be23@thapar.edu"
+"2026-01-22","income","5983","sales","Daily Retail Settlement","Alpha Retail","paid","2026-01-22","2026-01-22","nandan.nv358@gmail.com"
+"2026-01-22","expense","2412","utilities","Daily Operational Expense","","paid","2026-01-22","2026-01-22","admin@cashguardian.local"
+"2026-01-23","income","11930","sales","Daily Retail Settlement","Sigma Traders","paid","2026-01-23","2026-01-23","nandan.nv358@gmail.com"
+"2026-01-23","expense","3320","utilities","Daily Operational Expense","","paid","2026-01-23","2026-01-23","admin@cashguardian.local"
+"2026-01-24","income","15349","sales","Daily Retail Settlement","Gamma Services","paid","2026-01-24","2026-01-24","krishanmalhotra2005@gmail.com"
+"2026-01-24","expense","3394","utilities","Daily Operational Expense","","paid","2026-01-24","2026-01-24","admin@cashguardian.local"
+"2026-01-25","income","18806","sales","Daily Retail Settlement","Alpha Retail","paid","2026-01-25","2026-01-25","nandan.nv358@gmail.com"
+"2026-01-25","income","13846","sales","Daily Retail Settlement","Gamma Services","paid","2026-01-25","2026-01-25","krishanmalhotra2005@gmail.com"
+"2026-01-25","expense","2752","utilities","Daily Operational Expense","","paid","2026-01-25","2026-01-25","admin@cashguardian.local"
+"2026-01-26","income","7085","sales","Daily Retail Settlement","Beta Logistics","paid","2026-01-26","2026-01-26","krishanmalhotra2005@gmail.com"
+"2026-01-26","income","7559","sales","Daily Retail Settlement","Sigma Traders","paid","2026-01-26","2026-01-26","nandan.nv358@gmail.com"
+"2026-01-26","expense","2576","utilities","Daily Operational Expense","","paid","2026-01-26","2026-01-26","admin@cashguardian.local"
+"2026-01-26","expense","25000","rent","Office Rent Payment","","paid","2026-01-26","2026-01-26","admin@cashguardian.local"
+"2026-01-27","income","8535","sales","Daily Retail Settlement","Alpha Retail","paid","2026-01-27","2026-01-27","nandan.nv358@gmail.com"
+"2026-01-27","expense","3334","utilities","Daily Operational Expense","","paid","2026-01-27","2026-01-27","admin@cashguardian.local"
+"2026-01-28","income","17529","sales","Daily Retail Settlement","Sigma Traders","paid","2026-01-28","2026-01-28","nandan.nv358@gmail.com"
+"2026-01-28","income","16267","sales","Daily Retail Settlement","Alpha Retail","paid","2026-01-28","2026-01-28","nandan.nv358@gmail.com"
+"2026-01-28","expense","1442","utilities","Daily Operational Expense","","paid","2026-01-28","2026-01-28","admin@cashguardian.local"
+"2026-01-28","income","43245","consulting","Invoice 36","Sigma Traders","paid","2026-02-12","2026-01-28","nandan.nv358@gmail.com"
+"2026-01-29","income","5164","sales","Daily Retail Settlement","Beta Logistics","paid","2026-01-29","2026-01-29","krishanmalhotra2005@gmail.com"
+"2026-01-29","income","12390","sales","Daily Retail Settlement","Alpha Retail","paid","2026-01-29","2026-01-29","nandan.nv358@gmail.com"
+"2026-01-29","expense","3228","utilities","Daily Operational Expense","","paid","2026-01-29","2026-01-29","admin@cashguardian.local"
+"2026-01-30","income","11935","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-01-30","2026-01-30","nverma_be23@thapar.edu"
+"2026-01-30","expense","2345","utilities","Daily Operational Expense","","paid","2026-01-30","2026-01-30","admin@cashguardian.local"
+"2026-01-31","income","7465","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-01-31","2026-01-31","nverma_be23@thapar.edu"
+"2026-01-31","expense","1072","utilities","Daily Operational Expense","","paid","2026-01-31","2026-01-31","admin@cashguardian.local"
+"2026-02-01","income","17832","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-01","2026-02-01","krishanmalhotra2005@gmail.com"
+"2026-02-01","income","7230","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-01","2026-02-01","nandan.nv358@gmail.com"
+"2026-02-01","expense","576","utilities","Daily Operational Expense","","paid","2026-02-01","2026-02-01","admin@cashguardian.local"
+"2026-02-01","expense","120000","salaries","Staff Salaries Deployment","","paid","2026-02-01","2026-02-01","admin@cashguardian.local"
+"2026-02-02","income","7632","sales","Daily Retail Settlement","Alpha Retail","paid","2026-02-02","2026-02-02","nandan.nv358@gmail.com"
+"2026-02-02","income","5608","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-02","2026-02-02","nandan.nv358@gmail.com"
+"2026-02-02","expense","3310","utilities","Daily Operational Expense","","paid","2026-02-02","2026-02-02","admin@cashguardian.local"
+"2026-02-02","expense","25000","rent","Office Rent Payment","","paid","2026-02-02","2026-02-02","admin@cashguardian.local"
+"2026-02-03","income","7176","sales","Daily Retail Settlement","Alpha Retail","paid","2026-02-03","2026-02-03","nandan.nv358@gmail.com"
+"2026-02-03","expense","2076","utilities","Daily Operational Expense","","paid","2026-02-03","2026-02-03","admin@cashguardian.local"
+"2026-02-04","income","19532","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-04","2026-02-04","krishanmalhotra2005@gmail.com"
+"2026-02-04","income","10174","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-04","2026-02-04","krishanmalhotra2005@gmail.com"
+"2026-02-04","expense","2005","utilities","Daily Operational Expense","","paid","2026-02-04","2026-02-04","admin@cashguardian.local"
+"2026-02-04","income","24020","consulting","Invoice 57","Alpha Retail","paid","2026-02-19","2026-02-04","nandan.nv358@gmail.com"
+"2026-02-05","income","5856","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-02-05","2026-02-05","nverma_be23@thapar.edu"
+"2026-02-05","income","6410","sales","Daily Retail Settlement","Beta Logistics","paid","2026-02-05","2026-02-05","krishanmalhotra2005@gmail.com"
+"2026-02-05","expense","2173","utilities","Daily Operational Expense","","paid","2026-02-05","2026-02-05","admin@cashguardian.local"
+"2026-02-06","income","13579","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-02-06","2026-02-06","nverma_be23@thapar.edu"
+"2026-02-06","expense","1812","utilities","Daily Operational Expense","","paid","2026-02-06","2026-02-06","admin@cashguardian.local"
+"2026-02-07","income","9768","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-07","2026-02-07","krishanmalhotra2005@gmail.com"
+"2026-02-07","income","12724","sales","Daily Retail Settlement","Beta Logistics","paid","2026-02-07","2026-02-07","krishanmalhotra2005@gmail.com"
+"2026-02-07","expense","2197","utilities","Daily Operational Expense","","paid","2026-02-07","2026-02-07","admin@cashguardian.local"
+"2026-02-08","income","18366","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-02-08","2026-02-08","nverma_be23@thapar.edu"
+"2026-02-08","expense","2426","utilities","Daily Operational Expense","","paid","2026-02-08","2026-02-08","admin@cashguardian.local"
+"2026-02-09","income","17337","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-02-09","2026-02-09","nverma_be23@thapar.edu"
+"2026-02-09","income","17918","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-09","2026-02-09","krishanmalhotra2005@gmail.com"
+"2026-02-09","expense","646","utilities","Daily Operational Expense","","paid","2026-02-09","2026-02-09","admin@cashguardian.local"
+"2026-02-09","expense","25000","rent","Office Rent Payment","","paid","2026-02-09","2026-02-09","admin@cashguardian.local"
+"2026-02-10","income","5657","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-10","2026-02-10","krishanmalhotra2005@gmail.com"
+"2026-02-10","income","19547","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-10","2026-02-10","krishanmalhotra2005@gmail.com"
+"2026-02-10","expense","2302","utilities","Daily Operational Expense","","paid","2026-02-10","2026-02-10","admin@cashguardian.local"
+"2026-02-11","income","14576","sales","Daily Retail Settlement","Alpha Retail","paid","2026-02-11","2026-02-11","nandan.nv358@gmail.com"
+"2026-02-11","expense","3056","utilities","Daily Operational Expense","","paid","2026-02-11","2026-02-11","admin@cashguardian.local"
+"2026-02-11","income","36587","consulting","Invoice 77","Gamma Services","paid","2026-02-26","2026-02-11","krishanmalhotra2005@gmail.com"
+"2026-02-12","income","6603","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-12","2026-02-12","nandan.nv358@gmail.com"
+"2026-02-12","income","11206","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-02-12","2026-02-12","nverma_be23@thapar.edu"
+"2026-02-12","expense","1976","utilities","Daily Operational Expense","","paid","2026-02-12","2026-02-12","admin@cashguardian.local"
+"2026-02-13","income","6406","sales","Daily Retail Settlement","Beta Logistics","paid","2026-02-13","2026-02-13","krishanmalhotra2005@gmail.com"
+"2026-02-13","income","6529","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-13","2026-02-13","krishanmalhotra2005@gmail.com"
+"2026-02-13","expense","1279","utilities","Daily Operational Expense","","paid","2026-02-13","2026-02-13","admin@cashguardian.local"
+"2026-02-14","income","16660","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-02-14","2026-02-14","nverma_be23@thapar.edu"
+"2026-02-14","expense","3261","utilities","Daily Operational Expense","","paid","2026-02-14","2026-02-14","admin@cashguardian.local"
+"2026-02-15","income","19467","sales","Daily Retail Settlement","Alpha Retail","paid","2026-02-15","2026-02-15","nandan.nv358@gmail.com"
+"2026-02-15","income","5910","sales","Daily Retail Settlement","Beta Logistics","paid","2026-02-15","2026-02-15","krishanmalhotra2005@gmail.com"
+"2026-02-15","expense","1664","utilities","Daily Operational Expense","","paid","2026-02-15","2026-02-15","admin@cashguardian.local"
+"2026-02-16","income","6569","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-16","2026-02-16","nandan.nv358@gmail.com"
+"2026-02-16","income","10656","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-02-16","2026-02-16","nverma_be23@thapar.edu"
+"2026-02-16","expense","1292","utilities","Daily Operational Expense","","paid","2026-02-16","2026-02-16","admin@cashguardian.local"
+"2026-02-16","expense","25000","rent","Office Rent Payment","","paid","2026-02-16","2026-02-16","admin@cashguardian.local"
+"2026-02-17","income","5721","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-17","2026-02-17","krishanmalhotra2005@gmail.com"
+"2026-02-17","income","18170","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-17","2026-02-17","nandan.nv358@gmail.com"
+"2026-02-17","expense","1578","utilities","Daily Operational Expense","","paid","2026-02-17","2026-02-17","admin@cashguardian.local"
+"2026-02-18","income","5367","sales","Daily Retail Settlement","Alpha Retail","paid","2026-02-18","2026-02-18","nandan.nv358@gmail.com"
+"2026-02-18","income","7493","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-18","2026-02-18","nandan.nv358@gmail.com"
+"2026-02-18","expense","2323","utilities","Daily Operational Expense","","paid","2026-02-18","2026-02-18","admin@cashguardian.local"
+"2026-02-18","income","33516","consulting","Invoice 99","Delta Manufacturing","overdue","2026-03-05","2026-02-18","nverma_be23@thapar.edu"
+"2026-02-19","income","16106","sales","Daily Retail Settlement","Alpha Retail","paid","2026-02-19","2026-02-19","nandan.nv358@gmail.com"
+"2026-02-19","expense","2668","utilities","Daily Operational Expense","","paid","2026-02-19","2026-02-19","admin@cashguardian.local"
+"2026-02-20","income","8435","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-20","2026-02-20","krishanmalhotra2005@gmail.com"
+"2026-02-20","income","6355","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-20","2026-02-20","nandan.nv358@gmail.com"
+"2026-02-20","expense","2988","utilities","Daily Operational Expense","","paid","2026-02-20","2026-02-20","admin@cashguardian.local"
+"2026-02-20","expense","85000","logistics","Surge Logistics - Emergency Shipment","","paid","2026-02-20","2026-02-20","admin@cashguardian.local"
+"2026-02-21","income","18094","sales","Daily Retail Settlement","Alpha Retail","paid","2026-02-21","2026-02-21","nandan.nv358@gmail.com"
+"2026-02-21","income","12752","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-21","2026-02-21","nandan.nv358@gmail.com"
+"2026-02-21","expense","1021","utilities","Daily Operational Expense","","paid","2026-02-21","2026-02-21","admin@cashguardian.local"
+"2026-02-22","income","6219","sales","Daily Retail Settlement","Beta Logistics","paid","2026-02-22","2026-02-22","krishanmalhotra2005@gmail.com"
+"2026-02-22","income","18814","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-02-22","2026-02-22","nverma_be23@thapar.edu"
+"2026-02-22","expense","2500","utilities","Daily Operational Expense","","paid","2026-02-22","2026-02-22","admin@cashguardian.local"
+"2026-02-23","income","13132","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-23","2026-02-23","krishanmalhotra2005@gmail.com"
+"2026-02-23","income","18535","sales","Daily Retail Settlement","Alpha Retail","paid","2026-02-23","2026-02-23","nandan.nv358@gmail.com"
+"2026-02-23","expense","1003","utilities","Daily Operational Expense","","paid","2026-02-23","2026-02-23","admin@cashguardian.local"
+"2026-02-23","expense","25000","rent","Office Rent Payment","","paid","2026-02-23","2026-02-23","admin@cashguardian.local"
+"2026-02-24","income","13620","sales","Daily Retail Settlement","Beta Logistics","paid","2026-02-24","2026-02-24","krishanmalhotra2005@gmail.com"
+"2026-02-24","expense","1690","utilities","Daily Operational Expense","","paid","2026-02-24","2026-02-24","admin@cashguardian.local"
+"2026-02-25","income","6779","sales","Daily Retail Settlement","Beta Logistics","paid","2026-02-25","2026-02-25","krishanmalhotra2005@gmail.com"
+"2026-02-25","expense","2208","utilities","Daily Operational Expense","","paid","2026-02-25","2026-02-25","admin@cashguardian.local"
+"2026-02-25","income","41276","consulting","Invoice 120","Delta Manufacturing","overdue","2026-03-12","2026-02-25","nverma_be23@thapar.edu"
+"2026-02-26","income","7785","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-26","2026-02-26","nandan.nv358@gmail.com"
+"2026-02-26","income","12225","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-26","2026-02-26","nandan.nv358@gmail.com"
+"2026-02-26","expense","914","utilities","Daily Operational Expense","","paid","2026-02-26","2026-02-26","admin@cashguardian.local"
+"2026-02-27","income","8229","sales","Daily Retail Settlement","Sigma Traders","paid","2026-02-27","2026-02-27","nandan.nv358@gmail.com"
+"2026-02-27","expense","3205","utilities","Daily Operational Expense","","paid","2026-02-27","2026-02-27","admin@cashguardian.local"
+"2026-02-28","income","5761","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-28","2026-02-28","krishanmalhotra2005@gmail.com"
+"2026-02-28","income","10312","sales","Daily Retail Settlement","Gamma Services","paid","2026-02-28","2026-02-28","krishanmalhotra2005@gmail.com"
+"2026-02-28","expense","1990","utilities","Daily Operational Expense","","paid","2026-02-28","2026-02-28","admin@cashguardian.local"
+"2026-03-01","income","14199","sales","Daily Retail Settlement","Beta Logistics","paid","2026-03-01","2026-03-01","krishanmalhotra2005@gmail.com"
+"2026-03-01","expense","3227","utilities","Daily Operational Expense","","paid","2026-03-01","2026-03-01","admin@cashguardian.local"
+"2026-03-01","expense","120000","salaries","Staff Salaries Deployment","","paid","2026-03-01","2026-03-01","admin@cashguardian.local"
+"2026-03-02","income","10413","sales","Daily Retail Settlement","Beta Logistics","paid","2026-03-02","2026-03-02","krishanmalhotra2005@gmail.com"
+"2026-03-02","expense","2676","utilities","Daily Operational Expense","","paid","2026-03-02","2026-03-02","admin@cashguardian.local"
+"2026-03-02","expense","25000","rent","Office Rent Payment","","paid","2026-03-02","2026-03-02","admin@cashguardian.local"
+"2026-03-03","income","8791","sales","Daily Retail Settlement","Sigma Traders","paid","2026-03-03","2026-03-03","nandan.nv358@gmail.com"
+"2026-03-03","income","5865","sales","Daily Retail Settlement","Alpha Retail","paid","2026-03-03","2026-03-03","nandan.nv358@gmail.com"
+"2026-03-03","expense","3253","utilities","Daily Operational Expense","","paid","2026-03-03","2026-03-03","admin@cashguardian.local"
+"2026-03-04","income","12985","sales","Daily Retail Settlement","Alpha Retail","paid","2026-03-04","2026-03-04","nandan.nv358@gmail.com"
+"2026-03-04","expense","2581","utilities","Daily Operational Expense","","paid","2026-03-04","2026-03-04","admin@cashguardian.local"
+"2026-03-04","income","38388","consulting","Invoice 140","Sigma Traders","paid","2026-03-19","2026-03-04","nandan.nv358@gmail.com"
+"2026-03-05","income","9841","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-03-05","2026-03-05","nverma_be23@thapar.edu"
+"2026-03-05","expense","1054","utilities","Daily Operational Expense","","paid","2026-03-05","2026-03-05","admin@cashguardian.local"
+"2026-03-06","income","14600","sales","Daily Retail Settlement","Alpha Retail","paid","2026-03-06","2026-03-06","nandan.nv358@gmail.com"
+"2026-03-06","expense","2882","utilities","Daily Operational Expense","","paid","2026-03-06","2026-03-06","admin@cashguardian.local"
+"2026-03-07","income","8858","sales","Daily Retail Settlement","Alpha Retail","paid","2026-03-07","2026-03-07","nandan.nv358@gmail.com"
+"2026-03-07","income","17833","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-03-07","2026-03-07","nverma_be23@thapar.edu"
+"2026-03-07","expense","3325","utilities","Daily Operational Expense","","paid","2026-03-07","2026-03-07","admin@cashguardian.local"
+"2026-03-08","income","10137","sales","Daily Retail Settlement","Sigma Traders","paid","2026-03-08","2026-03-08","nandan.nv358@gmail.com"
+"2026-03-08","expense","1651","utilities","Daily Operational Expense","","paid","2026-03-08","2026-03-08","admin@cashguardian.local"
+"2026-03-09","income","14682","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-09","2026-03-09","krishanmalhotra2005@gmail.com"
+"2026-03-09","expense","3370","utilities","Daily Operational Expense","","paid","2026-03-09","2026-03-09","admin@cashguardian.local"
+"2026-03-09","expense","25000","rent","Office Rent Payment","","paid","2026-03-09","2026-03-09","admin@cashguardian.local"
+"2026-03-10","income","6282","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-10","2026-03-10","krishanmalhotra2005@gmail.com"
+"2026-03-10","income","8203","sales","Daily Retail Settlement","Beta Logistics","paid","2026-03-10","2026-03-10","krishanmalhotra2005@gmail.com"
+"2026-03-10","expense","3303","utilities","Daily Operational Expense","","paid","2026-03-10","2026-03-10","admin@cashguardian.local"
+"2026-03-11","income","8051","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-11","2026-03-11","krishanmalhotra2005@gmail.com"
+"2026-03-11","expense","1734","utilities","Daily Operational Expense","","paid","2026-03-11","2026-03-11","admin@cashguardian.local"
+"2026-03-11","income","38411","consulting","Invoice 158","Delta Manufacturing","overdue","2026-03-26","2026-03-11","nverma_be23@thapar.edu"
+"2026-03-12","income","16974","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-03-12","2026-03-12","nverma_be23@thapar.edu"
+"2026-03-12","income","6519","sales","Daily Retail Settlement","Sigma Traders","paid","2026-03-12","2026-03-12","nandan.nv358@gmail.com"
+"2026-03-12","expense","1817","utilities","Daily Operational Expense","","paid","2026-03-12","2026-03-12","admin@cashguardian.local"
+"2026-03-13","income","9210","sales","Daily Retail Settlement","Beta Logistics","paid","2026-03-13","2026-03-13","krishanmalhotra2005@gmail.com"
+"2026-03-13","income","10014","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-13","2026-03-13","krishanmalhotra2005@gmail.com"
+"2026-03-13","expense","2049","utilities","Daily Operational Expense","","paid","2026-03-13","2026-03-13","admin@cashguardian.local"
+"2026-03-14","income","18692","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-14","2026-03-14","krishanmalhotra2005@gmail.com"
+"2026-03-14","expense","2460","utilities","Daily Operational Expense","","paid","2026-03-14","2026-03-14","admin@cashguardian.local"
+"2026-03-15","income","8812","sales","Daily Retail Settlement","Beta Logistics","paid","2026-03-15","2026-03-15","krishanmalhotra2005@gmail.com"
+"2026-03-15","income","17654","sales","Daily Retail Settlement","Alpha Retail","paid","2026-03-15","2026-03-15","nandan.nv358@gmail.com"
+"2026-03-15","expense","3028","utilities","Daily Operational Expense","","paid","2026-03-15","2026-03-15","admin@cashguardian.local"
+"2026-03-16","income","12070","sales","Daily Retail Settlement","Beta Logistics","paid","2026-03-16","2026-03-16","krishanmalhotra2005@gmail.com"
+"2026-03-16","income","18513","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-16","2026-03-16","krishanmalhotra2005@gmail.com"
+"2026-03-16","expense","2322","utilities","Daily Operational Expense","","paid","2026-03-16","2026-03-16","admin@cashguardian.local"
+"2026-03-16","expense","25000","rent","Office Rent Payment","","paid","2026-03-16","2026-03-16","admin@cashguardian.local"
+"2026-03-17","income","8501","sales","Daily Retail Settlement","Beta Logistics","paid","2026-03-17","2026-03-17","krishanmalhotra2005@gmail.com"
+"2026-03-17","income","19343","sales","Daily Retail Settlement","Alpha Retail","paid","2026-03-17","2026-03-17","nandan.nv358@gmail.com"
+"2026-03-17","expense","1272","utilities","Daily Operational Expense","","paid","2026-03-17","2026-03-17","admin@cashguardian.local"
+"2026-03-18","income","14821","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-18","2026-03-18","krishanmalhotra2005@gmail.com"
+"2026-03-18","expense","1905","utilities","Daily Operational Expense","","paid","2026-03-18","2026-03-18","admin@cashguardian.local"
+"2026-03-18","income","57502","consulting","Invoice 179","Alpha Retail","paid","2026-04-02","2026-03-18","nandan.nv358@gmail.com"
+"2026-03-19","income","5224","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-19","2026-03-19","krishanmalhotra2005@gmail.com"
+"2026-03-19","income","18048","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-03-19","2026-03-19","nverma_be23@thapar.edu"
+"2026-03-19","expense","2522","utilities","Daily Operational Expense","","paid","2026-03-19","2026-03-19","admin@cashguardian.local"
+"2026-03-20","income","18439","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-03-20","2026-03-20","nverma_be23@thapar.edu"
+"2026-03-20","expense","718","utilities","Daily Operational Expense","","paid","2026-03-20","2026-03-20","admin@cashguardian.local"
+"2026-03-21","income","15860","sales","Daily Retail Settlement","Alpha Retail","paid","2026-03-21","2026-03-21","nandan.nv358@gmail.com"
+"2026-03-21","income","15495","sales","Daily Retail Settlement","Sigma Traders","paid","2026-03-21","2026-03-21","nandan.nv358@gmail.com"
+"2026-03-21","expense","1444","utilities","Daily Operational Expense","","paid","2026-03-21","2026-03-21","admin@cashguardian.local"
+"2026-03-22","income","7118","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-22","2026-03-22","krishanmalhotra2005@gmail.com"
+"2026-03-22","income","9665","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-22","2026-03-22","krishanmalhotra2005@gmail.com"
+"2026-03-22","expense","2755","utilities","Daily Operational Expense","","paid","2026-03-22","2026-03-22","admin@cashguardian.local"
+"2026-03-23","income","15659","sales","Daily Retail Settlement","Sigma Traders","paid","2026-03-23","2026-03-23","nandan.nv358@gmail.com"
+"2026-03-23","expense","1648","utilities","Daily Operational Expense","","paid","2026-03-23","2026-03-23","admin@cashguardian.local"
+"2026-03-23","expense","25000","rent","Office Rent Payment","","paid","2026-03-23","2026-03-23","admin@cashguardian.local"
+"2026-03-24","income","18521","sales","Daily Retail Settlement","Beta Logistics","paid","2026-03-24","2026-03-24","krishanmalhotra2005@gmail.com"
+"2026-03-24","income","19794","sales","Daily Retail Settlement","Alpha Retail","paid","2026-03-24","2026-03-24","nandan.nv358@gmail.com"
+"2026-03-24","expense","1481","utilities","Daily Operational Expense","","paid","2026-03-24","2026-03-24","admin@cashguardian.local"
+"2026-03-25","income","11478","sales","Daily Retail Settlement","Beta Logistics","paid","2026-03-25","2026-03-25","krishanmalhotra2005@gmail.com"
+"2026-03-25","income","19309","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-03-25","2026-03-25","nverma_be23@thapar.edu"
+"2026-03-25","expense","2377","utilities","Daily Operational Expense","","paid","2026-03-25","2026-03-25","admin@cashguardian.local"
+"2026-03-25","income","62664","consulting","Invoice 200","Gamma Services","paid","2026-04-09","2026-03-25","krishanmalhotra2005@gmail.com"
+"2026-03-26","income","17160","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-03-26","2026-03-26","nverma_be23@thapar.edu"
+"2026-03-26","income","8892","sales","Daily Retail Settlement","Sigma Traders","paid","2026-03-26","2026-03-26","nandan.nv358@gmail.com"
+"2026-03-26","expense","536","utilities","Daily Operational Expense","","paid","2026-03-26","2026-03-26","admin@cashguardian.local"
+"2026-03-27","income","17250","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-27","2026-03-27","krishanmalhotra2005@gmail.com"
+"2026-03-27","expense","948","utilities","Daily Operational Expense","","paid","2026-03-27","2026-03-27","admin@cashguardian.local"
+"2026-03-28","income","9578","sales","Daily Retail Settlement","Beta Logistics","paid","2026-03-28","2026-03-28","krishanmalhotra2005@gmail.com"
+"2026-03-28","income","18187","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-03-28","2026-03-28","nverma_be23@thapar.edu"
+"2026-03-28","expense","1049","utilities","Daily Operational Expense","","paid","2026-03-28","2026-03-28","admin@cashguardian.local"
+"2026-03-29","income","12423","sales","Daily Retail Settlement","Alpha Retail","paid","2026-03-29","2026-03-29","nandan.nv358@gmail.com"
+"2026-03-29","income","9810","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-03-29","2026-03-29","nverma_be23@thapar.edu"
+"2026-03-29","expense","523","utilities","Daily Operational Expense","","paid","2026-03-29","2026-03-29","admin@cashguardian.local"
+"2026-03-30","income","17567","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-03-30","2026-03-30","nverma_be23@thapar.edu"
+"2026-03-30","expense","882","utilities","Daily Operational Expense","","paid","2026-03-30","2026-03-30","admin@cashguardian.local"
+"2026-03-30","expense","25000","rent","Office Rent Payment","","paid","2026-03-30","2026-03-30","admin@cashguardian.local"
+"2026-03-31","income","7119","sales","Daily Retail Settlement","Gamma Services","paid","2026-03-31","2026-03-31","krishanmalhotra2005@gmail.com"
+"2026-03-31","income","19572","sales","Daily Retail Settlement","Sigma Traders","paid","2026-03-31","2026-03-31","nandan.nv358@gmail.com"
+"2026-03-31","expense","1793","utilities","Daily Operational Expense","","paid","2026-03-31","2026-03-31","admin@cashguardian.local"
+"2026-04-01","income","15682","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-04-01","2026-04-01","nverma_be23@thapar.edu"
+"2026-04-01","expense","3284","utilities","Daily Operational Expense","","paid","2026-04-01","2026-04-01","admin@cashguardian.local"
+"2026-04-01","expense","120000","salaries","Staff Salaries Deployment","","paid","2026-04-01","2026-04-01","admin@cashguardian.local"
+"2026-04-01","income","35280","consulting","Invoice 221","Alpha Retail","paid","2026-04-16","2026-04-01","nandan.nv358@gmail.com"
+"2026-04-02","income","5895","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-04-02","2026-04-02","nverma_be23@thapar.edu"
+"2026-04-02","expense","3262","utilities","Daily Operational Expense","","paid","2026-04-02","2026-04-02","admin@cashguardian.local"
+"2026-04-03","income","15489","sales","Daily Retail Settlement","Beta Logistics","paid","2026-04-03","2026-04-03","krishanmalhotra2005@gmail.com"
+"2026-04-03","income","7030","sales","Daily Retail Settlement","Alpha Retail","paid","2026-04-03","2026-04-03","nandan.nv358@gmail.com"
+"2026-04-03","expense","3469","utilities","Daily Operational Expense","","paid","2026-04-03","2026-04-03","admin@cashguardian.local"
+"2026-04-04","income","15491","sales","Daily Retail Settlement","Sigma Traders","paid","2026-04-04","2026-04-04","nandan.nv358@gmail.com"
+"2026-04-04","expense","3010","utilities","Daily Operational Expense","","paid","2026-04-04","2026-04-04","admin@cashguardian.local"
+"2026-04-05","income","11349","sales","Daily Retail Settlement","Sigma Traders","paid","2026-04-05","2026-04-05","nandan.nv358@gmail.com"
+"2026-04-05","income","13286","sales","Daily Retail Settlement","Beta Logistics","paid","2026-04-05","2026-04-05","krishanmalhotra2005@gmail.com"
+"2026-04-05","expense","1247","utilities","Daily Operational Expense","","paid","2026-04-05","2026-04-05","admin@cashguardian.local"
+"2026-04-06","income","17887","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-04-06","2026-04-06","nverma_be23@thapar.edu"
+"2026-04-06","expense","2108","utilities","Daily Operational Expense","","paid","2026-04-06","2026-04-06","admin@cashguardian.local"
+"2026-04-06","expense","25000","rent","Office Rent Payment","","paid","2026-04-06","2026-04-06","admin@cashguardian.local"
+"2026-04-07","income","7209","sales","Daily Retail Settlement","Sigma Traders","paid","2026-04-07","2026-04-07","nandan.nv358@gmail.com"
+"2026-04-07","expense","2012","utilities","Daily Operational Expense","","paid","2026-04-07","2026-04-07","admin@cashguardian.local"
+"2026-04-08","income","5671","sales","Daily Retail Settlement","Sigma Traders","paid","2026-04-08","2026-04-08","nandan.nv358@gmail.com"
+"2026-04-08","income","12621","sales","Daily Retail Settlement","Gamma Services","paid","2026-04-08","2026-04-08","krishanmalhotra2005@gmail.com"
+"2026-04-08","expense","1836","utilities","Daily Operational Expense","","paid","2026-04-08","2026-04-08","admin@cashguardian.local"
+"2026-04-08","income","55338","consulting","Invoice 240","Delta Manufacturing","unpaid","2026-04-23","2026-04-08","nverma_be23@thapar.edu"
+"2026-04-09","income","13731","sales","Daily Retail Settlement","Gamma Services","paid","2026-04-09","2026-04-09","krishanmalhotra2005@gmail.com"
+"2026-04-09","expense","2277","utilities","Daily Operational Expense","","paid","2026-04-09","2026-04-09","admin@cashguardian.local"
+"2026-04-10","income","7906","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-04-10","2026-04-10","nverma_be23@thapar.edu"
+"2026-04-10","expense","2397","utilities","Daily Operational Expense","","paid","2026-04-10","2026-04-10","admin@cashguardian.local"
+"2026-04-11","income","6292","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-04-11","2026-04-11","nverma_be23@thapar.edu"
+"2026-04-11","expense","1846","utilities","Daily Operational Expense","","paid","2026-04-11","2026-04-11","admin@cashguardian.local"
+"2026-04-12","income","8666","sales","Daily Retail Settlement","Beta Logistics","paid","2026-04-12","2026-04-12","krishanmalhotra2005@gmail.com"
+"2026-04-12","income","11355","sales","Daily Retail Settlement","Sigma Traders","paid","2026-04-12","2026-04-12","nandan.nv358@gmail.com"
+"2026-04-12","expense","956","utilities","Daily Operational Expense","","paid","2026-04-12","2026-04-12","admin@cashguardian.local"
+"2026-04-13","income","15106","sales","Daily Retail Settlement","Sigma Traders","paid","2026-04-13","2026-04-13","nandan.nv358@gmail.com"
+"2026-04-13","income","5865","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-04-13","2026-04-13","nverma_be23@thapar.edu"
+"2026-04-13","expense","2389","utilities","Daily Operational Expense","","paid","2026-04-13","2026-04-13","admin@cashguardian.local"
+"2026-04-13","expense","25000","rent","Office Rent Payment","","paid","2026-04-13","2026-04-13","admin@cashguardian.local"
+"2026-04-14","income","14138","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-04-14","2026-04-14","nverma_be23@thapar.edu"
+"2026-04-14","income","13742","sales","Daily Retail Settlement","Alpha Retail","paid","2026-04-14","2026-04-14","nandan.nv358@gmail.com"
+"2026-04-14","expense","3067","utilities","Daily Operational Expense","","paid","2026-04-14","2026-04-14","admin@cashguardian.local"
+"2026-04-15","income","12217","sales","Daily Retail Settlement","Sigma Traders","paid","2026-04-15","2026-04-15","nandan.nv358@gmail.com"
+"2026-04-15","expense","2976","utilities","Daily Operational Expense","","paid","2026-04-15","2026-04-15","admin@cashguardian.local"
+"2026-04-15","income","37333","consulting","Invoice 259","Sigma Traders","unpaid","2026-04-30","2026-04-15","nandan.nv358@gmail.com"
+"2026-04-16","income","18606","sales","Daily Retail Settlement","Beta Logistics","paid","2026-04-16","2026-04-16","krishanmalhotra2005@gmail.com"
+"2026-04-16","income","12251","sales","Daily Retail Settlement","Gamma Services","paid","2026-04-16","2026-04-16","krishanmalhotra2005@gmail.com"
+"2026-04-16","expense","2087","utilities","Daily Operational Expense","","paid","2026-04-16","2026-04-16","admin@cashguardian.local"
+"2026-04-17","income","7735","sales","Daily Retail Settlement","Delta Manufacturing","paid","2026-04-17","2026-04-17","nverma_be23@thapar.edu"
+"2026-04-17","expense","2227","utilities","Daily Operational Expense","","paid","2026-04-17","2026-04-17","admin@cashguardian.local"
+"2026-04-18","income","10751","sales","Daily Retail Settlement","Sigma Traders","paid","2026-04-18","2026-04-18","nandan.nv358@gmail.com"
+"2026-04-18","expense","1900","utilities","Daily Operational Expense","","paid","2026-04-18","2026-04-18","admin@cashguardian.local"
+"2026-04-19","income","7615","sales","Daily Retail Settlement","Gamma Services","paid","2026-04-19","2026-04-19","krishanmalhotra2005@gmail.com"
+"2026-04-19","income","11643","sales","Daily Retail Settlement","Gamma Services","paid","2026-04-19","2026-04-19","krishanmalhotra2005@gmail.com"
+"2026-04-19","expense","2563","utilities","Daily Operational Expense","","paid","2026-04-19","2026-04-19","admin@cashguardian.local"
+"2026-04-20","income","15000","sales","Bulk Order Settlement","Alpha Retail","paid","2026-04-20","2026-04-20","nandan.nv358@gmail.com"
+"2026-04-21","expense","35000","logistics","Express Logistics Surcharge","","paid","2026-04-21","2026-04-21","admin@cashguardian.local"
+"2026-04-22","income","9200","sales","Daily Retail Settlement","Beta Logistics","paid","2026-04-22","2026-04-22","krishanmalhotra2005@gmail.com"
+"2026-04-25","expense","45000","rent","Warehouse Rent April","","paid","2026-04-25","2026-04-25","admin@cashguardian.local"
+"2026-04-28","income","12000","sales","Daily Retail Settlement","Sigma Traders","paid","2026-04-28","2026-04-28","nandan.nv358@gmail.com"
+"2026-04-30","expense","120000","salaries","Staff Payroll April","","paid","2026-04-30","2026-04-30","admin@cashguardian.local"

@@ -16,12 +16,11 @@ function parseUtcDate(dateStr) {
  * @returns {Date} Latest transaction date.
  */
 function getLatestTransactionDate(dataset = transactions) {
-  const data = dataset || transactions;
-  if (!data || data.length === 0) return new Date();
-  return data.reduce((latest, transaction) => {
-    const transactionDate = parseUtcDate(transaction.date);
-    return transactionDate > latest ? transactionDate : latest;
-  }, parseUtcDate(dataset[0].date));
+  const { safeDate } = require("../utils/formatter");
+  const data = dataset && dataset.length > 0 ? dataset : transactions;
+  if (!data || !data.length) return new Date();
+  const dates = data.map((t) => safeDate(t.date)).filter((d) => !isNaN(d.getTime()));
+  return dates.length ? new Date(Math.max(...dates)) : new Date();
 }
 
 /**
@@ -47,10 +46,10 @@ function getTransactionsInRange(from, to, dataset = transactions) {
 function summarizeTransactions(items) {
   const income = items
     .filter((transaction) => transaction.type === "income")
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
+    .reduce((sum, transaction) => sum + safeNumber(transaction.amount), 0);
   const expenses = items
     .filter((transaction) => transaction.type === "expense")
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
+    .reduce((sum, transaction) => sum + Math.abs(safeNumber(transaction.amount)), 0);
 
   return {
     income,
@@ -201,7 +200,7 @@ function getCategoryVariances(current, previous) {
 
 function summarizeByCategory(items) {
   return items.reduce((acc, t) => {
-    acc[t.category] = (acc[t.category] || 0) + Number(t.amount);
+    acc[t.category] = (acc[t.category] || 0) + safeNumber(t.amount);
     return acc;
   }, {});
 }
@@ -220,6 +219,8 @@ function summarizeEntityMetrics(entity, dataset = transactions) {
   const matches = data.filter(t => 
     (t.client && t.client.toLowerCase().includes(norm)) ||
     (t.category && t.category.toLowerCase().includes(norm)) ||
+    (t.region && t.region.toLowerCase().includes(norm)) ||
+    (t.channel && t.channel.toLowerCase().includes(norm)) ||
     (t.description && t.description.toLowerCase().includes(norm))
   );
 
@@ -275,7 +276,7 @@ function compareEntities(a, b, dataset = transactions) {
 
 /**
  * Compares current period vs previous period.
- * @param {"week"|"month"} period - Period granularity.
+ * @param {"week"|"month"|Object} period - Period granularity or custom range object.
  * @param {number} unitsBack - How many units wide the current/previous windows are.
  * @param {Array<Object>} dataset - Optional transaction set.
  * @returns {{ current: object, previous: object, deltas: { income: number, expenses: number, net: number }, narrative: string }}
@@ -283,13 +284,19 @@ function compareEntities(a, b, dataset = transactions) {
 function comparePeriods(period, unitsBack = 1, dataset = transactions) {
   const data = dataset || transactions;
   const latestDate = getLatestTransactionDate(data);
-  let currentStart;
-  let previousStart;
-  let previousEnd;
+  let currentStart, currentEnd, previousStart, previousEnd;
+  let periodName = period;
 
-  if (period === "week") {
+  if (typeof period === "object" && period.target && period.baseline) {
+    currentStart = period.target.start;
+    currentEnd = period.target.end;
+    previousStart = period.baseline.start;
+    previousEnd = period.baseline.end;
+    periodName = period.name || "custom period";
+  } else if (period === "week") {
     currentStart = new Date(latestDate);
     currentStart.setUTCDate(currentStart.getUTCDate() - (7 * unitsBack) + 1);
+    currentEnd = latestDate;
     previousEnd = new Date(currentStart);
     previousEnd.setUTCDate(previousEnd.getUTCDate() - 1);
     previousStart = new Date(previousEnd);
@@ -299,6 +306,7 @@ function comparePeriods(period, unitsBack = 1, dataset = transactions) {
     if (unitsBack === 1) {
       currentStart = new Date(Date.UTC(latestDate.getUTCFullYear(), latestDate.getUTCMonth(), 1));
     }
+    currentEnd = latestDate;
     previousEnd = new Date(currentStart);
     previousEnd.setUTCDate(previousEnd.getUTCDate() - 1);
     previousStart = new Date(Date.UTC(previousEnd.getUTCFullYear(), previousEnd.getUTCMonth() - unitsBack + 1, 1));
@@ -306,10 +314,10 @@ function comparePeriods(period, unitsBack = 1, dataset = transactions) {
       previousStart = new Date(Date.UTC(previousEnd.getUTCFullYear(), previousEnd.getUTCMonth(), 1));
     }
   } else {
-    throw new Error("period must be 'week' or 'month'");
+    throw new Error("period must be 'week', 'month' or a custom range object");
   }
 
-  const currentTransactions = getTransactionsInRange(currentStart, latestDate, data);
+  const currentTransactions = getTransactionsInRange(currentStart, currentEnd, data);
   const previousTransactions = getTransactionsInRange(previousStart, previousEnd, data);
   const current = summarizeTransactions(currentTransactions);
   const previous = summarizeTransactions(previousTransactions);
@@ -322,17 +330,17 @@ function comparePeriods(period, unitsBack = 1, dataset = transactions) {
   return {
     current: {
       ...current,
-      period: `${currentStart.toISOString().slice(0, 10)} to ${latestDate.toISOString().slice(0, 10)}`
+      period: `${currentStart.toISOString().slice(0, 10)} to ${currentEnd.toISOString().slice(0, 10)}`
     },
     previous: {
       ...previous,
       period: `${previousStart.toISOString().slice(0, 10)} to ${previousEnd.toISOString().slice(0, 10)}`
     },
     deltas,
-    currentTrend: calculateWeeklyTrend(data, 0, latestDate),
-    previousTrend: calculateWeeklyTrend(data, period === 'week' ? 1 : 4, latestDate),
+    currentTrend: calculateWeeklyTrend(data, 0, currentEnd, typeof period === "object"),
+    previousTrend: calculateWeeklyTrend(data, 0, previousEnd, typeof period === "object"),
     variances: getCategoryVariances(currentTransactions, previousTransactions),
-    narrative: buildComparisonNarrative(current, previous, deltas, period)
+    narrative: buildComparisonNarrative(current, previous, deltas, periodName)
   };
 }
 
@@ -342,9 +350,10 @@ function comparePeriods(period, unitsBack = 1, dataset = transactions) {
  * @param {Array<Object>} transactions - List of transaction objects.
  * @param {number} weekOffset - Number of weeks to shift back (0 for current, 13 for previous).
  * @param {Date} anchorDate - Relative "now" for the trend.
+ * @param {boolean} normalizeLabels - If true, use generic "Week 1, Week 2..." labels.
  * @returns {{ labels: string[], revenue: number[], expenses: number[] }}
  */
-function calculateWeeklyTrend(transactions, weekOffset = 0, anchorDate = null) {
+function calculateWeeklyTrend(transactions, weekOffset = 0, anchorDate = null, normalizeLabels = false) {
   if (!transactions.length && !anchorDate) return { labels: [], revenue: [], expenses: [] };
 
   const absoluteLatest = anchorDate || getLatestTransactionDate(transactions);
@@ -357,7 +366,9 @@ function calculateWeeklyTrend(transactions, weekOffset = 0, anchorDate = null) {
   // Calculate dynamic history length (capped at 13 weeks, floored at 4 for stability)
   const diffMs = absoluteLatest.getTime() - earliestInData.getTime();
   const calculatedWeeks = Math.ceil(diffMs / weekMs);
-  const loopCount = Math.max(4, Math.min(calculatedWeeks + 1, 13));
+  
+  // FORCE ALIGNMENT: If comparing, use a fixed 13-week window so both periods match
+  const loopCount = normalizeLabels ? 12 : Math.max(4, Math.min(calculatedWeeks + 1, 13));
 
   const trend = { labels: [], revenue: [], expenses: [] };
 
@@ -366,7 +377,11 @@ function calculateWeeklyTrend(transactions, weekOffset = 0, anchorDate = null) {
     const weekStart = new Date(weekEnd.getTime() - weekMs);
     const weekNum = Math.ceil((weekEnd.getTime() - new Date(weekEnd.getFullYear(), 0, 1).getTime()) / weekMs);
     
-    trend.labels.push(`W${weekNum}`);
+    if (normalizeLabels) {
+      trend.labels.push(`Week ${loopCount - i}`);
+    } else {
+      trend.labels.push(`W${weekNum}`);
+    }
 
     const weekTransactions = transactions.filter(t => {
       const d = safeDate(t.date);
@@ -381,6 +396,34 @@ function calculateWeeklyTrend(transactions, weekOffset = 0, anchorDate = null) {
   }
 
   return trend;
+}
+
+/**
+ * Builds a leadership-ready narrative for period comparisons.
+ * @param {object} current - Current period summary.
+ * @param {object} previous - Previous period summary.
+ * @param {object} deltas - Calculated changes.
+ * @param {string} period - Name of the period (e.g., 'March vs February').
+ * @returns {string} Human-readable narrative.
+ */
+function buildComparisonNarrative(current, previous, deltas, period) {
+  const { formatCurrency } = require("../utils/formatter");
+  const incomeChangePct = previous.income !== 0 ? Math.round((deltas.income / previous.income) * 100) : 0;
+  const expenseChangePct = previous.expenses !== 0 ? Math.round((deltas.expenses / previous.expenses) * 100) : 0;
+  
+  const status = deltas.net >= 0 ? "improved" : "worsened";
+  const incomeDir = deltas.income >= 0 ? "increased" : "decreased";
+  const expenseDir = deltas.expenses >= 0 ? "rise" : "drop";
+  
+  let narrative = `${period.charAt(0).toUpperCase() + period.slice(1)}: Revenue ${incomeDir} by ${Math.abs(incomeChangePct)}%. `;
+  
+  if (Math.abs(deltas.expenses) > Math.abs(deltas.income) && deltas.expenses > 0) {
+    narrative += `The biggest driver was a ${Math.abs(expenseChangePct)}% ${expenseDir} in spending. `;
+  }
+  
+  narrative += `Net position has ${status} by ${formatCurrency(Math.abs(deltas.net))}.`;
+  
+  return narrative;
 }
 
 module.exports = {

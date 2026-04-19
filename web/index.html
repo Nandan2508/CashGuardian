@@ -362,7 +362,7 @@
             scrollToBottom();
 
             try {
-                const res = await fetch('/api/query', {
+                const response = await fetch('/api/query/stream', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -370,57 +370,96 @@
                         history: chatHistory 
                     })
                 });
-                
+
                 // Track user message in local history
                 chatHistory.push({ role: 'user', content: query });
-                if (chatHistory.length > 10) chatHistory.shift(); // Keep last 10 turns
+                if (chatHistory.length > 10) chatHistory.shift();
 
-                const data = await res.json();
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
                 const bubble = document.getElementById(aiBubbleId);
+                let fullText = '';
+                let lastData = null;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                if (data.error) {
+                                    bubble.innerHTML = `<div style="color: var(--accent-red); font-weight: 600;">⚠️ Query Failed</div><div style="font-size: 13px; margin-top: 4px;">${data.error}</div>`;
+                                    return;
+                                }
+
+                                if (data.text) {
+                                    fullText += data.text;
+                                    lastData = data;
+                                    
+                                    // Update text bubble in real-time
+                                    bubble.innerHTML = `<div class="answer-text">${marked.parse(fullText)}</div>`;
+                                    scrollToBottom();
+                                }
+                            } catch (e) { console.warn('Parse error', e); }
+                        }
+                    }
+                }
                 
-                if (data.error) {
-                    bubble.innerHTML = `<div style="color: var(--accent-red); font-weight: 600;">⚠️ Query Failed</div><div style="font-size: 13px; margin-top: 4px;">${data.details || data.error}</div>`;
-                } else {
-                    let responseText = data.response;
-                    
+                // Finalize UI after stream ends
+                if (lastData) {
                     // Track AI message in local history
-                    chatHistory.push({ role: 'assistant', content: responseText });
+                    chatHistory.push({ role: 'assistant', content: fullText });
                     if (chatHistory.length > 10) chatHistory.shift();
-                    
+
                     // Check if response is a summary that warrants a PDF export
                     const isSummary = query.toLowerCase().includes('summarise') || query.toLowerCase().includes('summary');
+                    let finalHtml = `<div class="answer-text">${marked.parse(fullText)}</div>`;
+                    
                     if (isSummary) {
-                        lastReportContent = responseText;
-                        responseText += "<br><br><strong>Would you like me to export this summary as a professional PDF? (Type 'yes' to confirm)</strong>";
+                        lastReportContent = fullText;
+                        finalHtml += "<br><br><strong>Would you like me to export this summary as a professional PDF? (Type 'yes' to confirm)</strong>";
                         awaitingPdfConfirm = true;
                     }
+
                     bubble.innerHTML = `
-                        <div class="answer-text">${marked.parse(responseText)}</div>
-                        <div class="response-meta"><span class="latency-badge">${data.latencyMs}ms</span><span>Source: ${data.source}</span></div>
+                        ${finalHtml}
+                        <div class="response-meta"><span class="latency-badge">${lastData.latencyMs}ms</span><span>Source: Local Intelligence</span></div>
                         <div class="transparency-section">
                             <div class="transparency-toggle" onclick="toggleTransparency(this)" style="font-size: 10px; opacity: 0.7;">
-                                <i class="fas fa-chevron-down"></i> Trace: <strong>${data.latencyMs}ms</strong> | <strong>${data.intent || 'Reasoning'}</strong>
+                                <i class="fas fa-chevron-down"></i> Trace: <strong>${lastData.latencyMs}ms</strong> | <strong>${lastData.intent || 'Reasoning'}</strong>
                             </div>
                             <div class="transparency-content" style="font-size: 10px;">
-                                Logic: ${data.latencyMs > 500 ? 'Agentic Reasoning System' : 'Deterministic Protocol'}<br>
-                                Data Source: ${data.source}
+                                Logic: Streaming Agentic System<br>
+                                Data Source: Grounded Snapshot
                             </div>
                         </div>
                     `;
+
                     saveToHistory(query);
 
-                    if (data.duel) {
-                        updateDuelChart(data.duel);
-                        document.getElementById('duel-narrative').innerText = data.duel.analysis?.narrative || "Head-to-head comparison active.";
+                    if (lastData.duel) {
+                        updateDuelChart(lastData.duel);
+                        document.getElementById('duel-narrative').innerText = lastData.duel.analysis?.narrative || "Head-to-head comparison active.";
                         document.getElementById('duel-card').style.display = 'block';
                     }
 
-                    if (data.trend) {
-                        updateTrendChart(data.trend, data.comparisonTrend);
+                    if (lastData.trend) {
+                        // Assuming trend data is for current vs previous
+                        // Since streaming might not send the comparisonTrend as clearly, we fetch snapshot to refresh panels
+                        fetchSnapshot();
                     }
                 }
                 scrollToBottom();
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error('Stream processing error:', err); 
+                const bubble = document.getElementById(aiBubbleId);
+                if (bubble) bubble.innerHTML = `<div style="color: var(--accent-red);">Connection lost. Please check your network.</div>`;
+            }
         }
 
         function updateDuelChart(duel) {

@@ -7,21 +7,23 @@ const { getRiskReport } = require("./riskService");
 /**
  * Generates a rule-based narrative summary.
  * @param {"weekly"|"monthly"} period - Summary period.
+ * @param {Array<Object>|null} customDataset - User-provided data.
  * @returns {Promise<string>} Narrative summary.
  */
-async function generateSummary(period) {
+async function generateSummary(period, customDataset = null) {
   const useWeekly = period === "weekly";
-  const latestMetric = metrics[metrics.length - 1];
-  const previousMetric = metrics[metrics.length - 2];
-  const monthlyComparison = comparePeriods("month");
-  const weeklyComparison = comparePeriods("week");
+  const monthlyComparison = comparePeriods("month", 1, customDataset);
+  const weeklyComparison = comparePeriods("week", 1, customDataset);
   const comparison = useWeekly ? weeklyComparison : monthlyComparison;
-  const relevantAnomalies = detectAnomalies().slice(0, 2);
-  const overdueInvoices = getOverdueInvoices();
+  
+  const relevantAnomalies = detectAnomalies(customDataset).slice(0, 2);
+  const overdueInvoices = getOverdueInvoices(customDataset);
   const overdueTotal = overdueInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const topRiskClient = getRiskReport()[0];
-  const income = useWeekly ? latestMetric.revenue : comparison.current.income;
-  const expenses = useWeekly ? latestMetric.expenses : comparison.current.expenses;
+  const riskReport = getRiskReport(customDataset);
+  const topRiskClient = riskReport[0] || { client: "None" };
+  
+  const income = comparison.current.income;
+  const expenses = comparison.current.expenses;
   const net = income - expenses;
   const deltaDirection = comparison.deltas.net >= 0 ? "improved" : "worsened";
   const anomalySentence = relevantAnomalies.length
