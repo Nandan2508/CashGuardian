@@ -4,7 +4,7 @@
 
 ## Problem Statement
 
-> *[Visual: Blank terminal or cluttered spreadsheet on screen]*
+
 
 "Imagine you're running a business. It's the end of the month and you need answers fast.
 How much cash do I actually have? Which clients owe me money? Are my expenses spiking?
@@ -18,9 +18,7 @@ This is the reality for most founders and operators today — and it's not a dat
 ---
 
 ## Segment 2 — Problem Deep Dive
-**Timing: [0:45 – 1:15]**
 
-> *[Visual: Problem Statement Pillars]*
 
 | Pillar | Challenge Faced by SMEs | CashGuardian Solution |
 |---|---|---|
@@ -33,7 +31,6 @@ This is the reality for most founders and operators today — and it's not a dat
 ---
 
 ## Segment 3 — Solution & Key Features
-**Timing: [1:15 – 2:15]**
 
 | # | Use Case | CashGuardian Feature |
 |---|---|---|
@@ -51,32 +48,7 @@ This is the reality for most founders and operators today — and it's not a dat
 ---
 
 ## Segment 4 — Architecture & Tech Stack
-**Timing: [2:15 – 3:00]**
 
-> *[Visual: The Query Lifecycle Sequence]*
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant Q as Query Agent
-    participant S as Finance Services
-    participant AI as LLM (Gemini/Groq/GPT)
-
-    U->>Q: "Analyze my revenue drivers"
-    Q->>Q: Intent Classification
-    Q->>S: Pull Transactional Context
-    S->>S: Deterministic Calculation
-    S-->>Q: Grounded Snapshot (Data Only)
-    Q->>AI: Grounded Prompt (Instruction + Data)
-    AI-->>Q: Executive Narrative Response
-    Q-->>U: Final Grounded Insight
-```
-
-"Our 'Grounding-First' pipeline ensures reliability. Every query starts with Intent Classification, follows with Deterministic Calculation, and ends with Generative Narration."
-
----
-
-> *[Visual: Full System Architecture Overview]*
 
 ```mermaid
 graph TD
@@ -135,8 +107,6 @@ graph TD
 
 ---
 
-> *[Visual: The Tech Stack]*
-
 | Layer | Technologies |
 |---|---|
 | **Runtime & Backend** | Node.js 18+, Express |
@@ -172,9 +142,6 @@ Finally, we can generate a professional summary. One click creates a comprehensi
 ---
 
 ## Segment 6 — Benchmark & Trust
-**Timing: [4:20 – 4:45]**
-
-> *[Visual: Benchmark Results]*
 
 "We verified our platform against 13 real-world ground-truth finance cases.
 
@@ -187,28 +154,12 @@ Every response includes a transparency block, showing exactly which data was use
 ---
 
 ## Segment 7 — Closing
-**Timing: [4:45 – 5:00]**
-
-> *[Visual: Live URL: cash-guardian-three.vercel.app]*
 
 "CashGuardian is live right now. No sign-up. Just talk to your data and trust your answers.
 
 **Thank you.**"
 
----
 
-## Speaker Notes
-
-| Segment | Key Point to Emphasize |
-|---|---|
-| Hook | Lead with the pain of manual data analysis. |
-| Problem | Clearly contrast 'Clarity, Trust, Speed' against legacy tools. |
-| Features | Emphasize that AI never calculates—it only narrations. |
-| Architecture | Show how the Services Layer protects the LLM from hallucinating. |
-| Demo | Demonstrate the transition from a query to a professional PDF. |
-| Benchmark | Use the numbers to prove production-readiness. |
-| Close | Reiterate the live URL for immediate engagement. |
 
 ---
 
-*Total estimated time: ~4 min 55 sec.*
