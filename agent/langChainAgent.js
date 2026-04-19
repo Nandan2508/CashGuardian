@@ -380,11 +380,23 @@ async function* handleStream(userInput, customDataset = null, history = []) {
       }
     }
 
+    // 0. Immediate feedback — kills the "Thinking" state in the frontend
+    yield { type: 'text', content: '' };
+
     // 1. Initial Processing (Snapshot + Intent)
-    const snapshot = getSnapshot(customDataset);
+    let snapshot;
+    try {
+      snapshot = getSnapshot(customDataset);
+    } catch (snapshotErr) {
+      console.error("[LangGraph] Snapshot failed:", snapshotErr.message);
+      yield { type: 'error', content: `Data processing failed: ${snapshotErr.message}` };
+      return;
+    }
+
     const intent = classifyIntent(userInput);
     const clientFromQuery = extractClientName(userInput, customDataset);
     const resolvedClient = clientFromQuery || lastClient;
+    console.log(`[LangGraph] Intent=${intent}, Client=${resolvedClient || 'none'}`);
 
     // 2. High-Priority Side-Effect: Send Reminder
     if (intent === INTENTS.SEND_REMINDER) {
@@ -473,26 +485,39 @@ async function* handleStream(userInput, customDataset = null, history = []) {
       `\n\nGROUNDING RULE: Answer ONLY using the snapshot data. Accuracy is 100% mandatory.`;
 
     // 3. Stream from LLM
-    const llm = getLLM();
-    const stream = await llm.stream([
-      new SystemMessage(systemPrompt),
-      ...messages
-    ]);
+    let llm, stream;
+    try {
+      llm = getLLM();
+      stream = await llm.stream([
+        new SystemMessage(systemPrompt),
+        ...messages
+      ]);
+    } catch (llmErr) {
+      console.error("[LangGraph] LLM init/stream failed:", llmErr.message);
+      yield { type: 'error', content: `AI service error: ${llmErr.message}. Check AI_API_KEY in .env.` };
+      return;
+    }
 
-    for await (const chunk of stream) {
-      if (chunk.content) {
-        yield { 
-          type: 'text',
-          content: chunk.content,
-          intent,
-          duel: snapshot.duel,
-          trend: snapshot.periodComparison ? snapshot.periodComparison.currentTrend : null
-        };
+    try {
+      for await (const chunk of stream) {
+        if (chunk.content) {
+          yield { 
+            type: 'text',
+            content: chunk.content,
+            intent,
+            duel: snapshot.duel,
+            trend: snapshot.periodComparison ? snapshot.periodComparison.currentTrend : (snapshot.trend || null),
+            comparisonTrend: snapshot.periodComparison ? snapshot.periodComparison.previousTrend : (snapshot.comparisonTrend || null)
+          };
+        }
       }
+    } catch (streamErr) {
+      console.error("[LangGraph] Stream read failed:", streamErr.message);
+      yield { type: 'error', content: "AI stream interrupted. Your data is safe." };
     }
   } catch (error) {
     console.error("[LangGraph Stream Error]", error);
-    yield { type: 'error', content: "Streaming error occurred." };
+    yield { type: 'error', content: error.message || "Unexpected error occurred." };
   }
 }
 
