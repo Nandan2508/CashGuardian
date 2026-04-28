@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
-            --bg: #FDFBF7;
+            --bg: #F9F5FF;              /* Very light NatWest Purple tint */
             --primary: #42145F;         /* NatWest Purple */
             --primary-light: #EDE5F4;   /* Light Purple */
             --text-main: #2D2437;
@@ -35,7 +35,7 @@
         .sidebar { width: 190px; background: white; border-right: 1px solid var(--header-border); padding: 20px; display: flex; flex-direction: column; gap: 24px; flex-shrink: 0; transition: width 0.3s ease, padding 0.3s ease; overflow: hidden; }
         .sidebar.collapsed { width: 0; padding: 0; border-right: none; }
         .logo { display: flex; flex-direction: column; gap: 4px; }
-        .logo-text { font-size: 18px; font-weight: 600; color: var(--text-main); }
+        .logo-text { font-size: 18px; font-weight: 600; color: var(--primary); }
         .logo-tagline { font-size: 12px; color: var(--text-muted); }
 
         .nav { display: flex; flex-direction: column; gap: 8px; }
@@ -44,7 +44,7 @@
 
         .upload-section { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
         #file-input { display: none; }
-        .btn-upload { background: var(--card-bg); border: 1.5px dashed #D1C4B0; padding: 12px; border-radius: var(--border-radius-sm); font-size: 13px; text-align: center; cursor: pointer; color: var(--text-muted); }
+        .btn-upload { background: var(--card-bg); border: 1.5px dashed var(--primary-light); padding: 12px; border-radius: var(--border-radius-sm); font-size: 13px; text-align: center; cursor: pointer; color: var(--text-muted); }
         .btn-upload:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
         .dataset-status { font-size: 11px; color: var(--text-muted); }
         .health-pill { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 6px; }
@@ -52,7 +52,7 @@
         .health-pill.negative { background: #FDECEC; color: var(--accent-red); }
 
         .sidebar-intelligence { padding: 16px 0; border-top: 1px solid var(--header-border); border-bottom: 1px solid var(--header-border); display: flex; flex-direction: column; gap: 16px; margin: 8px 0; }
-        .intel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 4px; }
+        .intel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--primary); letter-spacing: 0.05em; margin-bottom: 4px; }
         .intel-meter { display: flex; flex-direction: column; gap: 6px; }
         .meter-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-main); font-weight: 500; }
         .meter-bg { height: 4px; background: #F0F0F0; border-radius: 2px; overflow: hidden; }
@@ -68,7 +68,7 @@
 
         .dashboard-view { flex: 1; display: flex; flex-direction: column; background: var(--bg); position: relative; }
         .header { height: 60px; padding: 0 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--header-border); background: white; z-index: 10; }
-        .header-title { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+        .header-title { font-size: 14px; font-weight: 600; color: var(--primary); }
         
         .hamburger-btn { background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
         .hamburger-btn:hover { color: var(--primary); }
@@ -99,15 +99,15 @@
         .transparency-content.active { display: block; }
 
         .suggested-questions { padding: 0 48px; display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-        .question-pill { background: white; border: 1px solid #E6E1D6; padding: 6px 14px; border-radius: 18px; font-size: 12px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .question-pill { background: white; border: 1px solid var(--primary-light); padding: 6px 14px; border-radius: 18px; font-size: 12px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
         .question-pill:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 
         .input-bar { padding: 16px 24px 24px; background: var(--bg); display: flex; gap: 8px; }
         .input-wrapper { flex: 1; position: relative; }
-        #query-input { width: 100%; height: 50px; background: white; border: 1px solid #E6E1D6; border-radius: var(--border-radius-sm); padding: 0 20px; font-family: inherit; font-size: 14px; transition: 0.2s; outline: none; }
-        #query-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(193, 126, 74, 0.1); }
+        #query-input { width: 100%; height: 50px; background: white; border: 1px solid var(--primary-light); border-radius: var(--border-radius-sm); padding: 0 20px; font-family: inherit; font-size: 14px; transition: 0.2s; outline: none; }
+        #query-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(66, 20, 95, 0.1); }
         .btn-send { width: 100px; height: 50px; background: var(--primary); color: white; border: none; border-radius: var(--border-radius-sm); font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        .btn-send:hover { background: #ab6a3b; }
+        .btn-send:hover { background: #35104C; }
 
         .right-panel { width: 420px; background: white; border-left: 1px solid var(--header-border); padding: 24px; overflow-y: auto; flex-shrink: 0; }
         .panel-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 24px; }
@@ -121,17 +121,15 @@
 
         .chart-container { margin-top: 32px; display: flex; flex-direction: column; gap: 12px; }
         .chart-title { font-size: 13px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
-        .chart-title i { color: var(--accent-gold); }
+        .chart-title i { color: var(--primary); }
         .canvas-wrapper { height: 400px; width: 100%; transition: height 0.3s ease; }
         .breakdown-wrapper { height: 250px; width: 100%; margin-top: 20px; }
 
-        .btn-mic { width: 44px; height: 44px; border-radius: 50%; border: none; background: #FDEFE8; color: var(--accent-gold); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: relative; }
-        .btn-mic:hover { background: #FADBCB; transform: scale(1.05); }
+        .btn-mic { width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--primary-light); color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: relative; }
+        .btn-mic:hover { background: #E4D8F0; transform: scale(1.05); }
         .btn-mic.listening { background: var(--accent-red); color: white; animation: pulse-mic 1.5s infinite; }
         
         @keyframes pulse-mic {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230, 164, 149, 0.4); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(230, 164, 149, 0); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230, 164, 149, 0); }
         }
 
@@ -151,11 +149,11 @@
         .answer-text hr { border: none; border-top: 1px solid #EEE; margin: 16px 0; }
 
         /* Table Styles */
-        .answer-text table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; background: #FAFAFA; border-radius: 8px; overflow: hidden; border: 1px solid #E6E1D6; }
-        .answer-text th { background: #F5F1E9; color: var(--text-main); font-weight: 700; text-align: left; padding: 10px 12px; border-bottom: 2px solid #E6E1D6; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
-        .answer-text td { padding: 10px 12px; border-bottom: 1px solid #F0E6D3; color: var(--text-main); vertical-align: middle; }
+        .answer-text table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid var(--primary-light); }
+        .answer-text th { background: var(--primary-light); color: var(--primary); font-weight: 700; text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--primary); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+        .answer-text td { padding: 10px 12px; border-bottom: 1px solid var(--primary-light); color: var(--text-main); vertical-align: middle; }
         .answer-text tr:last-child td { border-bottom: none; }
-        .answer-text tr:hover { background: #FDEFE8; }
+        .answer-text tr:hover { background: rgba(66, 20, 95, 0.03); }
 
         @media (max-width: 1024px) { .right-panel { display: none; } }
         @media (max-width: 768px) {
@@ -603,7 +601,7 @@
             doc.setFont("times", "italic");
             doc.setFontSize(10);
             doc.text("Professional Financial Analysis Executive Brief", 105, 33, { align: 'center' });
-            doc.setDrawColor(...gold);
+            doc.setDrawColor(...purple);
             doc.setLineWidth(0.5);
             doc.line(20, 38, 190, 38);
 
@@ -624,12 +622,12 @@
                 .replace(/---/g, '\n--------------------------------------------------\n')
                 .replace(/<br>/g, '\n');
 
-            doc.setTextColor(...gold);
+            doc.setTextColor(...purple);
             doc.setFontSize(14);
             doc.setFont("times", "bold");
             doc.text("EXECUTIVE ANALYSIS & INSIGHTS", 20, 60);
             
-            doc.setTextColor(...darkBrown);
+            doc.setTextColor(...darkGrey);
             doc.setFont("times", "normal");
             doc.setFontSize(11);
             doc.setLineHeightFactor(1.15);
@@ -648,18 +646,18 @@
             doc.addPage();
             
             // Page 2 Header
-            doc.setTextColor(...gold);
+            doc.setTextColor(...purple);
             doc.setFont("times", "bold");
             doc.setFontSize(18);
             doc.text("VISUAL DATA SUPPLEMENT", 20, 25);
-            doc.setDrawColor(...gold);
+            doc.setDrawColor(...purple);
             doc.line(20, 28, 190, 28);
 
             try {
                 // 1. Trend Chart
                 const trendCanvas = document.getElementById('cashflow-chart');
                 const trendData = trendCanvas.toDataURL('image/png', 1.0);
-                doc.setTextColor(...darkBrown);
+                doc.setTextColor(...darkGrey);
                 doc.setFontSize(12);
                 doc.text("Cash Flow Trajectory (Revenue vs Expenses)", 20, 40);
                 doc.addImage(trendData, 'PNG', 20, 45, 170, 85);
