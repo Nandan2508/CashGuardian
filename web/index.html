@@ -14,17 +14,17 @@
     <style>
         :root {
             --bg: #FDFBF7;
-            --primary: #C17E4A;
-            --primary-light: #F0E6D3;
-            --text-main: #2C2417;
-            --text-muted: #7A6A55;
+            --primary: #42145F;         /* NatWest Purple */
+            --primary-light: #EDE5F4;   /* Light Purple */
+            --text-main: #2D2437;
+            --text-muted: #6E5B75;
             --card-bg: #FFFFFF;
-            --card-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            --card-shadow: 0 1px 4px rgba(66, 20, 95, 0.08);
             --border-radius: 12px;
             --border-radius-sm: 8px;
-            --accent-green: #4A8C6A;
-            --accent-red: #C15A4A;
-            --header-border: rgba(0,0,0,0.04);
+            --accent-green: #00A86B;
+            --accent-red: #ED1C24;      /* NatWest Red */
+            --header-border: rgba(66, 20, 95, 0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -474,7 +474,7 @@
             duelChart.data.datasets = [
                 { 
                     label: entityA.name, 
-                    backgroundColor: '#C17E4A', 
+                    backgroundColor: '#42145F', 
                     data: [
                         (entityA.revenue / maxRev) * 100,
                         (entityA.growth / maxGrowth) * 100,
@@ -484,7 +484,7 @@
                 },
                 { 
                     label: entityB.name, 
-                    backgroundColor: '#E6A495', 
+                    backgroundColor: '#ED1C24', 
                     data: [
                         (entityB.revenue / maxRev) * 100,
                         (entityB.growth / maxGrowth) * 100,
@@ -582,8 +582,8 @@
             const doc = new jsPDF();
             
             // Site Theme Colors
-            const gold = [193, 126, 74];
-            const darkBrown = [44, 36, 23];
+            const purple = [66, 20, 95];
+            const darkGrey = [50, 50, 50];
             
             // --- PAGE 1: EXECUTIVE SUMMARY ---
             // 1. Watermark
@@ -595,11 +595,11 @@
             } catch (e) { console.warn('Logo watermark failed'); }
 
             // Header
-            doc.setTextColor(...gold);
+            doc.setTextColor(...purple);
             doc.setFont("times", "bold");
             doc.setFontSize(22);
             doc.text("CASHGUARDIAN INTELLIGENCE™", 105, 25, { align: 'center' });
-            doc.setTextColor(...darkBrown);
+            doc.setTextColor(...darkGrey);
             doc.setFont("times", "italic");
             doc.setFontSize(10);
             doc.text("Professional Financial Analysis Executive Brief", 105, 33, { align: 'center' });
@@ -735,10 +735,10 @@
                 data: {
                     labels: [],
                     datasets: [
-                        { label: 'Revenue (Cur)', data: [], borderColor: '#C17E4A', backgroundColor: 'rgba(193, 126, 74, 0.1)', fill: true, tension: 0.4 },
-                        { label: 'Expenses (Cur)', data: [], borderColor: '#E6A495', fill: false, tension: 0.4 },
-                        { label: 'Revenue (Prev)', data: [], borderColor: 'rgba(193, 126, 74, 0.3)', borderDash: [5, 5], fill: false, tension: 0.4, hidden: true },
-                        { label: 'Expenses (Prev)', data: [], borderColor: 'rgba(230, 164, 149, 0.3)', borderDash: [5, 5], fill: false, tension: 0.4, hidden: true }
+                        { label: 'Revenue (Cur)', data: [], borderColor: '#42145F', backgroundColor: 'rgba(66, 20, 95, 0.1)', fill: true, tension: 0.4 },
+                        { label: 'Expenses (Cur)', data: [], borderColor: '#ED1C24', fill: false, tension: 0.4 },
+                        { label: 'Revenue (Prev)', data: [], borderColor: 'rgba(66, 20, 95, 0.3)', borderDash: [5, 5], fill: false, tension: 0.4, hidden: true },
+                        { label: 'Expenses (Prev)', data: [], borderColor: 'rgba(237, 28, 36, 0.3)', borderDash: [5, 5], fill: false, tension: 0.4, hidden: true }
                     ]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }, scales: { y: { display: true, beginAtZero: true }, x: { display: true, grid: { display: false } } } }
@@ -751,7 +751,7 @@
                     labels: [],
                     datasets: [{
                         data: [],
-                        backgroundColor: ['#C17E4A', '#E6A495', '#FADBCB', '#F1BCAE', '#D98E73', '#B0705F'],
+                        backgroundColor: ['#42145F', '#ED1C24', '#005C8A', '#00FF9D', '#FFBEC3', '#B0705F'],
                         borderWidth: 0
                     }]
                 },
