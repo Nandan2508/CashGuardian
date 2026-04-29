@@ -159,7 +159,11 @@ async function executeNode(state) {
     }
     const result = await decomposeTransactions(decompType, null, decompGroup, state.userId, state.transactions);
     const table = formatDecompositionTable(result);
-    const decompFallback = `#### Breakdown Analysis\n${result.target}: ${formatCurrency(result.total)}\n\n${table}`;
+    const decompFallback = [
+      "#### Breakdown Analysis",
+      `Total analyzed: ${formatCurrency(result.total)}.`,
+      result.insights.length ? result.insights.join(" ") : "The mix is relatively distributed without a single dominant outlier."
+    ].join("\n\n");
 
     const systemPrompt =
       buildSystemPrompt(await getSnapshot(state.userId, activeDataset, {
@@ -170,7 +174,7 @@ async function executeNode(state) {
       `Total: ${formatCurrency(result.total)}\n` +
       `Breakdown Table:\n${table}\n` +
       `### END DATA SOURCE\n\n` +
-      "Task: Provide a deep-dive executive analysis (approx 100-150 words). Discuss concentrations, outliers, and strategic implications. DO NOT repeat the table itself in your text; I will append it manually. Just refer to it.";
+      "Task: Provide a deep-dive executive analysis (approx 100-150 words). Discuss concentrations, outliers, and strategic implications. Do NOT reproduce the table. Return narrative only.";
 
     const llm = getLLM();
     const responseText = await invokeWithTimeout(
@@ -181,7 +185,7 @@ async function executeNode(state) {
     );
 
     return {
-      response: `${responseText}\n\n${table}`,
+      response: `${table}\n\n${responseText}`,
       duel: null,
       trend: null,
       comparisonTrend: null
@@ -284,7 +288,11 @@ async function executeNode(state) {
 
     const result = await decomposeTransactions(decompType, decompFilter, decompGroup, state.userId, activeDataset);
     const table = formatDecompositionTable(result);
-    const decompFallback = `#### Breakdown Analysis\n${result.target}: ${formatCurrency(result.total)}\n\n${table}`;
+    const decompFallback = [
+      "#### Breakdown Analysis",
+      `Total analyzed: ${formatCurrency(result.total)}.`,
+      result.insights.length ? result.insights.join(" ") : "The mix is relatively distributed without a single dominant outlier."
+    ].join("\n\n");
 
     const systemPrompt =
       buildSystemPrompt(snapshot) +
@@ -294,7 +302,7 @@ async function executeNode(state) {
       `Tabular Breakdown:\n${table}\n` +
       `Statistically relevant patterns: ${result.insights.join(", ") || "None detected"}\n` +
       `### END DATA SOURCE\n\n` +
-      "Task: Provide a strategic executive narrative. Keep it concise and insight-focused. Then include the same tabular breakdown.";
+      "Task: Provide a strategic executive narrative only. Keep it concise and insight-focused. Do NOT include the table in your answer.";
 
     const llm = getLLM();
     const responseText = await invokeWithTimeout(
@@ -305,7 +313,7 @@ async function executeNode(state) {
     );
 
     return {
-      response: `${responseText}\n\n${table}`,
+      response: `${table}\n\n${responseText}`,
       duel: null,
       trend: null,
       comparisonTrend: null
@@ -641,7 +649,7 @@ async function* handleStream(userInput, customDataset = null, history = [], user
       let decompGroup = (norm.includes("region") || norm.includes("location") || norm.includes("area")) ? "region" : (norm.includes("channel") ? "channel" : "category");
       const result = await decomposeTransactions(decompType, null, decompGroup, userId, activeTransactions);
       const table = formatDecompositionTable(result);
-      extraContext = `\n\n### MANDATORY DATA SOURCE: BREAKDOWN\nFocus: ${result.target}\n${table}\nTask: Provide a detailed executive analysis (approx 100-150 words). Discuss concentrations, outliers, and strategic implications. You MUST include the breakdown table in your response, but only ONCE. If you include it, place it at the VERY START.`;
+      extraContext = `\n\n### MANDATORY DATA SOURCE: BREAKDOWN\nFocus: ${result.target}\n${table}\nTask: Provide a detailed executive analysis (approx 100-150 words). Discuss concentrations, outliers, and strategic implications. Do NOT repeat the table in your response; return narrative only.`;
     } else if (intent === INTENTS.WEEKLY_SUMMARY || intent === INTENTS.CASH_SUMMARY) {
       extraContext = `\n\nTask: Provide a comprehensive executive narrative (minimum 150 words). Identify key drivers of performance, risks, and provide three distinct actionable recommendations. Be professional, detailed, and insightful. Use the available snapshot data extensively.`;
     }

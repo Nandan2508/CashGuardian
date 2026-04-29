@@ -31,7 +31,7 @@ const { decomposeTransactions } = require("../services/decompositionService");
 const { sendPaymentReminder } = require("../services/emailService");
 const { calculate30DayForecast } = require("../services/predictionService");
 const { isOverdue } = require("../utils/dateUtils");
-const { formatCurrency, printTable, safeDate, safeNumber } = require("../utils/formatter");
+const { formatCurrency, safeDate, safeNumber } = require("../utils/formatter");
 
 /**
  * Builds the live system prompt used for AI answers.
@@ -438,7 +438,7 @@ function formatOverdueTable(overdueInvoices) {
 
   return [
     `#### Overdue Invoices (${rows.length})`,
-    printTable(rows, ["Invoice", "Client", "Amount", "Due Date", "Days Overdue", "Status"])
+    buildMarkdownTable(rows, ["Invoice", "Client", "Amount", "Due Date", "Days Overdue", "Status"])
   ].join("\n");
 }
 
@@ -460,7 +460,7 @@ function formatExpenseBreakdown(breakdown) {
 
   return [
     "#### Expense Breakdown",
-    printTable(rows, ["Category", "Amount", "Share"])
+    buildMarkdownTable(rows, ["Category", "Amount", "Share"])
   ].join("\n");
 }
 
@@ -514,8 +514,33 @@ function formatDecompositionTable(result) {
 
   return [
     `#### ${result.target}`,
-    printTable(rows, [label, "Amount", "Share"])
+    buildMarkdownTable(rows, [label, "Amount", "Share"])
   ].join("\n");
+}
+
+/**
+ * Builds a markdown table for UI-friendly rendering.
+ * @param {Array<Record<string, string|number>>} rows - Table rows.
+ * @param {string[]} columns - Ordered columns.
+ * @returns {string} Markdown table text.
+ */
+function buildMarkdownTable(rows, columns) {
+  const header = `| ${columns.join(" | ")} |`;
+  const separator = `| ${columns.map(() => "---").join(" | ")} |`;
+  const body = rows.map((row) => {
+    const cells = columns.map((column) => {
+      const value = row[column];
+      if (typeof value === "number") {
+        return formatCurrency(value);
+      }
+
+      return String(value ?? "").replace(/\|/g, "\\|");
+    });
+
+    return `| ${cells.join(" | ")} |`;
+  });
+
+  return [header, separator, ...body].join("\n");
 }
 
 /**
