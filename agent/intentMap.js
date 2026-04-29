@@ -33,6 +33,22 @@ const INTENT_RULES = [
   { intent: INTENTS.HELP, keywords: ["help", "what can you", "commands", "guide"] }
 ];
 
+const INTENT_PRIORITIES = {
+  [INTENTS.ANOMALY]: 100,
+  [INTENTS.WEEKLY_SUMMARY]: 90,
+  [INTENTS.DECOMPOSITION]: 80,
+  [INTENTS.OVERDUE_INVOICES]: 70,
+  [INTENTS.EXPENSE_BREAKDOWN]: 60,
+  [INTENTS.PREDICTION]: 50,
+  [INTENTS.COMPARE]: 40,
+  [INTENTS.RISK_CLIENTS]: 30,
+  [INTENTS.SEND_REMINDER]: 20,
+  [INTENTS.CASH_BALANCE]: 15,
+  [INTENTS.CASH_SUMMARY]: 10,
+  [INTENTS.HELP]: 5,
+  [INTENTS.UNKNOWN]: 0
+};
+
 /**
  * Classifies a raw user query into a deterministic intent using a scoring system.
  * This avoids misclassification when multiple intents share similar keywords.
@@ -60,7 +76,19 @@ function classifyIntent(userInput) {
   });
 
   // Find the highest scoring intent
-  const bestMatch = scores.reduce((prev, current) => (current.score > prev.score ? current : prev), { intent: INTENTS.UNKNOWN, score: 0 });
+  const bestMatch = scores.reduce((prev, current) => {
+    if (current.score > prev.score) {
+      return current;
+    }
+
+    if (current.score === prev.score && current.score > 0) {
+      const currentPriority = INTENT_PRIORITIES[current.intent] || 0;
+      const previousPriority = INTENT_PRIORITIES[prev.intent] || 0;
+      return currentPriority > previousPriority ? current : prev;
+    }
+
+    return prev;
+  }, { intent: INTENTS.UNKNOWN, score: 0 });
 
   return bestMatch.score > 0 ? bestMatch.intent : INTENTS.UNKNOWN;
 }

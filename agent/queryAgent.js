@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require("fs");
+const path = require("path");
 const { getTransactions, getInvoices, getClients } = require("../services/dataService");
 
 const {
@@ -29,7 +31,7 @@ const { decomposeTransactions } = require("../services/decompositionService");
 const { sendPaymentReminder } = require("../services/emailService");
 const { calculate30DayForecast } = require("../services/predictionService");
 const { isOverdue } = require("../utils/dateUtils");
-const { formatCurrency, safeDate, safeNumber } = require("../utils/formatter");
+const { formatCurrency, printTable, safeDate, safeNumber } = require("../utils/formatter");
 
 /**
  * Builds the live system prompt used for AI answers.
@@ -306,6 +308,7 @@ async function getSnapshot(userId, customDataset = null, preFetched = null) {
       variances,
       anomalies: activeAnomaliesRaw,
       overdueList: overdueList.map(i => ({
+        id: i.id,
         client: i.client,
         amount: i.amount,
         dueDate: i.dueDate,
@@ -374,9 +377,12 @@ async function getSnapshot(userId, customDataset = null, preFetched = null) {
       },
       anomalies: activeAnomalies,
       overdueList: overdueList.map(i => ({
+        id: i.id,
         client: i.client,
         amount: i.amount,
-        dueDate: i.dueDate
+        dueDate: i.dueDate,
+        status: i.riskLabel,
+        daysPastDue: i.daysOverdue
       })),
       contacts: await getClients(userId)
     };
@@ -421,11 +427,19 @@ function formatOverdueInvoices(overdueInvoices) {
 function formatOverdueTable(overdueInvoices) {
   if (!overdueInvoices || overdueInvoices.length === 0) return "No overdue invoices found.";
 
-  let table = "| Client | Amount | Due Date | Status |\n|---|---|---|---|\n";
-  overdueInvoices.forEach(inv => {
-    table += `| ${inv.client} | ${formatCurrency(inv.amount)} | ${inv.dueDate || inv.date || 'N/A'} | ${inv.status || 'overdue'} |\n`;
-  });
-  return table;
+  const rows = overdueInvoices.map((invoice) => ({
+    Invoice: invoice.id || "N/A",
+    Client: invoice.client || "Unknown",
+    Amount: invoice.amount || 0,
+    "Due Date": invoice.dueDate || invoice.date || "N/A",
+    "Days Overdue": invoice.daysOverdue ?? invoice.daysPastDue ?? 0,
+    Status: invoice.status || invoice.riskLabel || "Overdue"
+  }));
+
+  return [
+    `#### Overdue Invoices (${rows.length})`,
+    printTable(rows, ["Invoice", "Client", "Amount", "Due Date", "Days Overdue", "Status"])
+  ].join("\n");
 }
 
 /**
@@ -434,9 +448,20 @@ function formatOverdueTable(overdueInvoices) {
  * @returns {string} Breakdown text.
  */
 function formatExpenseBreakdown(breakdown) {
-  return breakdown.map((row) =>
-    `${row.category}: ${formatCurrency(row.total)} (${row.percentage})`
-  ).join("\n");
+  if (!breakdown.length) {
+    return "No expense breakdown data available.";
+  }
+
+  const rows = breakdown.map((row) => ({
+    Category: row.category,
+    Amount: row.total,
+    Share: row.percentage
+  }));
+
+  return [
+    "#### Expense Breakdown",
+    printTable(rows, ["Category", "Amount", "Share"])
+  ].join("\n");
 }
 
 /**
@@ -472,12 +497,25 @@ function formatAnomalies(anomalies) {
  */
 function formatDecompositionTable(result) {
   if (!result || !result.components) return "No breakdown data available.";
+  const label = result.groupField === "category"
+    ? "Revenue Type"
+    : result.groupField === "client"
+      ? "Client"
+      : result.groupField === "region"
+        ? "Region"
+        : result.groupField === "channel"
+          ? "Channel"
+          : "Component";
+  const rows = result.components.map((component) => ({
+    [label]: component.label,
+    Amount: component.value,
+    Share: `${component.percentage}%`
+  }));
 
-  let table = "| Component | Amount | Share |\n|---|---|---|\n";
-  result.components.forEach(c => {
-    table += `| ${c.label} | ${formatCurrency(c.value)} | ${c.percentage}% |\n`;
-  });
-  return table;
+  return [
+    `#### ${result.target}`,
+    printTable(rows, [label, "Amount", "Share"])
+  ].join("\n");
 }
 
 /**
@@ -813,7 +851,10 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
     const clientName = extractClientName(userInput, activeDataset);
     if (clientName) {
       const invoicesByClient = await getInvoicesByClient(userId, clientName, null);
-      const overdueInvoice = invoicesByClient.find((invoice) => invoice.status === "overdue");
+      const overdueInvoice = invoicesByClient.find((invoice) => {
+        const dueDate = invoice.dueDate || invoice.duedate;
+        return String(invoice.status || "").toLowerCase() === "overdue" || (dueDate && isOverdue(dueDate));
+      });
       const paidInvoices = invoicesByClient.filter(i => i.status === 'paid');
       const latePaidCount = invoicesByClient.filter((invoice) =>
         invoice.paymentHistory && invoice.paymentHistory[0] && invoice.paymentHistory[0] > invoice.dueDate
@@ -891,8 +932,7 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
 
     if (norm.includes("sales") || norm.includes("revenue") || norm.includes("income")) {
       type = "income";
-      filter = "sales";
-      group = "client";
+      group = "category";
     }
 
     if (norm.includes("cost") || norm.includes("expense") || norm.includes("spending")) {
@@ -906,6 +946,9 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
     }
     if (norm.includes("channel") || norm.includes("medium") || norm.includes("method")) {
       group = "channel";
+    }
+    if (norm.includes("client") || norm.includes("customer") || norm.includes("account")) {
+      group = "client";
     }
 
     const result = await decomposeTransactions(type, filter, group, userId, activeDataset);
@@ -932,7 +975,7 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
   }
 
   if (intent === INTENTS.WEEKLY_SUMMARY) {
-    const ruleBased = await generateSummary("weekly", activeDataset);
+    const ruleBased = await generateSummary(userId, "weekly", activeDataset);
     if (!hasAiCredentials()) return ruleBased;
 
     const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });

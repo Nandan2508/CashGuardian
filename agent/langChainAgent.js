@@ -150,31 +150,67 @@ async function executeNode(state) {
     const balance = await getCashBalance(state.userId, state.transactions);
     fallbackText = `Current net cash balance is ${formatCurrency(balance.netBalance)}.\nIncome: ${formatCurrency(balance.totalIncome)} | Expenses: ${formatCurrency(balance.totalExpenses)}`;
     if (fastMode) return { response: fallbackText, duel: null, trend: null, comparisonTrend: null };
-  } else if (intent === INTENTS.CASH_SUMMARY) {
-    const summary = await getCashSummary(state.userId, 90, state.transactions);
-    const summaryText = `Income: ${formatCurrency(summary.income)}\nExpenses: ${formatCurrency(summary.expenses)}\nNet: ${formatCurrency(summary.net)}\nTop Expense Category: ${summary.topExpenseCategory}`;
+  } else if (intent === INTENTS.EXPENSE_BREAKDOWN || intent === INTENTS.DECOMPOSITION) {
+    const norm = userInput.toLowerCase();
+    let decompType = (norm.includes("sales") || norm.includes("revenue") || norm.includes("income")) ? "income" : "expense";
+    let decompGroup = (norm.includes("region") || norm.includes("location") || norm.includes("area")) ? "region" : (norm.includes("channel") ? "channel" : "category");
+    if (norm.includes("client") || norm.includes("customer") || norm.includes("account")) {
+      decompGroup = "client";
+    }
+    const result = await decomposeTransactions(decompType, null, decompGroup, state.userId, state.transactions);
+    const table = formatDecompositionTable(result);
+    const decompFallback = `#### Breakdown Analysis\n${result.target}: ${formatCurrency(result.total)}\n\n${table}`;
+
+    const systemPrompt =
+      buildSystemPrompt(await getSnapshot(state.userId, activeDataset, {
+        transactions: state.transactions,
+        invoices: state.invoices
+      })) +
+      `\n\n### MANDATORY DATA SOURCE: TARGET DECOMPOSITION\n` +
+      `Total: ${formatCurrency(result.total)}\n` +
+      `Breakdown Table:\n${table}\n` +
+      `### END DATA SOURCE\n\n` +
+      "Task: Provide a deep-dive executive analysis (approx 100-150 words). Discuss concentrations, outliers, and strategic implications. DO NOT repeat the table itself in your text; I will append it manually. Just refer to it.";
+
+    const llm = getLLM();
+    const responseText = await invokeWithTimeout(
+      llm,
+      [new SystemMessage(systemPrompt), ...messages],
+      decompFallback,
+      2500
+    );
+
+    return {
+      response: `${responseText}\n\n${table}`,
+      duel: null,
+      trend: null,
+      comparisonTrend: null
+    };
+  } else if (intent === INTENTS.CASH_SUMMARY || intent === INTENTS.WEEKLY_SUMMARY) {
+    const summary = (intent === INTENTS.WEEKLY_SUMMARY) 
+      ? await generateSummary(state.userId, "weekly", state.transactions)
+      : await getCashSummary(state.userId, 90, state.transactions);
+    
+    const summaryText = typeof summary === 'string' ? summary : `Income: ${formatCurrency(summary.income)}\nExpenses: ${formatCurrency(summary.expenses)}\nNet: ${formatCurrency(summary.net)}`;
     const summaryPrompt = buildSystemPrompt(await getSnapshot(state.userId, activeDataset, {
       transactions: state.transactions,
       invoices: state.invoices
     })) +
-      `\n\n### MANDATORY DATA SOURCE: CASH SUMMARY\n` +
+      `\n\n### MANDATORY DATA SOURCE: FINANCIAL SUMMARY\n` +
       `${summaryText}\n` +
       `### END DATA SOURCE\n\n` +
-      `Task: Provide a concise business summary with one actionable recommendation.`;
+      `Task: Provide a comprehensive executive narrative (minimum 100 words). ` +
+      `Identify key drivers of performance, risks, and provide three distinct actionable recommendations. ` +
+      `Be professional and insightful.`;
 
     const llm = getLLM();
     const aiSummary = await invokeWithTimeout(
       llm,
       [new SystemMessage(summaryPrompt), ...messages],
       summaryText,
-      3200
+      3500
     );
     return { response: aiSummary, duel: null, trend: null, comparisonTrend: null };
-  } else if (intent === INTENTS.EXPENSE_BREAKDOWN) {
-    const breakdown = await getExpenseBreakdown(state.userId, state.transactions);
-    const lines = breakdown.map((b) => `${b.category}: ${formatCurrency(b.total)} (${b.percentage})`);
-    const breakdownText = `#### Expense Breakdown\n${lines.join("\n")}`;
-    if (fastMode) return { response: breakdownText, duel: null, trend: null, comparisonTrend: null };
   } else if (intent === INTENTS.ANOMALY) {
     const anomalies = await detectAnomalies(state.userId, state.transactions);
     if (fastMode) {
@@ -234,8 +270,6 @@ async function executeNode(state) {
 
     if (norm.includes("sales") || norm.includes("revenue") || norm.includes("income")) {
       decompType = "income";
-      decompFilter = "sales";
-      decompGroup = "client";
     }
 
     if (norm.includes("region") || norm.includes("location") || norm.includes("area")) {
@@ -243,6 +277,9 @@ async function executeNode(state) {
     }
     if (norm.includes("channel") || norm.includes("medium") || norm.includes("method")) {
       decompGroup = "channel";
+    }
+    if (norm.includes("client") || norm.includes("customer") || norm.includes("account")) {
+      decompGroup = "client";
     }
 
     const result = await decomposeTransactions(decompType, decompFilter, decompGroup, state.userId, activeDataset);
@@ -598,19 +635,24 @@ async function* handleStream(userInput, customDataset = null, history = [], user
       }
       const table = formatOverdueTable(invoices);
       extraContext = `\n\n### MANDATORY DATA SOURCE: OVERDUE TABLE\n${table}\nTask: You MUST lead your response with the markdown table provided above.`;
-    } else if (intent === INTENTS.DECOMPOSITION) {
+    } else if (intent === INTENTS.EXPENSE_BREAKDOWN || intent === INTENTS.DECOMPOSITION) {
       const norm = userInput.toLowerCase();
       let decompType = (norm.includes("sales") || norm.includes("revenue") || norm.includes("income")) ? "income" : "expense";
       let decompGroup = (norm.includes("region") || norm.includes("location") || norm.includes("area")) ? "region" : (norm.includes("channel") ? "channel" : "category");
       const result = await decomposeTransactions(decompType, null, decompGroup, userId, activeTransactions);
       const table = formatDecompositionTable(result);
-      extraContext = `\n\n### MANDATORY DATA SOURCE: BREAKDOWN\nFocus: ${result.target}\n${table}\nTask: You MUST lead your response with the markdown table provided above.`;
+      extraContext = `\n\n### MANDATORY DATA SOURCE: BREAKDOWN\nFocus: ${result.target}\n${table}\nTask: Provide a detailed executive analysis (approx 100-150 words). Discuss concentrations, outliers, and strategic implications. You MUST include the breakdown table in your response, but only ONCE. If you include it, place it at the VERY START.`;
+    } else if (intent === INTENTS.WEEKLY_SUMMARY || intent === INTENTS.CASH_SUMMARY) {
+      extraContext = `\n\nTask: Provide a comprehensive executive narrative (minimum 150 words). Identify key drivers of performance, risks, and provide three distinct actionable recommendations. Be professional, detailed, and insightful. Use the available snapshot data extensively.`;
     }
 
     // NEW: Detailed Comparison Detection for Graphs
     const normalized = userInput.toLowerCase();
-    const monthNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december", "jan", "feb", "mar", "apr"];
-    const isPeriodComparison = monthNames.some(m => normalized.includes(m)) || normalized.includes("month") || normalized.includes("week");
+    const monthNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+    const shortMonths = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    const isPeriodComparison = monthNames.some(m => normalized.includes(m)) || 
+                             shortMonths.some(m => new RegExp(`\\b${m}\\b`).test(normalized)) ||
+                             normalized.includes("month") || normalized.includes("week");
 
     if (intent === INTENTS.COMPARE && (normalized.includes(" vs ") || normalized.includes(" versus "))) {
       const cleanInput = normalized
