@@ -1030,10 +1030,11 @@
             reader.onload = async (event) => {
                 let data = [];
                 const fileName = file.name.toLowerCase();
+                const readStart = performance.now();
 
                 try {
                     if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-                        const workbook = XLSX.read(event.target.result, { type: 'binary' });
+                        const workbook = XLSX.read(event.target.result, { type: 'array' });
                         // Process all relevant sheets
                         workbook.SheetNames.forEach(sheetName => {
                             if (['transactions', 'invoices', 'clients'].includes(sheetName.toLowerCase())) {
@@ -1047,6 +1048,7 @@
                         data = parseCSV(event.target.result);
                     }
 
+                    document.getElementById('dataset-name').innerText = 'Uploading...';
                     const res = await fetch('/api/upload', { 
                         method: 'POST', 
                         headers: getAuthHeaders(), 
@@ -1058,7 +1060,8 @@
                     if (res.ok && result.stats) {
                         document.getElementById('dataset-name').innerText = result.stats.name;
                         fetchSnapshot();
-                        appendMessage('ai', `I have successfully loaded <strong>${result.stats.name}</strong> (${result.stats.rows} total records across sheets). You can now ask questions about this data.`);
+                        const elapsedMs = Math.round(performance.now() - readStart);
+                        appendMessage('ai', `I have successfully loaded <strong>${result.stats.name}</strong> (${result.stats.rows} total records across sheets) in about <strong>${elapsedMs}ms</strong>. You can now ask questions about this data.`);
                     } else {
                         document.getElementById('dataset-name').innerText = 'Upload Failed';
                         appendMessage('ai', `<div style="color: var(--accent);">⚠️ Upload Failed: ${result.error || 'Server error'}</div><div style="font-size: 11px; opacity: 0.7;">Details: ${result.details || 'Check console'}</div>`);
@@ -1071,7 +1074,7 @@
             };
 
             if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-                reader.readAsBinaryString(file);
+                reader.readAsArrayBuffer(file);
             } else {
                 reader.readAsText(file);
             }

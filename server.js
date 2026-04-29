@@ -30,6 +30,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const queryCache = new Map();
 const QUERY_CACHE_TTL_MS = 60 * 1000;
+const DB_BATCH_SIZE = 250;
 
 function normalizeQueryKey(userId, query, history) {
   return JSON.stringify({
@@ -47,6 +48,118 @@ function getCachedResponse(key) {
     return null;
   }
   return entry.payload;
+}
+
+function chunkArray(items, size = DB_BATCH_SIZE) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+async function insertTransactionsBatch(client, rows) {
+  if (!rows.length) return;
+
+  const values = [];
+  const placeholders = rows.map((row, index) => {
+    const offset = index * 10;
+    values.push(
+      row.id,
+      row.userId,
+      row.date,
+      row.type,
+      row.amount,
+      row.category,
+      row.description,
+      row.clientName,
+      row.region,
+      row.channel
+    );
+    return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10})`;
+  });
+
+  await client.query(
+    `
+      INSERT INTO transactions (id, user_id, date, type, amount, category, description, client_name, region, channel)
+      VALUES ${placeholders.join(', ')}
+      ON CONFLICT (id) DO UPDATE SET
+        amount = EXCLUDED.amount,
+        category = EXCLUDED.category,
+        description = EXCLUDED.description,
+        client_name = EXCLUDED.client_name,
+        region = EXCLUDED.region,
+        channel = EXCLUDED.channel
+    `,
+    values
+  );
+}
+
+async function insertInvoicesBatch(client, rows) {
+  if (!rows.length) return;
+
+  const values = [];
+  const placeholders = rows.map((row, index) => {
+    const offset = index * 8;
+    values.push(
+      row.id,
+      row.userId,
+      row.clientName,
+      row.amount,
+      row.issueDate,
+      row.dueDate,
+      row.status,
+      row.paymentHistory
+    );
+    return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8})`;
+  });
+
+  await client.query(
+    `
+      INSERT INTO invoices (id, user_id, client_name, amount, issue_date, due_date, status, payment_history)
+      VALUES ${placeholders.join(', ')}
+      ON CONFLICT (id) DO UPDATE SET
+        amount = EXCLUDED.amount,
+        issue_date = EXCLUDED.issue_date,
+        due_date = EXCLUDED.due_date,
+        status = EXCLUDED.status,
+        payment_history = EXCLUDED.payment_history
+    `,
+    values
+  );
+}
+
+async function insertClientsBatch(client, rows) {
+  if (!rows.length) return;
+
+  const values = [];
+  const placeholders = rows.map((row, index) => {
+    const offset = index * 7;
+    values.push(
+      row.userId,
+      row.name,
+      row.aadharCard,
+      row.panCard,
+      row.bankAccount,
+      row.contactNumber,
+      row.email
+    );
+    return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7})`;
+  });
+
+  await client.query(
+    `
+      INSERT INTO clients (user_id, name, aadhar_card, pan_card, bank_account, contact_number, email)
+      VALUES ${placeholders.join(', ')}
+      ON CONFLICT (user_id, name) DO UPDATE SET
+        aadhar_card = COALESCE(EXCLUDED.aadhar_card, clients.aadhar_card),
+        pan_card = COALESCE(EXCLUDED.pan_card, clients.pan_card),
+        bank_account = COALESCE(EXCLUDED.bank_account, clients.bank_account),
+        contact_number = COALESCE(EXCLUDED.contact_number, clients.contact_number),
+        email = COALESCE(EXCLUDED.email, clients.email)
+    `,
+    values
+  );
 }
 
 // Global Error Logging
@@ -132,11 +245,9 @@ app.post('/api/upload', authenticateToken, async (req, res) => {
 
   try {
     console.log(`📥 Processing enriched upload: ${name} (${data.length} records) for userId: ${req.user.id}`);
-    
-    // Clear old data for this user to ensure fresh load
-    await pool.query('DELETE FROM transactions WHERE user_id = $1', [req.user.id]);
-    await pool.query('DELETE FROM invoices WHERE user_id = $1', [req.user.id]);
-    await pool.query('DELETE FROM clients WHERE user_id = $1', [req.user.id]);
+    const transactions = [];
+    const invoices = [];
+    const clients = [];
 
     for (let row of data) {
       // Normalize all keys to lowercase to avoid case-sensitivity issues (e.g., TYPE vs type)
@@ -179,29 +290,34 @@ app.post('/api/upload', authenticateToken, async (req, res) => {
       if (row.type && (String(row.type).toLowerCase() === 'income' || String(row.type).toLowerCase() === 'expense')) {
         const client = row.client || row.clientname || row.customer || 'Unknown';
         const amt = normAmount(row.amount);
-        await pool.query(`
-          INSERT INTO transactions (id, user_id, date, type, amount, category, description, client_name, region, channel)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-          ON CONFLICT (id) DO UPDATE SET amount = EXCLUDED.amount, category = EXCLUDED.category
-        `, [
-          rowId, req.user.id, normDate(row.date), String(row.type).toLowerCase(), amt, 
-          String(row.category || 'miscellaneous').toLowerCase(), row.description || 'No description', client, row.region || 'Default', row.channel || 'Direct'
-        ]);
+        transactions.push({
+          id: rowId,
+          userId: req.user.id,
+          date: normDate(row.date),
+          type: String(row.type).toLowerCase(),
+          amount: amt,
+          category: String(row.category || 'miscellaneous').toLowerCase(),
+          description: row.description || 'No description',
+          clientName: client,
+          region: row.region || 'Default',
+          channel: row.channel || 'Direct'
+        });
       }
 
       // 2. Invoice Logic
       if (row.duedate || row.issuedate || row.status) {
         const client = row.client || row.clientname || row.customer || 'Unknown';
         const status = normStatus(row.status);
-        await pool.query(`
-          INSERT INTO invoices (id, user_id, client_name, amount, issue_date, due_date, status, payment_history)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-          ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status
-        `, [
-          rowId, req.user.id, client, normAmount(row.amount), 
-          normDate(row.issuedate || row.date), normDate(row.duedate || row.date), 
-          status, JSON.stringify(row.paymenthistory || [])
-        ]);
+        invoices.push({
+          id: rowId,
+          userId: req.user.id,
+          clientName: client,
+          amount: normAmount(row.amount),
+          issueDate: normDate(row.issuedate || row.date),
+          dueDate: normDate(row.duedate || row.date),
+          status,
+          paymentHistory: JSON.stringify(row.paymenthistory || [])
+        });
       }
 
       // 3. Client PII Logic
@@ -215,18 +331,41 @@ app.post('/api/upload', authenticateToken, async (req, res) => {
         const encryptedPan = pan ? encrypt(pan) : null;
         const encryptedBank = bank ? encrypt(bank) : null;
         
-        await pool.query(`
-          INSERT INTO clients (user_id, name, aadhar_card, pan_card, bank_account, contact_number, email)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
-          ON CONFLICT (user_id, name) DO UPDATE SET 
-            aadhar_card = COALESCE(EXCLUDED.aadhar_card, clients.aadhar_card),
-            pan_card = COALESCE(EXCLUDED.pan_card, clients.pan_card),
-            bank_account = COALESCE(EXCLUDED.bank_account, clients.bank_account)
-        `, [
-          req.user.id, client, encryptedAadhar, encryptedPan, encryptedBank, 
-          row.contact || row.contactnumber || row.email, row.email
-        ]);
+        clients.push({
+          userId: req.user.id,
+          name: client,
+          aadharCard: encryptedAadhar,
+          panCard: encryptedPan,
+          bankAccount: encryptedBank,
+          contactNumber: row.contact || row.contactnumber || row.email,
+          email: row.email
+        });
       }
+    }
+
+    const dbClient = await pool.connect();
+    try {
+      await dbClient.query('BEGIN');
+      await dbClient.query('DELETE FROM transactions WHERE user_id = $1', [req.user.id]);
+      await dbClient.query('DELETE FROM invoices WHERE user_id = $1', [req.user.id]);
+      await dbClient.query('DELETE FROM clients WHERE user_id = $1', [req.user.id]);
+
+      for (const chunk of chunkArray(transactions)) {
+        await insertTransactionsBatch(dbClient, chunk);
+      }
+      for (const chunk of chunkArray(invoices)) {
+        await insertInvoicesBatch(dbClient, chunk);
+      }
+      for (const chunk of chunkArray(clients)) {
+        await insertClientsBatch(dbClient, chunk);
+      }
+
+      await dbClient.query('COMMIT');
+    } catch (dbError) {
+      await dbClient.query('ROLLBACK');
+      throw dbError;
+    } finally {
+      dbClient.release();
     }
 
     console.log(`✅ Upload Complete. Persisted data for userId: ${req.user.id}`);
