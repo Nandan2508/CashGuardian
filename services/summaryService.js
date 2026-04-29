@@ -6,20 +6,26 @@ const { getRiskReport } = require("./riskService");
 
 /**
  * Generates a rule-based narrative summary.
+ * @param {string} userId - Authenticated user ID.
  * @param {"weekly"|"monthly"} period - Summary period.
  * @param {Array<Object>|null} customDataset - User-provided data.
  * @returns {Promise<string>} Narrative summary.
  */
-async function generateSummary(period, customDataset = null) {
+async function generateSummary(userId, period, customDataset = null) {
   const useWeekly = period === "weekly";
-  const monthlyComparison = comparePeriods("month", 1, customDataset);
-  const weeklyComparison = comparePeriods("week", 1, customDataset);
-  const comparison = useWeekly ? weeklyComparison : monthlyComparison;
   
-  const relevantAnomalies = detectAnomalies(customDataset).slice(0, 2);
-  const overdueInvoices = getOverdueInvoices(customDataset);
+  // PRE-FETCH to avoid cascade of 5 DB calls
+  const { getTransactions } = require("./dataService");
+  const dataset = customDataset || await getTransactions(userId);
+
+  // Only run the comparison we actually need
+  const comparison = await comparePeriods(userId, useWeekly ? "week" : "month", 1, dataset);
+  
+  const allAnomalies = await detectAnomalies(userId, dataset);
+  const relevantAnomalies = allAnomalies.slice(0, 2);
+  const overdueInvoices = await getOverdueInvoices(userId, dataset);
   const overdueTotal = overdueInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const riskReport = getRiskReport(customDataset);
+  const riskReport = await getRiskReport(userId, dataset);
   const topRiskClient = riskReport[0] || { client: "None" };
   
   const income = comparison.current.income;

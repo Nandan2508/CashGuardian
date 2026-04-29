@@ -1,4 +1,4 @@
-const transactions = require("../data/transactions.json");
+const { getTransactions, getCashKpis } = require("./dataService");
 const { safeDate, safeNumber } = require("../utils/formatter");
 
 /**
@@ -15,9 +15,8 @@ function parseUtcDate(dateStr) {
  * @param {Array<object>} dataset - Optional transaction set.
  * @returns {Date} Latest transaction date.
  */
-function getLatestTransactionDate(dataset = transactions) {
-  const { safeDate } = require("../utils/formatter");
-  const data = dataset && dataset.length > 0 ? dataset : transactions;
+async function getLatestTransactionDate(userId, dataset = null) {
+  const data = await getTransactions(userId, dataset);
   if (!data || !data.length) return new Date();
   const dates = data.map((t) => safeDate(t.date)).filter((d) => !isNaN(d.getTime()));
   return dates.length ? new Date(Math.max(...dates)) : new Date();
@@ -30,8 +29,8 @@ function getLatestTransactionDate(dataset = transactions) {
  * @param {Array<object>} dataset - Optional transaction set.
  * @returns {Array<object>} Filtered transactions.
  */
-function getTransactionsInRange(from, to, dataset = transactions) {
-  const data = dataset || transactions;
+async function getTransactionsInRange(userId, from, to, dataset = null) {
+  const data = await getTransactions(userId, dataset);
   return data.filter((transaction) => {
     const transactionDate = parseUtcDate(transaction.date);
     return transactionDate >= from && transactionDate <= to;
@@ -76,33 +75,21 @@ function getExpenseTotals(items) {
     .sort((left, right) => right.total - left.total);
 }
 
-/**
- * Builds a narrative from current and previous period totals.
- * @param {{ income: number, expenses: number, net: number }} current - Current period totals.
- * @param {{ income: number, expenses: number, net: number }} previous - Previous period totals.
- * @param {{ income: number, expenses: number, net: number }} deltas - Delta values.
- * @param {"week"|"month"} period - Compared period unit.
- * @returns {string} Human-readable comparison summary.
- */
-function buildComparisonNarrative(current, previous, deltas, period) {
-  const incomeDirection = deltas.income >= 0 ? "up" : "down";
-  const expenseDirection = deltas.expenses >= 0 ? "up" : "down";
-  const netDirection = deltas.net >= 0 ? "improved" : "worsened";
-
-  return [
-    `Compared with the previous ${period}, income is ${incomeDirection} by ₹${Math.abs(deltas.income)}.`,
-    `Expenses are ${expenseDirection} by ₹${Math.abs(deltas.expenses)}.`,
-    `Overall net cash has ${netDirection} by ₹${Math.abs(deltas.net)}.`
-  ].join(" ");
-}
 
 /**
  * Returns current net cash position.
  * @param {Array<object>} dataset - Optional transaction set.
  * @returns {{ totalIncome: number, totalExpenses: number, netBalance: number }}
  */
-function getCashBalance(dataset = transactions) {
-  const data = dataset || transactions;
+async function getCashBalance(userId, dataset = null) {
+  if (!dataset) {
+    const kpis = await getCashKpis(userId);
+    if (kpis) {
+      return kpis;
+    }
+  }
+
+  const data = await getTransactions(userId, dataset);
   const totals = summarizeTransactions(data);
 
   return {
@@ -118,13 +105,13 @@ function getCashBalance(dataset = transactions) {
  * @param {Array<object>} dataset - Optional transaction set.
  * @returns {{ period: string, income: number, expenses: number, net: number, topExpenseCategory: string }}
  */
-function getCashSummary(days = 30, dataset = transactions) {
-  const data = dataset || transactions;
-  const latestDate = getLatestTransactionDate(data);
+async function getCashSummary(userId, days = 30, dataset = null) {
+  const data = await getTransactions(userId, dataset);
+  const latestDate = await getLatestTransactionDate(userId, data);
   const from = new Date(latestDate);
   from.setUTCDate(from.getUTCDate() - (days - 1));
 
-  const periodTransactions = getTransactionsInRange(from, latestDate, data);
+  const periodTransactions = await getTransactionsInRange(userId, from, latestDate, data);
   const totals = summarizeTransactions(periodTransactions);
   const topExpenseCategory = getExpenseTotals(periodTransactions)[0];
 
@@ -142,8 +129,8 @@ function getCashSummary(days = 30, dataset = transactions) {
  * @param {Array<object>} dataset - Optional transaction set.
  * @returns {Array<{ category: string, total: number, percentage: string }>}
  */
-function getExpenseBreakdown(dataset = transactions) {
-  const data = dataset || transactions;
+async function getExpenseBreakdown(userId, dataset = null) {
+  const data = await getTransactions(userId, dataset);
   const expenseTotals = getExpenseTotals(data);
   const totalExpenses = expenseTotals.reduce((sum, item) => sum + item.total, 0);
 
@@ -211,12 +198,12 @@ function summarizeByCategory(items) {
  * @param {Array<Object>} dataset - Optional transaction set.
  * @returns {object} Aggregated metrics.
  */
-function summarizeEntityMetrics(entity, dataset = transactions, windowDays = 90) {
+async function summarizeEntityMetrics(userId, entity, dataset = null, windowDays = 90) {
   const { safeNumber, safeDate } = require("../utils/formatter");
-  const data = dataset || transactions;
+  const data = await getTransactions(userId, dataset);
   const norm = entity.trim().toLowerCase();
   
-  const latestDateInSet = getLatestTransactionDate(data);
+  const latestDateInSet = await getLatestTransactionDate(userId, data);
   const cutoffDate = new Date(latestDateInSet);
   cutoffDate.setUTCDate(cutoffDate.getUTCDate() - windowDays);
 
@@ -236,7 +223,7 @@ function summarizeEntityMetrics(entity, dataset = transactions, windowDays = 90)
   const volume = matches.length;
   
   // Growth WoW (Last 7 days vs 7 days before)
-  const latest = getLatestTransactionDate(data);
+  const latest = await getLatestTransactionDate(userId, data);
   const cStart = new Date(latest); cStart.setUTCDate(cStart.getUTCDate() - 6);
   const pEnd = new Date(cStart); pEnd.setUTCDate(pEnd.getUTCDate() - 1);
   const pStart = new Date(pEnd); pStart.setUTCDate(pStart.getUTCDate() - 6);
@@ -260,10 +247,10 @@ function summarizeEntityMetrics(entity, dataset = transactions, windowDays = 90)
  * @param {Array<Object>} dataset - Optional transaction set.
  * @returns {object} Head-to-head comparison result.
  */
-function compareEntities(a, b, dataset = transactions) {
-  const data = dataset || transactions;
-  const entityA = { name: a, ...summarizeEntityMetrics(a, data) };
-  const entityB = { name: b, ...summarizeEntityMetrics(b, data) };
+async function compareEntities(userId, a, b, dataset = null) {
+  const data = await getTransactions(userId, dataset);
+  const entityA = { name: a, ...await summarizeEntityMetrics(userId, a, data) };
+  const entityB = { name: b, ...await summarizeEntityMetrics(userId, b, data) };
 
   // Determine Leader based on Revenue
   const leader = entityA.revenue > entityB.revenue ? entityA : entityB;
@@ -288,9 +275,9 @@ function compareEntities(a, b, dataset = transactions) {
  * @param {Array<Object>} dataset - Optional transaction set.
  * @returns {{ current: object, previous: object, deltas: { income: number, expenses: number, net: number }, narrative: string }}
  */
-function comparePeriods(period, unitsBack = 1, dataset = transactions) {
-  const data = dataset || transactions;
-  const latestDate = getLatestTransactionDate(data);
+async function comparePeriods(userId, period, unitsBack = 1, dataset = null) {
+  const data = await getTransactions(userId, dataset);
+  const latestDate = await getLatestTransactionDate(userId, data);
   let currentStart, currentEnd, previousStart, previousEnd;
   let periodName = period;
 
@@ -324,8 +311,8 @@ function comparePeriods(period, unitsBack = 1, dataset = transactions) {
     throw new Error("period must be 'week', 'month' or a custom range object");
   }
 
-  const currentTransactions = getTransactionsInRange(currentStart, currentEnd, data);
-  const previousTransactions = getTransactionsInRange(previousStart, previousEnd, data);
+  const currentTransactions = await getTransactionsInRange(userId, currentStart, currentEnd, data);
+  const previousTransactions = await getTransactionsInRange(userId, previousStart, previousEnd, data);
   const current = summarizeTransactions(currentTransactions);
   const previous = summarizeTransactions(previousTransactions);
   const deltas = {
@@ -344,8 +331,8 @@ function comparePeriods(period, unitsBack = 1, dataset = transactions) {
       period: `${previousStart.toISOString().slice(0, 10)} to ${previousEnd.toISOString().slice(0, 10)}`
     },
     deltas,
-    currentTrend: calculateWeeklyTrend(data, 0, currentEnd, typeof period === "object"),
-    previousTrend: calculateWeeklyTrend(data, 0, previousEnd, typeof period === "object"),
+    currentTrend: await calculateWeeklyTrend(userId, data, 0, currentEnd, typeof period === "object"),
+    previousTrend: await calculateWeeklyTrend(userId, data, 0, previousEnd, typeof period === "object"),
     variances: getCategoryVariances(currentTransactions, previousTransactions),
     narrative: buildComparisonNarrative(current, previous, deltas, periodName)
   };
@@ -360,10 +347,11 @@ function comparePeriods(period, unitsBack = 1, dataset = transactions) {
  * @param {boolean} normalizeLabels - If true, use generic "Week 1, Week 2..." labels.
  * @returns {{ labels: string[], revenue: number[], expenses: number[] }}
  */
-function calculateWeeklyTrend(transactions, weekOffset = 0, anchorDate = null, normalizeLabels = false) {
+async function calculateWeeklyTrend(userId, transactionsSet, weekOffset = 0, anchorDate = null, normalizeLabels = false) {
+  const transactions = await getTransactions(userId, transactionsSet);
   if (!transactions.length && !anchorDate) return { labels: [], revenue: [], expenses: [] };
 
-  const absoluteLatest = anchorDate || getLatestTransactionDate(transactions);
+  const absoluteLatest = anchorDate || await getLatestTransactionDate(userId, transactions);
   const earliestInData = transactions.length > 0 ? new Date(Math.min(...transactions.map(t => safeDate(t.date)))) : absoluteLatest;
   
   const weekMs = 7 * 24 * 60 * 60 * 1000;

@@ -18,14 +18,14 @@ const INTENTS = {
 };
 
 const INTENT_RULES = [
-  { intent: INTENTS.OVERDUE_INVOICES, keywords: ["overdue", "unpaid", "late invoice", "pending invoice", "collectibles", "overdue summary"] },
+  { intent: INTENTS.OVERDUE_INVOICES, keywords: ["invoice", "invoices", "overdue", "unpaid", "late invoice", "pending invoice", "collectibles", "overdue summary"] },
   { intent: INTENTS.CASH_BALANCE, keywords: ["balance", "how much cash", "current cash", "money left", "funds", "how much money", "cash left"] },
   { intent: INTENTS.SEND_REMINDER, keywords: ["send", "remind", "email", "reminder", "mail", "notify", "send reminder"] },
-  { intent: INTENTS.CASH_SUMMARY, keywords: ["summary", "overview", "cash flow", "performance summary", "financial state"] },
+  { intent: INTENTS.CASH_SUMMARY, keywords: ["summary", "summarise", "summarize", "overview", "cash flow", "performance summary", "financial state", "business summary", "business"] },
   { intent: INTENTS.RISK_CLIENTS, keywords: ["risk", "at risk", "won't pay", "bad client", "risky", "reliability"] },
-  { intent: INTENTS.ANOMALY, keywords: ["anomaly", "spike", "unusual", "weird", "sudden", "deviation", "jump"] },
+  { intent: INTENTS.ANOMALY, keywords: ["anomaly", "spike", "unusual", "weird", "sudden", "deviation", "jump", "dip", "dipped", "drop", "dropped", "decline", "decrease", "revenue dipped"] },
   { intent: INTENTS.DECOMPOSITION, keywords: ["breakdown", "what makes up", "decomposition", "components of", "structure of"] },
-  { intent: INTENTS.EXPENSE_BREAKDOWN, keywords: ["expense", "spending", "costs", "expenditure", "bills"] },
+  { intent: INTENTS.EXPENSE_BREAKDOWN, keywords: ["expense breakdown", "expense", "spending", "costs", "expenditure", "bills"] },
   { intent: INTENTS.SEND_REMINDER, keywords: ["send", "remind", "email", "reminder", "mail", "notify"] },
   { intent: INTENTS.WEEKLY_SUMMARY, keywords: ["weekly", "this week", "digest", "last 7 days"] },
   { intent: INTENTS.COMPARE, keywords: ["compare", "vs", "versus", "last month", "this month", "growth"] },

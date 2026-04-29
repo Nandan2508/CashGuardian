@@ -1,15 +1,16 @@
-const transactions = require("../data/transactions.json");
+const { getTransactions } = require("./dataService");
 
 /**
  * Decomposes a subset of transactions into its components by a grouping field.
  * @param {string} type - 'income' or 'expense'.
  * @param {string|null} categoryFilter - Optional specific category to filter by (e.g., 'sales').
  * @param {string} groupField - Field to group by ('category', 'client', 'region', 'channel').
+ * @param {string} userId - Authenticated user ID.
  * @param {Array<Object>} [dataset] - Optional dataset to analyze.
- * @returns {object} Decomposition result including totals, components, and insights.
+ * @returns {Promise<object>} Decomposition result including totals, components, and insights.
  */
-function decomposeTransactions(type, categoryFilter = null, groupField = "category", dataset = null) {
-  const data = dataset || transactions;
+async function decomposeTransactions(type, categoryFilter = null, groupField = "category", userId, dataset = null) {
+  const data = dataset || await getTransactions(userId);
   let filtered = data.filter((t) => t.type === type);
 
   if (categoryFilter) {

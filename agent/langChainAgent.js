@@ -23,7 +23,35 @@ const { detectAnomalies } = require("../services/anomalyService");
 const { generateSummary } = require("../services/summaryService");
 const { sendPaymentReminder } = require("../services/emailService");
 const { formatCurrency } = require("../utils/formatter");
-const { extractClientName, getSnapshot, buildSystemPrompt } = require("./queryAgent");
+const { getTransactions, getInvoices } = require("../services/dataService");
+const { extractClientName, getSnapshot, buildSystemPrompt, formatOverdueTable, formatDecompositionTable } = require("./queryAgent");
+
+function isFastModeEnabled() {
+  return process.env.AI_FAST_PATH !== "false";
+}
+
+function formatForecastQuick(forecast) {
+  return [
+    "#### 30-Day Forecast",
+    `Opening Balance: ${formatCurrency(forecast.openingBalance)}`,
+    `Projected Revenue: ${formatCurrency(forecast.projectedRevenue)}`,
+    `Projected Burn: ${formatCurrency(forecast.projectedBurn)}`,
+    `Upcoming Invoices: ${formatCurrency(forecast.upcomingTotal)}`,
+    `Projected Closing Balance: ${formatCurrency(forecast.finalBalance)}`
+  ].join("\n");
+}
+
+async function invokeWithTimeout(llm, messages, fallbackText, timeoutMs = 1200) {
+  try {
+    const result = await Promise.race([
+      llm.invoke(messages),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("LLM timeout")), timeoutMs))
+    ]);
+    return result && result.content ? result.content.trim() : fallbackText;
+  } catch (_error) {
+    return fallbackText;
+  }
+}
 
 // Initialize LLM based on provider
 function getLLM() {
@@ -69,7 +97,7 @@ async function classifyNode(state) {
   const intent = classifyIntent(lastUserMessage);
   
   // Try to extract client from current query
-  let client = extractClientName(lastUserMessage, state.activeDataset);
+  let client = await extractClientName(lastUserMessage, state.transactions);
   
   // CONTEXT MEMORY: If no client in query, use the one from state
   if (!client && state.lastClient) {
@@ -90,22 +118,28 @@ async function classifyNode(state) {
 async function executeNode(state) {
   const { intent, lastClient, activeDataset, messages } = state;
   const userInput = messages[messages.length - 1].content;
+  const fastMode = isFastModeEnabled();
 
   // 1. High-Priority Action: Send Reminder
   if (intent === INTENTS.SEND_REMINDER) {
     if (!lastClient) return { response: "Please specify which client should receive the reminder." };
 
-    const dataset = activeDataset || require("../data/transactions.json");
-    const overdueRow = dataset.find(item => item.client === lastClient && (item.status === 'overdue' || item.amount < 0));
-
-    if (!overdueRow) return { response: `No overdue records found for ${lastClient} in the active dataset.` };
+    const clientInvoices = await getInvoicesByClient(state.userId, lastClient, state.invoices);
+    const overdueRow = clientInvoices.find((inv) => {
+      const dueDate = inv.dueDate || inv.duedate;
+      const status = String(inv.status || "").toLowerCase();
+      return status === "overdue" || (dueDate && new Date(dueDate).getTime() < Date.now());
+    });
+    if (!overdueRow) return { response: `No overdue records found for ${lastClient}.` };
+    const dueDate = overdueRow.dueDate || overdueRow.duedate;
+    const daysOverdue = dueDate ? Math.max(1, Math.ceil((Date.now() - new Date(dueDate).getTime()) / 86400000)) : 7;
 
     const result = await sendPaymentReminder({
       client: lastClient,
-      amount: Math.abs(overdueRow.amount),
-      daysOverdue: overdueRow.daysOverdue || 7,
-      invoiceId: overdueRow.id || overdueRow.invoiceId || 'N/A'
-    }, activeDataset);
+      amount: Math.abs(Number(overdueRow.amount) || 0),
+      daysOverdue,
+      invoiceId: overdueRow.id || overdueRow.invoiceId || "N/A"
+    }, state.userId, activeDataset);
 
     return { response: result.alert };
   }
@@ -113,11 +147,47 @@ async function executeNode(state) {
   // 2. Data Retrieval Intents
   let fallbackText = null;
   if (intent === INTENTS.CASH_BALANCE) {
-    const balance = getCashBalance();
+    const balance = await getCashBalance(state.userId, state.transactions);
     fallbackText = `Current net cash balance is ${formatCurrency(balance.netBalance)}.\nIncome: ${formatCurrency(balance.totalIncome)} | Expenses: ${formatCurrency(balance.totalExpenses)}`;
+    if (fastMode) return { response: fallbackText, duel: null, trend: null, comparisonTrend: null };
+  } else if (intent === INTENTS.CASH_SUMMARY) {
+    const summary = await getCashSummary(state.userId, 90, state.transactions);
+    const summaryText = `Income: ${formatCurrency(summary.income)}\nExpenses: ${formatCurrency(summary.expenses)}\nNet: ${formatCurrency(summary.net)}\nTop Expense Category: ${summary.topExpenseCategory}`;
+    const summaryPrompt = buildSystemPrompt(await getSnapshot(state.userId, activeDataset, {
+      transactions: state.transactions,
+      invoices: state.invoices
+    })) +
+      `\n\n### MANDATORY DATA SOURCE: CASH SUMMARY\n` +
+      `${summaryText}\n` +
+      `### END DATA SOURCE\n\n` +
+      `Task: Provide a concise business summary with one actionable recommendation.`;
+
+    const llm = getLLM();
+    const aiSummary = await invokeWithTimeout(
+      llm,
+      [new SystemMessage(summaryPrompt), ...messages],
+      summaryText,
+      3200
+    );
+    return { response: aiSummary, duel: null, trend: null, comparisonTrend: null };
+  } else if (intent === INTENTS.EXPENSE_BREAKDOWN) {
+    const breakdown = await getExpenseBreakdown(state.userId, state.transactions);
+    const lines = breakdown.map((b) => `${b.category}: ${formatCurrency(b.total)} (${b.percentage})`);
+    const breakdownText = `#### Expense Breakdown\n${lines.join("\n")}`;
+    if (fastMode) return { response: breakdownText, duel: null, trend: null, comparisonTrend: null };
+  } else if (intent === INTENTS.ANOMALY) {
+    const anomalies = await detectAnomalies(state.userId, state.transactions);
+    if (fastMode) {
+      const text = anomalies.length
+        ? anomalies.map((a) => `- ${a.explanation}`).join("\n")
+        : "No significant anomalies detected.";
+      return { response: `#### Anomaly Report\n${text}`, duel: null, trend: null, comparisonTrend: null };
+    }
   } else if (intent === INTENTS.OVERDUE_INVOICES) {
-    const { formatOverdueTable } = require("./queryAgent");
-    const snapshot = getSnapshot(activeDataset);
+    const snapshot = await getSnapshot(state.userId, activeDataset, {
+      transactions: state.transactions,
+      invoices: state.invoices
+    });
     
     let invoices = snapshot.overdueList || [];
     let contextTitle = "Global Overdue Status";
@@ -134,24 +204,29 @@ async function executeNode(state) {
       `${table}\n` +
       `### END DATA SOURCE\n\n` +
       `Task: Present the data above. You MUST lead with the provided markdown table. Accuracy is 100% mandatory. Ignore irrelevant snapshot data if it contradicts this specific table.`;
+    if (fastMode) {
+      return { response: table, duel: null, trend: null, comparisonTrend: null };
+    }
 
     const llm = getLLM();
-    const resultAI = await llm.invoke([new SystemMessage(systemPrompt), ...messages]);
+    const fallback = table;
+    const responseText = await invokeWithTimeout(llm, [new SystemMessage(systemPrompt), ...messages], fallback);
 
     return {
-      response: resultAI.content.trim(),
+      response: responseText,
       duel: null,
       trend: null,
       comparisonTrend: null
     };
   }
 
-  const snapshot = getSnapshot(activeDataset);
+  const snapshot = await getSnapshot(state.userId, activeDataset, {
+    transactions: state.transactions,
+    invoices: state.invoices
+  });
 
   // 3. New Decomposition (Breakdown) handling
   if (intent === INTENTS.DECOMPOSITION) {
-    const { decomposeTransactions } = require("../services/decompositionService");
-    const { formatDecompositionTable } = require("./queryAgent");
     const norm = userInput.toLowerCase();
     let decompType = "expense";
     let decompFilter = null;
@@ -170,8 +245,9 @@ async function executeNode(state) {
       decompGroup = "channel";
     }
 
-    const result = decomposeTransactions(decompType, decompFilter, decompGroup, activeDataset);
+    const result = await decomposeTransactions(decompType, decompFilter, decompGroup, state.userId, activeDataset);
     const table = formatDecompositionTable(result);
+    const decompFallback = `#### Breakdown Analysis\n${result.target}: ${formatCurrency(result.total)}\n\n${table}`;
 
     const systemPrompt =
       buildSystemPrompt(snapshot) +
@@ -181,13 +257,18 @@ async function executeNode(state) {
       `Tabular Breakdown:\n${table}\n` +
       `Statistically relevant patterns: ${result.insights.join(", ") || "None detected"}\n` +
       `### END DATA SOURCE\n\n` +
-      "Task: Provide a strategic executive narrative. You MUST lead with the Tabular Breakdown provided above. Highlight the top contributor and explain any concentration risks or outliers found in the statistically relevant patterns.";
+      "Task: Provide a strategic executive narrative. Keep it concise and insight-focused. Then include the same tabular breakdown.";
 
     const llm = getLLM();
-    const resultAI = await llm.invoke([new SystemMessage(systemPrompt), ...messages]);
+    const responseText = await invokeWithTimeout(
+      llm,
+      [new SystemMessage(systemPrompt), ...messages],
+      decompFallback,
+      1800
+    );
 
     return {
-      response: resultAI.content.trim(),
+      response: `${responseText}\n\n${table}`,
       duel: null,
       trend: null,
       comparisonTrend: null
@@ -197,7 +278,10 @@ async function executeNode(state) {
   // 4. Prediction Mode
   if (intent === INTENTS.PREDICTION) {
     const { calculate30DayForecast } = require("../services/predictionService");
-    const forecast = calculate30DayForecast(activeDataset);
+    const forecast = await calculate30DayForecast(state.userId, activeDataset);
+    if (fastMode) {
+      return { response: formatForecastQuick(forecast), duel: null, trend: null, comparisonTrend: null };
+    }
 
     const systemPrompt = buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: 30-DAY FORECAST\n` +
@@ -211,10 +295,14 @@ async function executeNode(state) {
       `Task: Provide an executive narrative of this 30-day forecast. Explain how the historical burn rate and upcoming receivables combine to reach the final balance. Accuracy is mandatory.`;
 
     const llm = getLLM();
-    const resultAI = await llm.invoke([new SystemMessage(systemPrompt), ...messages]);
+    const responseText = await invokeWithTimeout(
+      llm,
+      [new SystemMessage(systemPrompt), ...messages],
+      formatForecastQuick(forecast)
+    );
 
     return {
-      response: resultAI.content,
+      response: responseText,
       duel: null,
       trend: null,
       comparisonTrend: null
@@ -237,19 +325,38 @@ async function executeNode(state) {
     
     // If it's a period comparison (month vs month), route to comparePeriods
     if (isPeriodComparison) {
-      const { comparePeriods } = require("../services/cashFlowService");
       const period = normalized.includes("week") ? "week" : "month";
-      snapshot.periodComparison = comparePeriods(period, 1, activeDataset);
+        snapshot.periodComparison = await comparePeriods(state.userId, period, 1, activeDataset);
     } else {
       const parts = cleanInput.split(/ vs | versus /);
       if (parts.length >= 2) {
         const entityA = parts[0].trim();
         const entityB = parts[1].trim();
         const { compareEntities } = require("../services/cashFlowService");
-        snapshot.duel = compareEntities(entityA, entityB, activeDataset);
+        snapshot.duel = await compareEntities(state.userId, entityA, entityB, activeDataset);
         console.log(`[LangGraph] Duel detected: ${entityA} vs ${entityB}`);
       }
     }
+  }
+
+  if (fastMode && intent === INTENTS.WEEKLY_SUMMARY) {
+    return {
+      response: await generateSummary("weekly", state.transactions),
+      duel: null,
+      trend: snapshot.trend || null,
+      comparisonTrend: snapshot.comparisonTrend || null
+    };
+  }
+
+  if (fastMode && intent === INTENTS.COMPARE) {
+    const period = normalized.includes("week") ? "week" : "month";
+    const comparison = await comparePeriods(state.userId, period, 1, state.transactions);
+    return {
+      response: comparison.narrative,
+      duel: null,
+      trend: comparison.currentTrend,
+      comparisonTrend: comparison.previousTrend
+    };
   }
 
   const systemPrompt = buildSystemPrompt(snapshot) + 
@@ -259,13 +366,15 @@ async function executeNode(state) {
     `If a client is not in the OVERDUE LIST, simply state that they have no overdue invoices. Accuracy is 100% mandatory.`;
 
   const llm = getLLM();
-  const result = await llm.invoke([
-    new SystemMessage(systemPrompt),
-    ...messages
-  ]);
+  const fallbackResponse = fallbackText || "Please try a more specific finance query (balance, overdue, breakdown, compare, or summary).";
+  const responseText = await invokeWithTimeout(
+    llm,
+    [new SystemMessage(systemPrompt), ...messages],
+    fallbackResponse
+  );
 
   return { 
-    response: result.content,
+    response: responseText,
     duel: snapshot.duel || null,
     trend: snapshot.periodComparison ? snapshot.periodComparison.currentTrend : null,
     comparisonTrend: snapshot.periodComparison ? snapshot.periodComparison.previousTrend : null
@@ -289,6 +398,18 @@ const StateAnnotation = Annotation.Root({
     default: () => null,
   }),
   activeDataset: Annotation({
+    reducer: (x, y) => y ?? x,
+    default: () => null,
+  }),
+  transactions: Annotation({
+    reducer: (x, y) => y ?? x,
+    default: () => null,
+  }),
+  invoices: Annotation({
+    reducer: (x, y) => y ?? x,
+    default: () => null,
+  }),
+  userId: Annotation({
     reducer: (x, y) => y ?? x,
     default: () => null,
   }),
@@ -325,16 +446,27 @@ const app = workflow.compile();
  * @param {Array<Object>} customDataset - Uploaded data.
  * @param {Array} history - Previous messages.
  */
-async function handleQuery(userInput, customDataset = null, history = []) {
+async function handleQuery(userInput, customDataset = null, history = [], userId = null) {
   try {
     // 1. Prepare initial messages
     const messages = history.map(m => m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content));
     messages.push(new HumanMessage(userInput));
 
-    // 2. Fetch current state context (we could persist this in a DB, but for now we look at history)
+    // 1.5 Pre-fetch data for the graph
+    const [transactions, invoices] = await Promise.all([
+      customDataset && customDataset.length > 0 ? Promise.resolve(customDataset) : getTransactions(userId),
+      getInvoices(userId)
+    ]);
+
+    // 2. Compute clients for context
+    const clients = [...new Set([
+      ...transactions.map(t => t.client || t.client_name),
+      ...invoices.map(i => i.client || i.client_name)
+    ].filter(Boolean))];
+
     let lastClient = null;
     for (let i = history.length - 1; i >= 0; i--) {
-      const match = extractClientName(history[i].content, customDataset);
+      const match = extractClientName(history[i].content, transactions, clients);
       if (match) {
         lastClient = match;
         break;
@@ -345,7 +477,10 @@ async function handleQuery(userInput, customDataset = null, history = []) {
     const result = await app.invoke({
       messages,
       activeDataset: customDataset,
-      lastClient
+      transactions,
+      invoices,
+      lastClient,
+      userId
     });
 
     return {
@@ -366,27 +501,43 @@ async function handleQuery(userInput, customDataset = null, history = []) {
  * @param {Array<Object>} customDataset - Uploaded data.
  * @param {Array} history - Previous messages.
  */
-async function* handleStream(userInput, customDataset = null, history = []) {
+async function* handleStream(userInput, customDataset = null, history = [], userId = null) {
   try {
     const messages = history.map(m => m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content));
     messages.push(new HumanMessage(userInput));
 
+    // 1. Pre-fetch all necessary data in parallel
+    const [activeTransactions, activeInvoices] = await Promise.all([
+      customDataset && customDataset.length > 0 ? Promise.resolve(customDataset) : getTransactions(userId),
+      getInvoices(userId)
+    ]);
+
+    // 2. Pre-compute unique clients list for efficient matching
+    const preComputedClients = [...new Set([
+      ...activeTransactions.map(t => t.client || t.client_name),
+      ...activeInvoices.map(i => i.client || i.client_name)
+    ].filter(Boolean))];
+
     let lastClient = null;
     for (let i = history.length - 1; i >= 0; i--) {
-      const match = extractClientName(history[i].content, customDataset);
+      // Use synchronous optimized matching
+      const match = extractClientName(history[i].content, activeTransactions, preComputedClients);
       if (match) {
         lastClient = match;
         break;
       }
     }
 
-    // 0. Immediate feedback — kills the "Thinking" state in the frontend
-    yield { type: 'text', content: '' };
-
-    // 1. Initial Processing (Snapshot + Intent)
+    console.time(`[LangGraph] Processing:${userInput.substring(0, 20)}`);
+    // 1. Processing (Snapshot + Intent)
     let snapshot;
     try {
-      snapshot = getSnapshot(customDataset);
+      console.time("[Performance] getSnapshot");
+      snapshot = await getSnapshot(userId, customDataset, { 
+        transactions: activeTransactions, 
+        invoices: activeInvoices 
+      });
+      console.timeEnd("[Performance] getSnapshot");
     } catch (snapshotErr) {
       console.error("[LangGraph] Snapshot failed:", snapshotErr.message);
       yield { type: 'error', content: `Data processing failed: ${snapshotErr.message}` };
@@ -394,8 +545,10 @@ async function* handleStream(userInput, customDataset = null, history = []) {
     }
 
     const intent = classifyIntent(userInput);
-    const clientFromQuery = extractClientName(userInput, customDataset);
+    const clientFromQuery = extractClientName(userInput, activeTransactions, preComputedClients);
     const resolvedClient = clientFromQuery || lastClient;
+    console.timeEnd(`[LangGraph] Processing:${userInput.substring(0, 20)}`);
+    
     console.log(`[LangGraph] Intent=${intent}, Client=${resolvedClient || 'none'}`);
 
     // 2. High-Priority Side-Effect: Send Reminder
@@ -405,23 +558,28 @@ async function* handleStream(userInput, customDataset = null, history = []) {
         return;
       }
 
-      const dataset = customDataset || require("../data/transactions.json");
-      const overdueRow = dataset.find(item => {
-        const clientKey = Object.keys(item).find(k => k.toLowerCase() === 'client' || k.toLowerCase() === 'customer');
-        return clientKey && item[clientKey] && item[clientKey].toLowerCase() === resolvedClient.toLowerCase() && (item.status === 'overdue' || item.amount < 0);
+      const overdueRow = activeInvoices.find((inv) => {
+        const clientValue = inv.client || inv.client_name || inv.customer || "";
+        if (clientValue.toLowerCase() !== resolvedClient.toLowerCase()) return false;
+        const status = String(inv.status || "").toLowerCase();
+        const dueDate = inv.dueDate || inv.duedate;
+        return status === "overdue" || (dueDate && new Date(dueDate).getTime() < Date.now());
       });
 
       if (!overdueRow) {
-        yield { type: 'text', content: `No overdue records found for ${resolvedClient} in the active dataset.` };
+        yield { type: 'text', content: `No overdue records found for ${resolvedClient}.` };
         return;
       }
 
       const result = await sendPaymentReminder({
         client: resolvedClient,
         amount: Math.abs(overdueRow.amount || 0),
-        daysOverdue: overdueRow.daysOverdue || 7,
+        daysOverdue: (() => {
+          const dueDate = overdueRow.dueDate || overdueRow.duedate;
+          return dueDate ? Math.max(1, Math.ceil((Date.now() - new Date(dueDate).getTime()) / 86400000)) : 7;
+        })(),
         invoiceId: overdueRow.id || overdueRow.invoiceId || 'N/A'
-      }, customDataset);
+      }, userId, activeTransactions);
 
       yield { 
         type: 'text', 
@@ -434,7 +592,6 @@ async function* handleStream(userInput, customDataset = null, history = []) {
     // 3. Narrative Support Intelligence (Tables, Data Injections)
     let extraContext = "";
     if (intent === INTENTS.OVERDUE_INVOICES) {
-      const { formatOverdueTable } = require("./queryAgent");
       let invoices = snapshot.overdueList || [];
       if (resolvedClient) {
         invoices = invoices.filter(i => i.client.toLowerCase().includes(resolvedClient.toLowerCase()));
@@ -442,12 +599,10 @@ async function* handleStream(userInput, customDataset = null, history = []) {
       const table = formatOverdueTable(invoices);
       extraContext = `\n\n### MANDATORY DATA SOURCE: OVERDUE TABLE\n${table}\nTask: You MUST lead your response with the markdown table provided above.`;
     } else if (intent === INTENTS.DECOMPOSITION) {
-      const { decomposeTransactions } = require("../services/decompositionService");
-      const { formatDecompositionTable } = require("./queryAgent");
       const norm = userInput.toLowerCase();
       let decompType = (norm.includes("sales") || norm.includes("revenue") || norm.includes("income")) ? "income" : "expense";
       let decompGroup = (norm.includes("region") || norm.includes("location") || norm.includes("area")) ? "region" : (norm.includes("channel") ? "channel" : "category");
-      const result = decomposeTransactions(decompType, null, decompGroup, customDataset);
+      const result = await decomposeTransactions(decompType, null, decompGroup, userId, activeTransactions);
       const table = formatDecompositionTable(result);
       extraContext = `\n\n### MANDATORY DATA SOURCE: BREAKDOWN\nFocus: ${result.target}\n${table}\nTask: You MUST lead your response with the markdown table provided above.`;
     }
@@ -464,16 +619,14 @@ async function* handleStream(userInput, customDataset = null, history = []) {
         .replace(/\.$/, "");
       
       if (isPeriodComparison) {
-        const { comparePeriods } = require("../services/cashFlowService");
         const period = normalized.includes("week") ? "week" : "month";
-        snapshot.periodComparison = comparePeriods(period, 1, customDataset);
+        snapshot.periodComparison = await comparePeriods(userId, period, 1, activeTransactions);
       } else {
         const parts = cleanInput.split(/ vs | versus /);
         if (parts.length >= 2) {
           const entityA = parts[0].trim();
           const entityB = parts[1].trim();
-          const { compareEntities } = require("../services/cashFlowService");
-          snapshot.duel = compareEntities(entityA, entityB, customDataset);
+          snapshot.duel = await compareEntities(userId, entityA, entityB, activeTransactions);
         }
       }
     }
@@ -498,8 +651,14 @@ async function* handleStream(userInput, customDataset = null, history = []) {
       return;
     }
 
+    console.time("[Performance] LLM Stream First Token");
     try {
+      let firstToken = true;
       for await (const chunk of stream) {
+        if (firstToken && chunk.content) {
+          console.timeEnd("[Performance] LLM Stream First Token");
+          firstToken = false;
+        }
         if (chunk.content) {
           yield { 
             type: 'text',

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node cli.js",
     "test": "jest --runInBand",
-    "lint": "node --check index.js && node --check agent/queryAgent.js && node --check utils/formatter.js && node --check utils/dateUtils.js && node --check scripts/verifyData.js",
+    "lint": "node --check cli.js && node --check server.js && node --check agent/queryAgent.js && node --check agent/langChainAgent.js && node --check services/dataService.js && node --check utils/formatter.js && node --check utils/dateUtils.js && node --check scripts/verifyData.js",
     "benchmark": "node tests/benchmark.js",
     "benchmark:verbose": "node tests/benchmark.js --verbose",
     "demo": "node scripts/showcaseDemo.js",
@@ -24,11 +24,15 @@
     "@langchain/google-genai": "^2.1.27",
     "@langchain/langgraph": "^1.2.9",
     "@langchain/openai": "^1.4.4",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
-    "nodemailer": "^6.10.1"
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^6.10.1",
+    "pg": "^8.20.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "jest": "^30.0.5"

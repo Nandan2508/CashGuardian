@@ -1,4 +1,4 @@
-const transactions = require("../data/transactions.json");
+const { getTransactions } = require("./dataService");
 
 /**
  * Builds a simple week label from a transaction date string.
@@ -20,34 +20,21 @@ function getWeekLabel(dateStr) {
  * @returns {"low"|"medium"|"high"} Severity label.
  */
 function getSeverity(deviation) {
-  if (deviation > 70) {
-    return "high";
-  }
-
-  if (deviation > 40) {
-    return "medium";
-  }
-
+  if (deviation > 70) return "high";
+  if (deviation > 40) return "medium";
   return "low";
 }
 
 /**
  * Detects anomalies in income and expense patterns.
+ * @param {number} userId - Authenticated user ID.
  * @param {Array<Object>} [customTransactions] - Optional custom data to analyze.
- * @returns {Array<{
- *   type: "income" | "expense",
- *   category: string,
- *   week: string,
- *   actual: number,
- *   expected: number,
- *   deviation: string,
- *   severity: "low" | "medium" | "high",
- *   explanation: string
- * }>}
+ * @returns {Promise<Array<Object>>}
  */
-function detectAnomalies(customTransactions = null) {
-  const sourceData = customTransactions || transactions;
+async function detectAnomalies(userId, customTransactions = null) {
+  const sourceData = await getTransactions(userId, customTransactions);
   const weeks = [...new Set(sourceData.map((transaction) => getWeekLabel(transaction.date)))].sort();
+  
   const groupedBySeries = sourceData.reduce((seriesMap, transaction) => {
     const seriesKey = `${transaction.type}|${transaction.category}`;
     const week = getWeekLabel(transaction.date);
@@ -56,7 +43,7 @@ function detectAnomalies(customTransactions = null) {
       seriesMap[seriesKey] = {};
     }
 
-    seriesMap[seriesKey][week] = (seriesMap[seriesKey][week] || 0) + transaction.amount;
+    seriesMap[seriesKey][week] = (seriesMap[seriesKey][week] || 0) + Number(transaction.amount);
     return seriesMap;
   }, {});
 
@@ -89,7 +76,7 @@ function detectAnomalies(customTransactions = null) {
       const severity = getSeverity(roundedDeviation);
       const explanation = type === "expense"
         ? `${category.charAt(0).toUpperCase() + category.slice(1)} expenses in week ${week} were ₹${actual.toLocaleString("en-IN")} (+${roundedDeviation}% higher than the usual ₹${roundedExpected.toLocaleString("en-IN")}). This may indicate a one-off operational spike.`
-        : `${category.charAt(0).toUpperCase() + category.slice(1)} income in week ${week} was ₹${actual.toLocaleString("en-IN")} (+${roundedDeviation}% higher than the usual ₹${roundedExpected.toLocaleString("en-IN")}). This may indicate an unusually strong collection or sales week.`;
+        : `${category.charAt(0).toUpperCase() + category.slice(1)} income in week ${week} were ₹${actual.toLocaleString("en-IN")} (+${roundedDeviation}% higher than the usual ₹${roundedExpected.toLocaleString("en-IN")}). This may indicate an unusually strong collection or sales week.`;
 
       anomalies.push({
         type,

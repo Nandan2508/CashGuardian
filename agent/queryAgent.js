@@ -1,5 +1,5 @@
 require('dotenv').config();
-const invoices = require("../data/invoices.json");
+const { getTransactions, getInvoices, getClients } = require("../services/dataService");
 const externalValidation = require("../data/externalValidation.json");
 const {
   INTENTS,
@@ -28,6 +28,7 @@ const { generateSummary } = require("../services/summaryService");
 const { decomposeTransactions } = require("../services/decompositionService");
 const { sendPaymentReminder } = require("../services/emailService");
 const { calculate30DayForecast } = require("../services/predictionService");
+const { isOverdue } = require("../utils/dateUtils");
 const { formatCurrency, safeDate, safeNumber } = require("../utils/formatter");
 
 /**
@@ -39,7 +40,7 @@ function buildSystemPrompt(snapshot) {
   const validationNotes = snapshot.externalValidationNotes.map((line) => `- ${line}`).join("\n");
   const anomalies = (snapshot.anomalies || []).map((a) => `- CRITICAL: ${a.explanation}`).join("\n");
   const variances = snapshot.variances;
-  
+
   let duelSection = "";
   if (snapshot.duel) {
     const { entityA, entityB, analysis } = snapshot.duel;
@@ -92,15 +93,17 @@ ${validationNotes}
 ${(snapshot.topDrivers || []).join('\n')}
 ================================================
 
-=== CONTACT DIRECTORY (TOP 5) ===
-${JSON.stringify(Object.fromEntries(Object.entries(snapshot.contacts || {}).slice(0, 5)), null, 2)}
+=== CONTACTS (TOP 3) ===
+${JSON.stringify(Object.fromEntries(Object.entries(snapshot.contacts || {}).slice(0, 3)), null, 2)}
 ================================================
 
-=== OVERDUE LIST (TOP 3) ===
-${JSON.stringify((snapshot.overdueList || []).slice(0, 3), null, 2)}
-=============================
+=== OVERDUE & RISK INVOICES (DYNAMIC) ===
+${JSON.stringify((snapshot.overdueList || []).slice(0, 10), null, 2)}
+==========================================
 
 Rules:
+- **Dynamic Overdue Logic**: An invoice is overdue if its due date has passed and it is not paid. Prioritize this date-based logic over any static status fields.
+- **Risk Tiers**: Use 1-30 days (Overdue), 31-60 days (High Risk), 60+ days (Critical).
 - Format money as ₹X,XX,XXX (Indian style).
 - Use Markdown headings (####) for structure.
 - **Narrative Consistency**: If a PERFORMANCE DUEL GROUNDING section is present, prioritize its long-term totals (Entity A vs Entity B) over short-term "Transaction Drivers".
@@ -146,12 +149,12 @@ async function callGemini(systemPrompt, userQuery) {
       generationConfig: { maxOutputTokens: 500, temperature: 0.3 }
     })
   });
-  
+
   if (!response.ok) {
     const text = await response.text();
     throw new Error(`Gemini API error (${response.status}): ${text}`);
   }
-  
+
   const data = await response.json();
   return data.candidates[0].content.parts[0].text;
 }
@@ -200,68 +203,72 @@ function fallbackResponse() {
   return "AI service unavailable. Check AI_API_KEY and AI_PROVIDER in .env. Financial data is still accessible - type 'help' for rule-based commands.";
 }
 
-// Data sanitization helpers now imported from utils/formatter.js
-
-// Removed local calculateWeeklyTrend - moved to services/cashFlowService.js
-
-let snapshotCache = null;
-let lastDatasetRef = null;
+const snapshotCache = new Map(); // User-specific cache
 
 /**
  * Builds a global snapshot for AI grounding and UI metrics.
+ * @param {string} userId - Current user ID.
  * @param {Array<Object>|null} customDataset - User uploaded data if available.
- * @returns {{ netBalance: number, totalIncome: number, totalExpenses: number, overdueCount: number, overdueTotal: number, highRiskClients: string[], topExpenseCategory: string, externalValidationNotes: string[], trend: object, comparisonTrend: object, breakdown: object[] }}
+ * @param {Object|null} preFetched - Optional object containing { transactions, invoices }.
+ * @returns {Promise<object>} Global snapshot.
  */
-function getSnapshot(customDataset = null) {
-  // CACHE CHECK: If dataset reference hasn't changed and we have a cache, return it
-  if (customDataset === lastDatasetRef && snapshotCache) {
-    return snapshotCache;
+async function getSnapshot(userId, customDataset = null, preFetched = null) {
+  // Check cache first (ignore if customDataset or preFetched is provided)
+  if (!customDataset && !preFetched && snapshotCache.has(userId)) {
+    return snapshotCache.get(userId);
   }
 
+  // Use pre-fetched data or parallel fetch
+  const transactionsPromise = preFetched?.transactions ? Promise.resolve(preFetched.transactions) : getTransactions(userId);
+  const invoicesPromise = getOverdueInvoices(userId, preFetched?.invoices || null);
+
+  // Note: detectAnomalies still called here, but we'll optimize it to use the same transactions below
+  const [dbData, overdueList, activeAnomaliesRaw] = await Promise.all([
+    transactionsPromise,
+    invoicesPromise,
+    detectAnomalies(userId, customDataset || preFetched?.transactions)
+  ]);
+
+  const dataToUse = customDataset || (dbData.length > 0 ? dbData : null);
   let snapshot;
 
-  // If we have a custom dataset, derive snapshot from it
-  if (customDataset && customDataset.length > 0) {
-    // PRE-CLEAN: Ensure all metrics downstream use clean numbers/dates
-    const cleanedData = customDataset.map(item => ({
-      ...item,
-      amount: safeNumber(item.amount),
-      date: item.date,
-      region: String(item.region || 'All').trim(),
-      channel: String(item.channel || 'Misc').trim()
-    }));
+  if (dataToUse) {
+    const cleanedData = dataToUse;
 
+    // Derived metrics (Sync)
     const totalIncome = cleanedData
-      .filter(item => item.type === 'income' || (!item.type && item.amount > 0))
-      .reduce((sum, item) => sum + item.amount, 0);
+      .filter(item => item.type === 'income' || (!item.type && Number(item.amount) > 0))
+      .reduce((sum, item) => sum + Number(item.amount), 0);
     const totalExpenses = cleanedData
-      .filter(item => item.type === 'expense' || (!item.type && item.amount < 0))
-      .reduce((sum, item) => sum + Math.abs(item.amount), 0);
+      .filter(item => item.type === 'expense' || (!item.type && Number(item.amount) < 0))
+      .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
 
-
-    // Breakdown for Donut Chart
     const breakdownMap = cleanedData
       .filter(item => item.type === 'expense')
       .reduce((acc, item) => {
-        acc[item.category] = (acc[item.category] || 0) + Math.abs(item.amount);
+        acc[item.category] = (acc[item.category] || 0) + Math.abs(Number(item.amount));
         return acc;
       }, {});
 
     const breakdown = Object.entries(breakdownMap).map(([category, total]) => ({ category, total }));
 
-    // --- ENHANCED INTEL FOR CUSTOM DATA ---
-    const latestDate = getLatestTransactionDate(cleanedData);
+    // Parallel fetch for time-based metrics
+    const latestDate = await getLatestTransactionDate(userId, cleanedData);
     const midPoint = new Date(latestDate);
     midPoint.setUTCDate(midPoint.getUTCDate() - 30);
     const startPoint = new Date(midPoint);
     startPoint.setUTCDate(startPoint.getUTCDate() - 30);
 
-    const currentInterval = getTransactionsInRange(midPoint, latestDate, cleanedData);
-    const prevInterval = getTransactionsInRange(startPoint, midPoint, cleanedData);
-    
+    const [currentInterval, prevInterval, trend, comparisonTrend] = await Promise.all([
+      getTransactionsInRange(userId, midPoint, latestDate, cleanedData),
+      getTransactionsInRange(userId, startPoint, midPoint, cleanedData),
+      calculateWeeklyTrend(userId, cleanedData, 0),
+      calculateWeeklyTrend(userId, cleanedData, 13)
+    ]);
+
     const currentSummary = summarizeTransactions(currentInterval);
     const prevSummary = summarizeTransactions(prevInterval);
-    
+
     const variances = {
       income: {
         current: currentSummary.income,
@@ -278,57 +285,34 @@ function getSnapshot(customDataset = null) {
       categories: getCategoryVariances(currentInterval, prevInterval)
     };
 
-    const { detectAnomalies } = require("../services/anomalyService");
-    const activeAnomalies = detectAnomalies(cleanedData);
-
-    // Deduplicate overdue items (Filter for status, then group by unique traits to avoid TXN/INV double counting)
-    const overdueUniqueMap = cleanedData
-      .filter(item => item.status === 'overdue')
-      .reduce((acc, item) => {
-        const key = `${item.client}-${item.amount}-${item.dueDate || item.date}`;
-        if (!acc[key]) acc[key] = item;
-        return acc;
-      }, {});
-    
-    const overdueDeduplicated = Object.values(overdueUniqueMap);
-
-    const overdueClients = overdueDeduplicated
-      .filter(item => item.client && item.client !== 'Walk-in Client')
-      .reduce((acc, item) => {
-        acc[item.client] = (acc[item.client] || 0) + item.amount;
-        return acc;
-      }, {});
-
-    const highRiskClients = Object.entries(overdueClients)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([name, amt]) => `${name} (₹${amt.toLocaleString('en-IN')})`);
-
     snapshot = {
       netBalance: totalIncome - totalExpenses,
       totalIncome,
       totalExpenses,
-      overdueCount: overdueDeduplicated.length,
-      overdueTotal: overdueDeduplicated.reduce((sum, item) => sum + item.amount, 0),
-      highRiskClients: highRiskClients.length > 0 ? highRiskClients : ['None'],
+      isDemo: false,
+      overdueCount: overdueList.filter(i => i.effectiveStatus !== 'due_soon').length,
+      overdueTotal: overdueList.filter(i => i.effectiveStatus !== 'due_soon').reduce((sum, item) => sum + Number(item.amount), 0),
+      highRiskClients: [...new Set(overdueList.filter(i => ['high_risk', 'critical'].includes(i.effectiveStatus)).map(i => i.client))],
       topExpenseCategory: breakdown.length > 0 ? breakdown.sort((a, b) => b.total - a.total)[0].category : 'Various',
       regions: [...new Set(cleanedData.map(d => d.region))].join(', '),
       channels: [...new Set(cleanedData.map(d => d.channel))].join(', '),
       externalValidationNotes: [
-        'Custom dataset active. Analysis based on user-provided transactional boundaries.',
-        ...activeAnomalies.map(a => `ANOMALY DETECTED: ${a.explanation}`)
+        'Dynamic Risk Analysis active (Date-based override).',
+        ...activeAnomaliesRaw.map(a => `ANOMALY DETECTED: ${a.explanation}`)
       ],
-      trend: calculateWeeklyTrend(cleanedData, 0),
-      comparisonTrend: calculateWeeklyTrend(cleanedData, 13),
+      trend,
+      comparisonTrend,
       breakdown,
       variances,
-      anomalies: activeAnomalies,
-      overdueList: overdueDeduplicated.map(i => ({
+      anomalies: activeAnomaliesRaw,
+      overdueList: overdueList.map(i => ({
         client: i.client,
         amount: i.amount,
-        dueDate: i.dueDate || i.date || 'N/A'
+        dueDate: i.dueDate,
+        status: i.riskLabel,
+        daysPastDue: i.daysOverdue
       })),
-      topDrivers: currentInterval.sort((a,b) => b.amount - a.amount).slice(0, 5).map(i => `${i.type === 'income' ? 'IN' : 'OUT'}: ${i.description} (₹${i.amount.toLocaleString()})`),
+      topDrivers: currentInterval.sort((a, b) => b.amount - a.amount).slice(0, 5).map(i => `${i.type === 'income' ? 'IN' : 'OUT'}: ${i.description} (₹${i.amount.toLocaleString()})`),
       contacts: cleanedData.reduce((acc, row) => {
         const clientKey = Object.keys(row).find(k => k.toLowerCase() === 'client' || k.toLowerCase() === 'customer');
         const emailKey = Object.keys(row).find(k => k.toLowerCase().includes('email') || k.toLowerCase() === 'contact');
@@ -339,25 +323,26 @@ function getSnapshot(customDataset = null) {
       }, {})
     };
   } else {
-    // Fallback to Demo (Mehta Wholesale Traders)
-    const balance = getCashBalance();
-    const overdueInvoices = getOverdueInvoices();
-    const expenseBreakdown = getExpenseBreakdown();
-    const riskReport = getRiskReport();
-    const metrics = require("../data/metrics.json");
+    // Fallback to Demo/DB
+    const [balance, expenseBreakdown, comparison, activeAnomalies] = await Promise.all([
+      getCashBalance(userId),
+      getExpenseBreakdown(userId),
+      comparePeriods(userId, "month", 1),
+      detectAnomalies(userId)
+    ]);
 
-    // Pull last 13 weeks and the 13 before that for comparison
+    const metrics = require("../data/metrics.json");
     const recentMetrics = metrics.slice(-13);
     const previousMetrics = metrics.slice(-26, -13);
-    const comparison = comparePeriods("month", 1);
 
     snapshot = {
+      isDemo: true,
       netBalance: balance.netBalance,
       totalIncome: balance.totalIncome,
       totalExpenses: balance.totalExpenses,
-      overdueCount: overdueInvoices.length,
-      overdueTotal: overdueInvoices.reduce((sum, invoice) => sum + invoice.amount, 0),
-      highRiskClients: riskReport.filter((client) => client.riskLevel === "HIGH").map((client) => client.client),
+      overdueCount: overdueList.filter(i => i.effectiveStatus !== 'due_soon').length,
+      overdueTotal: overdueList.filter(i => i.effectiveStatus !== 'due_soon').reduce((sum, item) => sum + item.amount, 0),
+      highRiskClients: [...new Set(overdueList.filter(i => ['high_risk', 'critical'].includes(i.effectiveStatus)).map(i => i.client))],
       topExpenseCategory: expenseBreakdown[0] ? expenseBreakdown[0].category : "none",
       externalValidationNotes: externalValidation.map((item) =>
         `${item.source} (${item.focus}): ${item.insight}`
@@ -388,21 +373,27 @@ function getSnapshot(customDataset = null) {
         },
         categories: comparison.variances
       },
-      anomalies: detectAnomalies(), // ADDED: Critical for grounding spending queries
-      overdueList: overdueInvoices.map(i => ({
+      anomalies: activeAnomalies,
+      overdueList: overdueList.map(i => ({
         client: i.client,
         amount: i.amount,
         dueDate: i.dueDate
       })),
-      contacts: require("../data/clientContacts.json")
+      contacts: await getClients(userId)
     };
   }
 
   // Update Cache
-  snapshotCache = snapshot;
-  lastDatasetRef = customDataset;
-
+  snapshotCache.set(userId, snapshot);
   return snapshot;
+}
+
+/**
+ * Invalidates the snapshot cache for a specific user.
+ * @param {string} userId - The user ID.
+ */
+function invalidateSnapshotCache(userId) {
+  snapshotCache.delete(userId);
 }
 
 /**
@@ -429,13 +420,13 @@ function formatOverdueInvoices(overdueInvoices) {
  * @returns {string} Markdown table.
  */
 function formatOverdueTable(overdueInvoices) {
-    if (!overdueInvoices || overdueInvoices.length === 0) return "No overdue invoices found.";
-    
-    let table = "| Client | Amount | Due Date | Status |\n|---|---|---|---|\n";
-    overdueInvoices.forEach(inv => {
-        table += `| ${inv.client} | ${formatCurrency(inv.amount)} | ${inv.dueDate || inv.date || 'N/A'} | ${inv.status || 'overdue'} |\n`;
-    });
-    return table;
+  if (!overdueInvoices || overdueInvoices.length === 0) return "No overdue invoices found.";
+
+  let table = "| Client | Amount | Due Date | Status |\n|---|---|---|---|\n";
+  overdueInvoices.forEach(inv => {
+    table += `| ${inv.client} | ${formatCurrency(inv.amount)} | ${inv.dueDate || inv.date || 'N/A'} | ${inv.status || 'overdue'} |\n`;
+  });
+  return table;
 }
 
 /**
@@ -481,13 +472,13 @@ function formatAnomalies(anomalies) {
  * @returns {string} Markdown table.
  */
 function formatDecompositionTable(result) {
-    if (!result || !result.components) return "No breakdown data available.";
-    
-    let table = "| Component | Amount | Share |\n|---|---|---|\n";
-    result.components.forEach(c => {
-        table += `| ${c.label} | ${formatCurrency(c.value)} | ${c.percentage}% |\n`;
-    });
-    return table;
+  if (!result || !result.components) return "No breakdown data available.";
+
+  let table = "| Component | Amount | Share |\n|---|---|---|\n";
+  result.components.forEach(c => {
+    table += `| ${c.label} | ${formatCurrency(c.value)} | ${c.percentage}% |\n`;
+  });
+  return table;
 }
 
 /**
@@ -530,15 +521,18 @@ function getHelpText() {
  * @param {Array<Object>} [customDataset] - Optional custom dataset.
  * @returns {string | null} Benchmark-aligned response or null.
  */
-function getBenchmarkResponse(userInput, customDataset = null) {
+async function getBenchmarkResponse(userInput, customDataset = null) {
   const query = String(userInput || "").trim().toLowerCase();
-  const overdueInvoices = getOverdueInvoices(customDataset);
+  const overdueInvoices = await getOverdueInvoices(null, customDataset);
   const overdueTotal = overdueInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const balance = getCashBalance(customDataset);
-  const breakdown = getExpenseBreakdown(customDataset);
-  const riskReport = getRiskReport(); // Risk report still based on history/invoices
-  const prediction = getCashPrediction(customDataset);
-  const comparison = comparePeriods("month", 1, customDataset);
+  const balance = await getCashBalance(null, customDataset);
+  const breakdown = await getExpenseBreakdown(null, customDataset);
+  const riskReport = await getRiskReport(null, customDataset); // Risk report still based on history/invoices
+  // NOTE: getCashPrediction does not exist in standard imports, replacing with getCashSummary or just bypassing if prediction is missing
+  // Assuming getCashPrediction was replaced by calculate30DayForecast
+  const { calculate30DayForecast } = require("../services/predictionService");
+  const prediction = calculate30DayForecast(customDataset);
+  const comparison = await comparePeriods(null, "month", 1, customDataset);
 
   if (query.includes("current cash balance")) {
     return [
@@ -645,37 +639,56 @@ function getBenchmarkResponse(userInput, customDataset = null) {
 }
 
 /**
- * Extracts a known client name from the user query.
- * @param {string} userInput - Raw query text.
- * @param {Array<Object>|null} dataset - Optional dataset to scan for names.
+ * Extracts a client name from user input using substring matching.
+ * @param {string} userInput - The raw query.
+ * @param {Array<Object>|null} dataset - Optional dataset to extract from.
+ * @param {Array<string>|null} preComputedClients - Optional pre-computed unique client names.
  * @returns {string | null} Matched client name.
  */
-function extractClientName(userInput, dataset = null) {
+function extractClientName(userInput, dataset = null, preComputedClients = null) {
   const normalizedInput = userInput.toLowerCase();
-  
+
   // 1. Get unique clients from the relevant source
-  let clients = [];
-  if (dataset) {
-    clients = [...new Set(dataset.map(item => {
-      const key = Object.keys(item).find(k => k.toLowerCase() === 'client' || k.toLowerCase() === 'customer');
+  let clients = preComputedClients;
+
+  if (!clients) {
+    const sourceData = dataset || [];
+    clients = [...new Set(sourceData.map(item => {
+      const key = Object.keys(item).find(k => k.toLowerCase() === 'client' || k.toLowerCase() === 'customer' || k.toLowerCase() === 'client_name');
       return key ? item[key] : null;
     }).filter(Boolean))];
-  } else {
-    // Fallback to demo data sources
-    const demoTransactions = require("../data/transactions.json");
-    const demoInvoices = require("../data/invoices.json");
-    clients = [...new Set([...demoTransactions, ...demoInvoices].map(i => i.client).filter(Boolean))];
+
+    if (!dataset) {
+      // Fallback to demo data sources
+      try {
+        const demoTransactions = require("../data/transactions.json");
+        const demoInvoices = require("../data/invoices.json");
+        clients = [...new Set([...demoTransactions, ...demoInvoices].map(i => i.client || i.client_name).filter(Boolean))];
+      } catch (e) { }
+    }
   }
 
-  // 2. Exact match (case insensitive)
-  let match = clients.find(client => normalizedInput.includes(client.toLowerCase()));
-  if (match) return match;
+  // 2. Exact Match (The most reliable)
+  const exactMatch = clients.find(c => normalizedInput.includes(c.toLowerCase()));
 
-  // 3. Fuzzy/Partial match (e.g., "Sharma" matching "Sharma Retail")
-  // We look for a keyword that is at least 3 chars and is part of the client name
-  const words = normalizedInput.split(/\s+/).filter(w => w.length > 3);
+  // 3. Whole Word Match (To avoid "Traders" matching "Kapoor Traders" when user said "Sigma Traders")
+  const words = normalizedInput.split(/\s+/).filter(w => w.length >= 3);
+
+  // Priority 1: Full name in query
+  if (exactMatch) return exactMatch;
+
+  // Priority 2: Multi-word match (e.g. "Sigma Traders")
+  for (let i = 0; i < words.length - 1; i++) {
+    const duo = `${words[i]} ${words[i + 1]}`;
+    const found = clients.find(c => c.toLowerCase().includes(duo));
+    if (found) return found;
+  }
+
+  // Priority 3: Single word match, but EXCLUDING common generic words like "Traders", "Manufacturing", "Retail"
+  const genericWords = ['traders', 'manufacturing', 'retail', 'logistics', 'services', 'wholesale', 'limited', 'pvt', 'ltd'];
   for (const word of words) {
-    const found = clients.find(client => client.toLowerCase().includes(word));
+    if (genericWords.includes(word)) continue;
+    const found = clients.find(c => c.toLowerCase().includes(word));
     if (found) return found;
   }
 
@@ -695,14 +708,15 @@ function hasAiCredentials() {
  * @param {string} userInput - Original user question.
  * @param {string} fallbackText - Rule-based answer.
  * @param {Array<Object>} [customDataset] - User data context.
+ * @param {string} [userId] - Optional user context.
  * @returns {Promise<string>} Final response.
  */
-async function maybeUseAI(userInput, fallbackText, customDataset = null) {
-  if (!hasAiCredentials()) {
+async function maybeUseAI(userInput, fallbackText, customDataset = null, userId = null) {
+  if (!process.env.AI_API_KEY || process.env.AI_API_KEY === "your-api-key-here") {
     return `🔴 AI_API_KEY not set. Add it to .env (see AI_PROVIDER_SETUP.md)\n\n${fallbackText}`;
   }
 
-  const aiResponse = await callAI(buildSystemPrompt(getSnapshot(customDataset)), userInput);
+  const aiResponse = await callAI(buildSystemPrompt(await getSnapshot(userId, customDataset)), userInput);
   if (aiResponse === fallbackResponse()) {
     return `${aiResponse}\n\n${fallbackText}`;
   }
@@ -716,37 +730,45 @@ async function maybeUseAI(userInput, fallbackText, customDataset = null) {
  * @param {Array<Object>|null} customDataset - Optional user-uploaded data context.
  * @returns {Promise<string>} Routed response.
  */
-async function handleQuery(userInput, customDataset = null) {
+async function handleQuery(userInput, customDataset = null, userId = null) {
   // PRE-CLEAN: Ensure custom dataset is sanitized for all services
-  const activeDataset = (customDataset && customDataset.length > 0) 
-    ? customDataset.map(item => ({
+  const [activeDataset, activeInvoices] = await Promise.all([
+    (customDataset && customDataset.length > 0)
+      ? Promise.resolve(customDataset.map(item => ({
         ...item,
         amount: safeNumber(item.amount),
         type: String(item.type || '').trim().toLowerCase(),
         category: String(item.category || '').trim().toLowerCase(),
         client: String(item.client || '').trim()
-      }))
-    : null;
+      })))
+      : getTransactions(userId),
+    getInvoices(userId)
+  ]);
 
   const intent = classifyIntent(userInput);
 
   // If sending a reminder, we should ALWAYS trigger the actual service
   if (intent === INTENTS.SEND_REMINDER) {
-    const clientName = extractClientName(userInput, customDataset);
+    const clientName = extractClientName(userInput, activeDataset);
     if (!clientName) return "Please specify which client should receive the reminder.";
 
-    // Find the invoice in the current dataset (custom or demo)
-    const dataset = activeDataset || require("../data/transactions.json");
-    const overdueRow = dataset.find(item => item.client === clientName && (item.status === 'overdue' || item.amount < 0));
+    const clientInvoices = await getInvoicesByClient(userId, clientName, activeInvoices);
+    const overdueRow = clientInvoices.find((inv) => {
+      const dueDate = inv.dueDate || inv.duedate;
+      const status = String(inv.status || "").toLowerCase();
+      return status === "overdue" || (dueDate && isOverdue(dueDate));
+    });
+    if (!overdueRow) return `No overdue records found for ${clientName}.`;
 
-    if (!overdueRow) return `No overdue records found for ${clientName} in the active dataset.`;
+    const dueDate = overdueRow.dueDate || overdueRow.duedate;
+    const daysOverdue = dueDate ? Math.max(1, Math.ceil((Date.now() - new Date(dueDate).getTime()) / (1000 * 60 * 60 * 24))) : 7;
 
     const result = await sendPaymentReminder({
       client: clientName,
-      amount: Math.abs(overdueRow.amount),
-      daysOverdue: overdueRow.daysOverdue || 7,
-      invoiceId: overdueRow.id || overdueRow.invoiceId || 'N/A'
-    }, activeDataset);
+      amount: Math.abs(Number(overdueRow.amount) || 0),
+      daysOverdue,
+      invoiceId: overdueRow.id || overdueRow.invoiceId || "N/A"
+    }, userId, activeDataset);
 
     return result.alert;
   }
@@ -758,7 +780,7 @@ async function handleQuery(userInput, customDataset = null) {
   }
 
   if (intent === INTENTS.CASH_BALANCE) {
-    const balance = getCashBalance(activeDataset);
+    const balance = await getCashBalance(userId, activeDataset);
     return maybeUseAI(
       userInput,
       `Current net cash balance is ${formatCurrency(balance.netBalance)}.\nIncome: ${formatCurrency(balance.totalIncome)} | Expenses: ${formatCurrency(balance.totalExpenses)}`,
@@ -767,7 +789,7 @@ async function handleQuery(userInput, customDataset = null) {
   }
 
   if (intent === INTENTS.CASH_SUMMARY) {
-    const summary = getCashSummary(90, activeDataset);
+    const summary = await getCashSummary(userId, 90, activeDataset);
     return maybeUseAI(
       userInput,
       `Over the latest tracked period, income was ${formatCurrency(summary.income)} and expenses were ${formatCurrency(summary.expenses)}.\nNet cash flow was ${formatCurrency(summary.net)}, with ${summary.topExpenseCategory} as the top expense category.`,
@@ -778,23 +800,23 @@ async function handleQuery(userInput, customDataset = null) {
   if (intent === INTENTS.OVERDUE_INVOICES) {
     const clientName = extractClientName(userInput, activeDataset);
     if (clientName) {
-      const invoicesByClient = getInvoicesByClient(clientName, activeDataset);
+      const invoicesByClient = await getInvoicesByClient(userId, clientName, null);
       const overdueInvoice = invoicesByClient.find((invoice) => invoice.status === "overdue");
       const paidInvoices = invoicesByClient.filter(i => i.status === 'paid');
-      const latePaidCount = invoicesByClient.filter((invoice) => 
+      const latePaidCount = invoicesByClient.filter((invoice) =>
         invoice.paymentHistory && invoice.paymentHistory[0] && invoice.paymentHistory[0] > invoice.dueDate
       ).length;
 
       if (!hasAiCredentials()) {
         return `${clientName} has ${invoicesByClient.length} invoices on record. ` +
-               `${overdueInvoice ? `Current overdue: ${formatCurrency(overdueInvoice.amount)}.` : "No current overdue."} ` +
-               `${latePaidCount} previously paid invoices were late.`;
+          `${overdueInvoice ? `Current overdue: ${formatCurrency(overdueInvoice.amount)}.` : "No current overdue."} ` +
+          `${latePaidCount} previously paid invoices were late.`;
       }
 
-      const snapshot = getSnapshot(activeDataset);
+      const snapshot = await getSnapshot(userId, activeDataset);
       const fallback = `${clientName} has ${invoicesByClient.length} invoices on record. ` +
-               `${overdueInvoice ? `Current overdue: ${formatCurrency(overdueInvoice.amount)}.` : "No current overdue."} ` +
-               `${latePaidCount} previously paid invoices were late.`;
+        `${overdueInvoice ? `Current overdue: ${formatCurrency(overdueInvoice.amount)}.` : "No current overdue."} ` +
+        `${latePaidCount} previously paid invoices were late.`;
 
       const systemPrompt = buildSystemPrompt(snapshot) +
         `\n\n### CLIENT SPECIFIC HISTORY: ${clientName}\n` +
@@ -809,7 +831,7 @@ async function handleQuery(userInput, customDataset = null) {
 
       return callAI(systemPrompt, userInput, fallback);
     }
-    return maybeUseAI(userInput, formatOverdueInvoices(getOverdueInvoices(activeDataset)), activeDataset);
+    return maybeUseAI(userInput, formatOverdueInvoices(await getOverdueInvoices(userId, activeInvoices)), activeDataset);
   }
 
   if (intent === INTENTS.RISK_CLIENTS) {
@@ -825,17 +847,17 @@ async function handleQuery(userInput, customDataset = null) {
         activeDataset
       );
     }
-    return maybeUseAI(userInput, formatRiskReport(getRiskReport(activeDataset)), activeDataset);
+    return maybeUseAI(userInput, formatRiskReport(await getRiskReport(userId, activeDataset)), activeDataset);
   }
 
   if (intent === INTENTS.EXPENSE_BREAKDOWN) {
-    return maybeUseAI(userInput, formatExpenseBreakdown(getExpenseBreakdown(activeDataset)), activeDataset);
+    return maybeUseAI(userInput, formatExpenseBreakdown(await getExpenseBreakdown(userId, activeDataset)), activeDataset);
   }
 
   if (intent === INTENTS.ANOMALY) {
-    const anomalies = detectAnomalies(activeDataset);
-    const comparison = comparePeriods("month", 1, activeDataset);
-    const snapshot = getSnapshot(activeDataset);
+    const anomalies = await detectAnomalies(userId, activeDataset);
+    const comparison = await comparePeriods(userId, "month", 1, activeDataset);
+    const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
     const systemPrompt = buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: DRIVER & ANOMALY ANALYSIS\n` +
       `Comparison Variances (Income): ${JSON.stringify((comparison.variances.income || []).slice(0, 10))}\n` +
@@ -874,14 +896,14 @@ async function handleQuery(userInput, customDataset = null) {
       group = "channel";
     }
 
-    const result = decomposeTransactions(type, filter, group, activeDataset);
+    const result = await decomposeTransactions(type, filter, group, userId, activeDataset);
     const table = formatDecompositionTable(result);
 
     if (!hasAiCredentials()) {
       return `🔴 AI_API_KEY not set. Add it to .env (see AI_PROVIDER_SETUP.md)\n\n${table}`;
     }
 
-    const snapshot = getSnapshot(activeDataset);
+    const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
     const systemPrompt = buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: TARGET DECOMPOSITION\n` +
       `You MUST explain the following components of the focus area "${result.target}":\n` +
@@ -901,7 +923,7 @@ async function handleQuery(userInput, customDataset = null) {
     const ruleBased = await generateSummary("weekly", activeDataset);
     if (!hasAiCredentials()) return ruleBased;
 
-    const snapshot = getSnapshot(activeDataset);
+    const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
     const systemPrompt = buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: WEEKLY SUMMARY DATA\n` +
       `${ruleBased}\n\n` +
@@ -914,7 +936,7 @@ async function handleQuery(userInput, customDataset = null) {
 
   if (intent === INTENTS.COMPARE) {
     const normalized = userInput.toLowerCase();
-    
+
     // SMART ROUTING: Determine if this is a month-on-month trend or an entity duel
     const monthNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december", "jan", "feb", "mar", "apr"];
     const isPeriodComparison = monthNames.some(m => normalized.includes(m)) || normalized.includes("month") || normalized.includes("week");
@@ -922,14 +944,14 @@ async function handleQuery(userInput, customDataset = null) {
     if (normalized.includes(" vs ") || normalized.includes(" versus ")) {
       const cleaned = normalized.replace(/.*compare /i, "").replace(/["']/g, "").replace(/\.$/, "");
       const parts = cleaned.split(/ vs | versus /);
-      
+
       if (parts.length >= 2 && !isPeriodComparison) {
         // ENTITY DUEL (e.g. "Alpha Retail vs Beta Logistics")
         const entityA = parts[0].trim();
         const entityB = parts[1].trim();
-        const duelData = compareEntities(entityA, entityB, activeDataset);
+        const duelData = await compareEntities(userId, entityA, entityB, activeDataset);
 
-        const snapshot = getSnapshot(activeDataset);
+        const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
         snapshot.duel = duelData;
         const response = await callAI(buildSystemPrompt(snapshot), userInput);
         return { content: response, duel: duelData };
@@ -938,7 +960,7 @@ async function handleQuery(userInput, customDataset = null) {
 
     // PERIOD COMPARISON (e.g. "April vs March" or "this month vs last month")
     const monthMap = {
-      january: 0, feb: 1, february: 1, mar: 2, march: 2, apr: 3, april: 3, 
+      january: 0, feb: 1, february: 1, mar: 2, march: 2, apr: 3, april: 3,
       may: 4, june: 5, july: 6, august: 7, september: 8, october: 9, november: 10, december: 11, jan: 0
     };
 
@@ -959,7 +981,7 @@ async function handleQuery(userInput, customDataset = null) {
       const rangeB = getMonthRange(parts[1]);
 
       if (rangeA && rangeB) {
-        comparison = comparePeriods({
+        comparison = await comparePeriods(userId, {
           target: rangeA,
           baseline: rangeB,
           name: `${parts[0].replace(/.*compare /i, "").trim()} vs ${parts[1].trim()}`
@@ -969,10 +991,10 @@ async function handleQuery(userInput, customDataset = null) {
 
     if (!comparison) {
       const period = normalized.includes("week") ? "week" : "month";
-      comparison = comparePeriods(period, 1, activeDataset);
+      comparison = await comparePeriods(userId, period, 1, activeDataset);
     }
 
-    const snapshot = getSnapshot(activeDataset);
+    const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
     const systemPrompt = buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: PERIOD COMPARISON\n` +
       `Target Period (${comparison.current.period}): Income ${formatCurrency(comparison.current.income)}, Expenses ${formatCurrency(comparison.current.expenses)}\n` +
@@ -986,7 +1008,7 @@ async function handleQuery(userInput, customDataset = null) {
       `Disambiguate the periods explicitly.`;
 
     const response = await callAI(systemPrompt, userInput, formatComparison(comparison));
-    
+
     return {
       content: response,
       trend: comparison.currentTrend,
@@ -995,8 +1017,8 @@ async function handleQuery(userInput, customDataset = null) {
   }
 
   if (intent === INTENTS.PREDICTION) {
-    const forecast = calculate30DayForecast(activeDataset);
-    const snapshot = getSnapshot(activeDataset);
+    const forecast = await calculate30DayForecast(userId, activeDataset);
+    const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
     const systemPrompt = buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: 30-DAY FORECAST\n` +
       `Match the user's focus on the next 30 days using these components:\n` +
@@ -1016,13 +1038,13 @@ async function handleQuery(userInput, customDataset = null) {
 
   // CATCH-ALL FOR CUSTOM DATASETS: If no specific intent matched, use generic AI reasoning
   if (activeDataset) {
-    const snapshot = getSnapshot(activeDataset);
+    const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
     const systemPrompt = buildSystemPrompt(snapshot) + `\n\nAdditionally, here is a sampling of the custom dataset rows:\n${JSON.stringify(activeDataset.slice(0, 10))}`;
     return callAI(systemPrompt, userInput);
   }
 
   return hasAiCredentials()
-    ? callAI(buildSystemPrompt(getSnapshot(activeDataset)), userInput)
+    ? callAI(buildSystemPrompt(await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices })), userInput)
     : "🔴 AI_API_KEY not set. Add it to .env (see AI_PROVIDER_SETUP.md)";
 }
 
@@ -1039,5 +1061,6 @@ module.exports = {
   getHelpText,
   getBenchmarkResponse,
   formatDecompositionTable,
-  formatOverdueTable
+  formatOverdueTable,
+  invalidateSnapshotCache
 };

@@ -1,4 +1,4 @@
-const invoices = require("../data/invoices.json");
+const { getInvoices } = require("./dataService");
 
 const RECOMMENDATIONS = {
   HIGH: "Require advance payment or stop credit",
@@ -8,10 +8,11 @@ const RECOMMENDATIONS = {
 
 /**
  * Returns unique client names from the invoice dataset.
+ * @param {Array<object>} invoices - Invoice list.
  * @returns {string[]} Client names.
  */
-function getClients() {
-  return [...new Set(invoices.map((invoice) => invoice.client))];
+function getClientNames(invoices) {
+  return [...new Set(invoices.map((invoice) => invoice.client || invoice.client_name))];
 }
 
 /**
@@ -21,7 +22,10 @@ function getClients() {
  */
 function getLatePaymentMetrics(clientInvoices) {
   const lateInvoices = clientInvoices.filter(
-    (invoice) => invoice.paymentHistory[0] && invoice.paymentHistory[0] > invoice.dueDate
+    (invoice) => {
+      const history = Array.isArray(invoice.payment_history) ? invoice.payment_history : (invoice.paymentHistory || []);
+      return history[0] && history[0] > (invoice.due_date || invoice.dueDate);
+    }
   );
 
   if (!lateInvoices.length) {
@@ -29,8 +33,12 @@ function getLatePaymentMetrics(clientInvoices) {
   }
 
   const totalDaysLate = lateInvoices.reduce((sum, invoice) => {
-    const dueDate = new Date(`${invoice.dueDate}T00:00:00Z`);
-    const paymentDate = new Date(`${invoice.paymentHistory[0]}T00:00:00Z`);
+    const dueDateStr = invoice.due_date || invoice.dueDate;
+    const history = Array.isArray(invoice.payment_history) ? invoice.payment_history : (invoice.paymentHistory || []);
+    const paymentDateStr = history[0];
+    
+    const dueDate = new Date(`${dueDateStr}T00:00:00Z`);
+    const paymentDate = new Date(`${paymentDateStr}T00:00:00Z`);
     return sum + Math.round((paymentDate - dueDate) / 86400000);
   }, 0);
 
@@ -46,33 +54,27 @@ function getLatePaymentMetrics(clientInvoices) {
  * @returns {"HIGH"|"MEDIUM"|"LOW"} Risk label.
  */
 function getRiskLevel(riskScore) {
-  if (riskScore >= 60) {
-    return "HIGH";
-  }
-
-  if (riskScore >= 30) {
-    return "MEDIUM";
-  }
-
+  if (riskScore >= 60) return "HIGH";
+  if (riskScore >= 30) return "MEDIUM";
   return "LOW";
 }
 
 /**
  * Returns risk assessment for a single client.
  * @param {string} clientName - Client business name.
+ * @param {Array<object>} allInvoices - Full invoice set.
  * @returns {{ client: string, riskScore: number, riskLevel: string, latePayments: number, overdueAmount: number, recommendation: string } | null}
  */
-function getClientRisk(clientName) {
-  const clientInvoices = invoices.filter((invoice) => invoice.client === clientName);
+function getClientRisk(clientName, allInvoices) {
+  const clientInvoices = allInvoices.filter((invoice) => (invoice.client || invoice.client_name) === clientName);
 
-  if (!clientInvoices.length) {
-    return null;
-  }
+  if (!clientInvoices.length) return null;
 
   const { latePayments, avgDaysLate } = getLatePaymentMetrics(clientInvoices);
   const overdueInvoices = clientInvoices.filter((invoice) => invoice.status === "overdue");
   const overdueAmount = overdueInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
   const hasCurrentOverdue = overdueInvoices.length > 0;
+  
   const riskScore = Number(((latePayments * 30) + (avgDaysLate * 2) + (hasCurrentOverdue ? 10 : 0)).toFixed(2));
   const riskLevel = getRiskLevel(riskScore);
 
@@ -88,13 +90,18 @@ function getClientRisk(clientName) {
 
 /**
  * Returns risk assessment for all clients.
- * @returns {Array<{ client: string, riskScore: number, riskLevel: string, latePayments: number, overdueAmount: number, recommendation: string }>}
+ * @param {number} userId - Authenticated user ID.
+ * @param {Array<object>|null} dataset - Optional custom dataset.
+ * @returns {Promise<Array<Object>>}
  */
-function getRiskReport() {
-  return getClients()
-    .map((client) => getClientRisk(client))
+async function getRiskReport(userId, dataset = null) {
+  const invoices = await getInvoices(userId, dataset);
+  const names = getClientNames(invoices);
+  
+  return names
+    .map((name) => getClientRisk(name, invoices))
     .filter(Boolean)
-    .sort((left, right) => right.riskScore - left.riskScore);
+    .sort((a, b) => b.riskScore - a.riskScore);
 }
 
 module.exports = {

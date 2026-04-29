@@ -1,22 +1,31 @@
 const nodemailer = require("nodemailer");
 const { formatCurrency, printAlert } = require("../utils/formatter");
+const { getClients } = require("./dataService");
 const clientContacts = require("../data/clientContacts.json");
 
 /**
  * Resolves a reminder recipient email.
  * Resolution order:
  * 1) client mapping from customDataset (if provided)
- * 2) client mapping from data/clientContacts.json
- * 3) explicit EMAIL_TO (only if set, used for debug/override)
- * 4) EMAIL_USER fallback
+ * 2) client mapping from PostgreSQL clients table
+ * 3) client mapping from data/clientContacts.json
+ * 4) explicit EMAIL_TO (only if set, used for debug/override)
+ * 5) EMAIL_USER fallback
  * @param {string} clientName - Business client name.
+ * @param {number} userId - Current user ID for DB lookup.
  * @param {Array<Object>|null} customDataset - Optional active dataset.
- * @returns {string | null} Email address to send reminder to.
+ * @returns {Promise<string | null>} Email address to send reminder to.
  */
-function resolveRecipient(clientName, customDataset = null) {
+async function resolveRecipient(clientName, userId, customDataset = null) {
   const normalizedClient = clientName ? clientName.toLowerCase() : "";
 
-  // 1) Higher Priority: Client mapping from customDataset (if provided)
+  // 1) Explicit EMAIL_TO override (highest priority, used for testing/demos)
+  if (process.env.EMAIL_TO) {
+    console.log(`📧 Using explicit EMAIL_TO override: ${process.env.EMAIL_TO}`);
+    return process.env.EMAIL_TO;
+  }
+
+  // 2) Higher Priority: Client mapping from customDataset (if provided)
   if (customDataset && customDataset.length > 0) {
     const row = customDataset.find(item => {
       // Find the client key (robust)
@@ -38,16 +47,21 @@ function resolveRecipient(clientName, customDataset = null) {
     }
   }
 
-  // 2) Static client contact map (data/clientContacts.json)
+  // 3) Database lookup from PostgreSQL clients table
+  if (userId) {
+    const dbClients = await getClients(userId);
+    // Find client case-insensitively
+    const dbMatch = Object.keys(dbClients).find(k => k.toLowerCase() === normalizedClient);
+    if (dbMatch && dbClients[dbMatch].includes('@')) {
+      console.log(`📧 Resolved recipient from DB: ${dbClients[dbMatch]} (for ${clientName})`);
+      return dbClients[dbMatch];
+    }
+  }
+
+  // 4) Static client contact map (data/clientContacts.json)
   if (clientContacts[clientName]) {
     console.log(`📧 Resolved recipient from clientContacts.json: ${clientContacts[clientName]}`);
     return clientContacts[clientName];
-  }
-
-  // 3) Explicit EMAIL_TO override (lowest priority, used for testing/demos)
-  if (process.env.EMAIL_TO) {
-    console.log(`📧 Using explicit EMAIL_TO override: ${process.env.EMAIL_TO}`);
-    return process.env.EMAIL_TO;
   }
 
   // 4) Last resort: EMAIL_USER fallback
@@ -72,10 +86,11 @@ function validateEmailConfig() {
 /**
  * Sends a payment reminder email to an overdue client.
  * @param {{ client: string, amount: number, daysOverdue: number, invoiceId: string }} invoiceData
+ * @param {number} userId - Authenticated user ID.
  * @param {Array<Object>|null} customDataset - Optional active data context.
  * @returns {Promise<{ success: boolean, messageId?: string, error?: string, alert: string, recipient?: string }>}
  */
-async function sendPaymentReminder(invoiceData, customDataset = null) {
+async function sendPaymentReminder(invoiceData, userId, customDataset = null) {
   const configValidation = validateEmailConfig();
   if (!configValidation.ok) {
     const missingList = configValidation.missing.join(", ");
@@ -86,7 +101,7 @@ async function sendPaymentReminder(invoiceData, customDataset = null) {
     };
   }
 
-  const recipient = resolveRecipient(invoiceData.client, customDataset);
+  const recipient = await resolveRecipient(invoiceData.client, userId, customDataset);
   if (!recipient) {
     return {
       success: false,
@@ -118,9 +133,9 @@ async function sendPaymentReminder(invoiceData, customDataset = null) {
         "",
         "Please arrange payment at your earliest convenience to avoid further delays.",
         "",
-        "Warm regards,",
-        "Mehta Wholesale Traders",
-        "(Sent via CashGuardian CLI)"
+        `Warm regards,`,
+        process.env.COMPANY_NAME || "Mehta Wholesale Traders",
+        "(Sent via CashGuardian Intelligence)"
       ].join("\n")
     });
 

@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CashGuardian | Talk to Data</title>
+    <link rel="icon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg: #F9F5FF;              /* Very light NatWest Purple tint */
+            --primary: #42145F;         /* NatWest Purple */
+            --primary-light: #EDE5F4;   /* Light Purple */
+            --accent: #ED1C24;          /* NatWest Red */
+            --text-main: #2D2437;
+            --text-muted: #6E5B75;
+            --card-bg: #FFFFFF;
+            --card-shadow: 0 1px 4px rgba(66, 20, 95, 0.08);
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --accent-green: #00A86B;
+            --accent-red: #ED1C24;      /* NatWest Red */
+            --header-border: rgba(66, 20, 95, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text-main); height: 100vh; overflow: hidden; }
+
+        .app-container { display: flex; height: 100vh; overflow: hidden; }
+        
+        .sidebar { width: 190px; background: white; border-right: 1px solid var(--header-border); padding: 20px; display: flex; flex-direction: column; gap: 24px; flex-shrink: 0; transition: width 0.3s ease, padding 0.3s ease; overflow: hidden; }
+        .sidebar.collapsed { width: 0; padding: 0; border-right: none; }
+        .logo { display: flex; flex-direction: column; gap: 4px; }
+        .logo-text { font-size: 18px; font-weight: 600; color: var(--primary); }
+        .logo-tagline { font-size: 12px; color: var(--text-muted); }
+
+        .nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { padding: 8px 12px; border-radius: var(--border-radius-sm); font-size: 14px; color: var(--text-muted); text-decoration: none; cursor: pointer; transition: 0.2s; }
+        .nav-item:hover, .nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 500; }
+
+        .upload-section { display: flex; flex-direction: column; gap: 12px; padding-top: 12px; border-top: 1px solid var(--header-border); }
+        #file-input { display: none; }
+        .btn-upload { background: var(--card-bg); border: 1.5px dashed var(--primary-light); padding: 12px; border-radius: var(--border-radius-sm); font-size: 13px; text-align: center; cursor: pointer; color: var(--text-muted); }
+        .btn-upload:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+        .dataset-status { font-size: 11px; color: var(--text-muted); }
+        .logout-btn { margin-top: auto; padding: 12px; font-size: 13px; color: var(--text-muted); cursor: pointer; text-align: left; border-radius: var(--border-radius-sm); transition: 0.2s; }
+        .logout-btn:hover { background: #FDECEC; color: var(--accent-red); }
+        .health-pill { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 6px; }
+        .health-pill.positive { background: #E6F3EC; color: var(--accent-green); }
+        .health-pill.negative { background: #FDECEC; color: var(--accent-red); }
+
+        .sidebar-intelligence { padding: 16px 0; border-top: 1px solid var(--header-border); border-bottom: 1px solid var(--header-border); display: flex; flex-direction: column; gap: 16px; margin: 8px 0; }
+        .intel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--primary); letter-spacing: 0.05em; margin-bottom: 4px; }
+        .intel-meter { display: flex; flex-direction: column; gap: 6px; }
+        .meter-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-main); font-weight: 500; }
+        .meter-bg { height: 4px; background: #F0F0F0; border-radius: 2px; overflow: hidden; }
+        .meter-fill { height: 100%; background: var(--primary); transition: width 0.5s ease; width: 0; }
+        .meter-fill.warning { background: var(--accent-red); }
+        .meter-fill.success { background: var(--accent-green); }
+
+        .sidebar-history { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; height: 100%; }
+        .history-item { padding: 10px 12px; background: #FAFAFA; border: 1px solid #F0F0F0; border-radius: var(--border-radius-sm); font-size: 11px; color: var(--text-main); cursor: pointer; transition: 0.2s; animation: slideIn 0.3s ease-out both; position: relative; overflow: hidden; }
+        .history-item:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); transform: translateX(4px); }
+        .history-time { font-size: 9px; color: var(--text-muted); margin-top: 4px; display: block; }
+        .no-history { font-size: 11px; color: var(--text-muted); font-style: italic; text-align: center; margin-top: 12px; }
+
+        .dashboard-view { flex: 1; display: flex; flex-direction: column; background: var(--bg); position: relative; }
+        .header { height: 60px; padding: 0 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--header-border); background: white; z-index: 10; }
+        .header-title { font-size: 14px; font-weight: 600; color: var(--primary); }
+        
+        .hamburger-btn { background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .hamburger-btn:hover { color: var(--primary); }
+
+        .resizer { width: 6px; background: transparent; cursor: col-resize; flex-shrink: 0; transition: background 0.2s; position: relative; z-index: 5; margin: 0 -3px; }
+        .resizer:hover { background: var(--primary-light); }
+        .resizer-line { position: absolute; left: 2.5px; top: 0; bottom: 0; width: 1px; background: var(--header-border); }
+        .dragging .resizer { background: var(--primary); width: 2px; margin: 0 -1px; }
+        .dragging { cursor: col-resize; user-select: none; }
+
+        .chat-area { flex: 1; overflow-y: auto; padding: 8px 24px; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth; }
+        .welcome-msg { text-align: center; color: var(--text-muted); font-size: 13px; margin: 12px 0; }
+
+        .chat-msg { max-width: 80%; display: flex; flex-direction: column; gap: 8px; animation: slideIn 0.3s ease-out both; }
+        .chat-msg.user { align-self: flex-end; }
+        .chat-msg.ai { align-self: flex-start; }
+
+        .msg-bubble { padding: 6px 14px; font-size: 14px; line-height: 1.4; border-radius: var(--border-radius); position: relative; white-space: pre-wrap; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .user .msg-bubble { background: var(--primary-light); color: var(--text-main); border-bottom-right-radius: 4px; }
+        .ai .msg-bubble { background: white; color: var(--text-main); box-shadow: var(--card-shadow); border-bottom-left-radius: 4px; font-family: 'Inter', system-ui, -apple-system, sans-serif; letter-spacing: -0.01em; }
+
+        .response-meta { display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--text-muted); padding: 0 4px; }
+        .latency-badge { background: #F0F0F0; padding: 2px 6px; border-radius: 4px; }
+
+        .transparency-section { margin-top: 8px; border-top: 1px solid #F0F0F0; padding-top: 8px; font-size: 11px; color: var(--text-muted); }
+        .transparency-toggle { cursor: pointer; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+        .transparency-content { display: none; background: #FAFAFA; padding: 8px; border-radius: 4px; line-height: 1.5; }
+        .transparency-content.active { display: block; }
+
+        .suggested-questions { padding: 0 48px; display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .question-pill { background: white; border: 1px solid var(--primary-light); padding: 6px 14px; border-radius: 18px; font-size: 12px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .question-pill:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+        .input-bar { padding: 16px 24px 24px; background: var(--bg); display: flex; gap: 8px; }
+        .input-wrapper { flex: 1; position: relative; }
+        #query-input { width: 100%; height: 50px; background: white; border: 1px solid var(--primary-light); border-radius: var(--border-radius-sm); padding: 0 20px; font-family: inherit; font-size: 14px; transition: 0.2s; outline: none; }
+        #query-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(66, 20, 95, 0.1); }
+        .btn-send { width: 100px; height: 50px; background: var(--primary); color: white; border: none; border-radius: var(--border-radius-sm); font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .btn-send:hover { background: #35104C; }
+
+        .right-panel { width: 420px; background: white; border-left: 1px solid var(--header-border); padding: 24px; overflow-y: auto; flex-shrink: 0; }
+        .panel-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 24px; }
+
+        .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+        .metric-card { background: white; padding: 16px; border-radius: var(--border-radius); border: 1px solid #F0F0F0; box-shadow: var(--card-shadow); display: flex; flex-direction: column; gap: 4px; }
+        .metric-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .metric-value { font-size: 16px; font-weight: 700; }
+        .metric-value.positive { color: var(--accent-green); }
+        .metric-value.negative { color: var(--accent-red); }
+
+        .chart-container { margin-top: 32px; display: flex; flex-direction: column; gap: 12px; }
+        .chart-title { font-size: 13px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .chart-title i { color: var(--primary); }
+        .canvas-wrapper { height: 400px; width: 100%; transition: height 0.3s ease; }
+        .breakdown-wrapper { height: 250px; width: 100%; margin-top: 20px; }
+
+        .btn-mic { width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--primary-light); color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: relative; }
+        .btn-mic:hover { background: #E4D8F0; transform: scale(1.05); }
+        .btn-mic.listening { background: var(--accent-red); color: white; animation: pulse-mic 1.5s infinite; }
+        
+        @keyframes pulse-mic {
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230, 164, 149, 0); }
+        }
+
+        .footer-note { padding: 16px; font-size: 10px; color: var(--text-muted); text-align: center; background: white; }
+
+        .loading-dots:after { content: '.'; animation: dots 1.5s steps(5, end) infinite; }
+        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60% { content: '...'; } 80%, 100% { content: ''; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Markdown Styles */
+        .answer-text h1, .answer-text h2, .answer-text h3, .answer-text h4 { margin: 16px 0 8px; color: var(--text-main); line-height: 1.2; }
+        .answer-text h4 { font-size: 16px; border-bottom: 1px solid #F0E6D3; padding-bottom: 4px; }
+        .answer-text p { margin-bottom: 12px; }
+        .answer-text ul, .answer-text ol { margin: 12px 0; padding-left: 20px; }
+        .answer-text li { margin-bottom: 6px; }
+        .answer-text strong { color: var(--primary); font-weight: 700; }
+        .answer-text hr { border: none; border-top: 1px solid #EEE; margin: 16px 0; }
+
+        /* Table Styles */
+        .answer-text table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid var(--primary-light); }
+        .answer-text th { background: var(--primary-light); color: var(--primary); font-weight: 700; text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--primary); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+        .answer-text td { padding: 10px 12px; border-bottom: 1px solid var(--primary-light); color: var(--text-main); vertical-align: middle; }
+        .answer-text tr:last-child td { border-bottom: none; }
+        .answer-text tr:hover { background: rgba(66, 20, 95, 0.03); }
+
+        @media (max-width: 1024px) { .right-panel { display: none; } }
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; padding: 24px 12px; align-items: center; }
+            .logo-text, .logo-tagline, .nav-item span, .btn-upload span, .dataset-status, .health-pill span { display: none; }
+            .suggested-questions, .input-bar, .chat-area { padding: 16px; }
+        }
+
+        /* Login Modal */
+        .login-overlay { position: fixed; inset: 0; background: rgba(66, 20, 95, 0.4); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-card { background: white; padding: 40px; border-radius: var(--border-radius); box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; max-width: 380px; text-align: center; }
+        .login-logo { font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+        .login-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+        .login-form { display: flex; flex-direction: column; gap: 16px; }
+        .login-input { padding: 12px 16px; border: 1px solid var(--primary-light); border-radius: var(--border-radius-sm); outline: none; font-size: 14px; }
+        .login-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(66, 20, 95, 0.1); }
+        .btn-login { background: var(--primary); color: white; border: none; padding: 14px; border-radius: var(--border-radius-sm); font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-login:hover { background: #35104C; }
+        .login-error { color: var(--accent-red); font-size: 12px; margin-top: 12px; display: none; }
+        .logout-btn { margin-top: auto; padding: 12px; font-size: 13px; color: var(--text-muted); cursor: pointer; text-align: left; border-radius: var(--border-radius-sm); transition: 0.2s; }
+        .logout-btn:hover { background: #FDECEC; color: var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-text">CashGuardian</span>
+                <span class="logo-tagline">Talk to your finances</span>
+            </div>
+            <nav class="nav">
+                <span class="nav-item active">
+                    <svg style="vertical-align: middle; margin-right: 8px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span>Dashboard</span>
+                </span>
+            </nav>
+
+            <div class="upload-section">
+                <label for="file-input" class="btn-upload">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg><br>
+                    <span>Upload CSV/XLSX</span>
+                </label>
+                <input type="file" id="file-input" accept=".csv,.json,.xlsx,.xls">
+                <div class="dataset-status" id="dataset-name">Demo: Internal Finance</div>
+            </div>
+
+            <div class="sidebar-history">
+                <div class="intel-title">Recent Intelligence</div>
+                <div id="history-list" class="no-history">No recent insights yet.</div>
+            </div>
+
+            <div class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i> Sign Out
+            </div>
+        </aside>
+
+        <main class="dashboard-view">
+            <header class="header">
+                <button class="hamburger-btn" id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">Ask CashGuardian</span>
+            </header>
+            
+            <div class="chat-area" id="chat-history">
+                <div class="welcome-msg">
+                    <strong>Hello. I am CashGuardian.</strong><br>
+                    Upload a dataset or ask about your finances.
+                </div>
+            </div>
+
+            <div class="suggested-questions">
+                <div class="question-pill" onclick="sendQuery('What is my current cash balance?')">Balance?</div>
+                <div class="question-pill" onclick="sendQuery('Show me overdue invoices')">Overdue?</div>
+                <div class="question-pill" onclick="sendQuery('Are there unusual patterns in my spending?')">Anomalies?</div>
+                <div class="question-pill" onclick="sendQuery('Compare this month vs last month')">Compare</div>
+                <div class="question-pill" onclick="sendQuery('What will my cash look like in 30 days?')">30d Forecast</div>
+            </div>
+
+                <div class="input-bar">
+                    <button class="btn-mic" id="mic-btn" onclick="startVoiceRecognition()" title="Voice Command">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <div class="input-wrapper">
+                        <input type="text" id="query-input" placeholder="Ask me something or use mic..." onkeypress="if(event.key==='Enter') sendQuery()">
+                    </div>
+                    <button class="btn-send" onclick="sendQuery()">Send</button>
+                </div>
+            
+            <footer class="footer-note">
+                Demo mode: all calculations run on local locked data. Upload mode: your file is processed locally and never stored on disk.
+            </footer>
+        </main>
+
+        <div class="resizer" id="panel-resizer">
+            <div class="resizer-line"></div>
+        </div>
+
+        <aside class="right-panel" id="analytics-panel">
+            <h2 class="panel-title">Dataset Overview</h2>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <span class="metric-label">Net Balance</span>
+                    <span class="metric-value" id="stat-balance">₹0</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Overdue</span>
+                    <span class="metric-value" id="stat-overdue">0</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Risk Client</span>
+                    <span class="metric-value" id="stat-risk">None</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Top Expense</span>
+                    <span class="metric-value" id="stat-expense">None</span>
+                </div>
+            </div>
+
+            <div class="chart-container" id="duel-card" style="display: none; margin-bottom: 24px;">
+                <div class="chart-title"><i class="fas fa-balance-scale"></i> Performance Duel</div>
+                <div id="duel-narrative" style="font-size: 11px; color: var(--text-muted); background: #FAFAFA; padding: 10px; border-radius: 8px; border-left: 3px solid var(--primary); margin-bottom: 12px; line-height: 1.4;"></div>
+                <div class="canvas-wrapper" style="height: 180px;"><canvas id="duelChart"></canvas></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title"><i class="fas fa-chart-line"></i> Cash Flow Trend (Current vs Prev)</div>
+                <div class="canvas-wrapper"><canvas id="cashflow-chart"></canvas></div>
+            </div>
+
+            <div class="chart-container" style="border-top: 1px solid var(--header-border); padding-top: 24px;">
+                <div class="chart-title"><i class="fas fa-chart-pie"></i> Expense Decomposition</div>
+                <div class="breakdown-wrapper"><canvas id="breakdown-chart"></canvas></div>
+            </div>
+
+            <div style="margin-top: 40px; border-top: 1px solid var(--header-border); padding-top: 24px;">
+                <p style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
+                    All calculations run on local locked data. Data is processed locally and context is sent to the AI provider for reasoning.
+                </p>
+            </div>
+        </aside>
+    </div>
+
+
+    <script>
+        let cashflowChart = null;
+        let breakdownChart = null;
+        let duelChart = null;
+        let lastReportContent = '';
+        let awaitingPdfConfirm = false;
+        let chatHistory = []; // Conversational memory
+        let authToken = localStorage.getItem('cg_token');
+        const FAST_QUERY_PATTERNS = [
+            /cash balance/i,
+            /overdue/i,
+            /expense breakdown/i,
+            /income\s*breakdown/i,
+            /compare/i,
+            /summary|summarise|summarize|business|bussiness/i,
+            /risk/i,
+            /revenue\s*(dip|dipped|drop|decline|decrease)/i
+        ];
+
+        function getAuthHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            };
+        }
+
+        async function checkAuth() {
+            if (!authToken) {
+                window.location.href = '/index.html';
+                return;
+            }
+            try {
+                const res = await fetch('/api/auth/verify', { headers: getAuthHeaders() });
+                if (!res.ok) throw new Error('Invalid token');
+            } catch (err) {
+                logout();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('login-overlay').style.display = 'flex';
+        }
+
+        async function handleLogin() {
+            const user = document.getElementById('login-username').value;
+            const pass = document.getElementById('login-password').value;
+            const error = document.getElementById('login-error');
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('cg_token', authToken);
+                    document.getElementById('login-overlay').style.display = 'none';
+                    fetchSnapshot();
+                } else {
+                    error.innerText = data.error || 'Login failed';
+                    error.style.display = 'block';
+                }
+            } catch (err) {
+                error.innerText = 'Server unreachable';
+                error.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            localStorage.removeItem('cg_token');
+            window.location.href = '/index.html';
+        }
+
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            }).format(val);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            initCharts();
+            fetchSnapshot();
+            initResizer();
+            renderHistory();
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function shouldUseFastPath(query) {
+            const text = String(query || '').trim();
+            if (!text) return false;
+            return FAST_QUERY_PATTERNS.some((pattern) => pattern.test(text));
+        }
+
+        function initResizer() {
+            const resizer = document.getElementById('panel-resizer');
+            const panel = document.getElementById('analytics-panel');
+            let isDragging = false;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                document.body.classList.add('dragging');
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const width = window.innerWidth - e.clientX;
+                if (width > 250 && width < window.innerWidth * 0.7) {
+                    panel.style.width = `${width}px`;
+                    if (cashflowChart) cashflowChart.resize();
+                    if (breakdownChart) breakdownChart.resize();
+                    if (duelChart) duelChart.resize();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    document.body.classList.remove('dragging');
+                }
+            });
+        }
+
+        async function sendQuery(text) {
+            const input = document.getElementById('query-input');
+            const query = text || input.value.trim();
+            if (!query) return;
+
+            // Hide the duel card when a new query starts
+            document.getElementById('duel-card').style.display = 'none';
+
+            // Handle PDF Confirmation
+            if (awaitingPdfConfirm && (query.toLowerCase().trim() === 'yes' || query.toLowerCase().trim() === 'yup')) {
+                generatePDF(lastReportContent);
+                appendMessage('user', 'Yes, please.');
+                appendMessage('ai', 'Generating your report... Done! 📄 Check your downloads.');
+                awaitingPdfConfirm = false;
+                input.value = '';
+                return;
+            }
+
+            input.value = '';
+            appendMessage('user', query);
+            awaitingPdfConfirm = false;
+
+            const aiBubbleId = 'ai-' + Date.now();
+            appendMessage('ai', '<span class="loading-dots">Thinking</span>', aiBubbleId);
+            scrollToBottom();
+
+            try {
+                // Track user message in local history
+                chatHistory.push({ role: 'user', content: query });
+                if (chatHistory.length > 10) chatHistory.shift();
+
+                const useFastPath = shouldUseFastPath(query);
+                if (useFastPath) {
+                    const start = performance.now();
+                    const response = await fetch('/api/query', {
+                        method: 'POST',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify({
+                            query,
+                            history: chatHistory
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok || data.error) {
+                        throw new Error(data.error || data.details || 'Query failed');
+                    }
+
+                    const bubble = document.getElementById(aiBubbleId);
+                    const answer = data.response || 'No response.';
+                    const uiLatency = Math.round(performance.now() - start);
+
+                    chatHistory.push({ role: 'assistant', content: answer });
+                    if (chatHistory.length > 10) chatHistory.shift();
+
+                    const isSummary = query.toLowerCase().includes('summarise') || query.toLowerCase().includes('summary');
+                    let finalHtml = `<div class="answer-text">${marked.parse(answer)}</div>`;
+                    if (isSummary) {
+                        lastReportContent = answer;
+                        finalHtml += "<br><br><strong>Would you like me to export this summary as a professional PDF? (Type 'yes' to confirm)</strong>";
+                        awaitingPdfConfirm = true;
+                    } else {
+                        awaitingPdfConfirm = false;
+                    }
+
+                    bubble.innerHTML = `
+                        ${finalHtml}
+                        <div class="response-meta">
+                            <span class="latency-badge">${data.latencyMs ?? uiLatency}ms</span>
+                            <span>Source: ${data.source || 'Local Intelligence'}</span>
+                            ${data.cached ? '<span class="latency-badge">cache hit</span>' : ''}
+                        </div>
+                        <div class="transparency-section">
+                            <div class="transparency-toggle" onclick="toggleTransparency(this)" style="font-size: 10px; opacity: 0.7;">
+                                <i class="fas fa-chevron-down"></i> Trace: <strong>${data.latencyMs ?? uiLatency}ms</strong> | <strong>${data.intent || 'fast-path'}</strong>
+                            </div>
+                            <div class="transparency-content" style="font-size: 10px;">
+                                Logic: Deterministic Fast Path (/api/query)<br>
+                                Data Source: ${data.source || 'Database (Live)'}
+                            </div>
+                        </div>
+                    `;
+
+                    saveToHistory(query);
+                    if (data.duel) {
+                        updateDuelChart(data.duel);
+                        document.getElementById('duel-narrative').innerText = data.duel.analysis?.narrative || "Head-to-head comparison active.";
+                        document.getElementById('duel-card').style.display = 'block';
+                    }
+                    if (data.trend || data.comparisonTrend) {
+                        fetchSnapshot();
+                    }
+
+                    scrollToBottom();
+                    return;
+                }
+
+                const response = await fetch('/api/query/stream', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ 
+                        query,
+                        history: chatHistory 
+                    })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                const bubble = document.getElementById(aiBubbleId);
+                let fullText = '';
+                let lastData = null;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                if (data.error) {
+                                    bubble.innerHTML = `<div style="color: var(--accent-red); font-weight: 600;">⚠️ Query Failed</div><div style="font-size: 13px; margin-top: 4px;">${data.error}</div>`;
+                                    return;
+                                }
+
+                                if (data.text) {
+                                    fullText += data.text;
+                                    lastData = data;
+                                    
+                                    // Update text bubble in real-time
+                                    bubble.innerHTML = `<div class="answer-text">${marked.parse(fullText)}</div>`;
+                                    scrollToBottom();
+                                }
+                            } catch (e) { console.warn('Parse error', e); }
+                        }
+                    }
+                }
+                
+                // Finalize UI after stream ends
+                if (lastData) {
+                    // Track AI message in local history
+                    chatHistory.push({ role: 'assistant', content: fullText });
+                    if (chatHistory.length > 10) chatHistory.shift();
+
+                    // Check if response is a summary that warrants a PDF export
+                    const isSummary = query.toLowerCase().includes('summarise') || query.toLowerCase().includes('summary');
+                    let finalHtml = `<div class="answer-text">${marked.parse(fullText)}</div>`;
+                    
+                    if (isSummary) {
+                        lastReportContent = fullText;
+                        finalHtml += "<br><br><strong>Would you like me to export this summary as a professional PDF? (Type 'yes' to confirm)</strong>";
+                        awaitingPdfConfirm = true;
+                    }
+
+                    bubble.innerHTML = `
+                        ${finalHtml}
+                        <div class="response-meta"><span class="latency-badge">${lastData.latencyMs}ms</span><span>Source: Local Intelligence</span></div>
+                        <div class="transparency-section">
+                            <div class="transparency-toggle" onclick="toggleTransparency(this)" style="font-size: 10px; opacity: 0.7;">
+                                <i class="fas fa-chevron-down"></i> Trace: <strong>${lastData.latencyMs}ms</strong> | <strong>${lastData.intent || 'Reasoning'}</strong>
+                            </div>
+                            <div class="transparency-content" style="font-size: 10px;">
+                                Logic: Streaming Agentic System<br>
+                                Data Source: Grounded Snapshot
+                            </div>
+                        </div>
+                    `;
+
+                    saveToHistory(query);
+
+                    if (lastData.duel) {
+                        updateDuelChart(lastData.duel);
+                        document.getElementById('duel-narrative').innerText = lastData.duel.analysis?.narrative || "Head-to-head comparison active.";
+                        document.getElementById('duel-card').style.display = 'block';
+                    }
+
+                    if (lastData.trend) {
+                        // Assuming trend data is for current vs previous
+                        // Since streaming might not send the comparisonTrend as clearly, we fetch snapshot to refresh panels
+                        fetchSnapshot();
+                    }
+                }
+                scrollToBottom();
+            } catch (err) { 
+                console.error('Stream processing error:', err); 
+                const bubble = document.getElementById(aiBubbleId);
+                if (bubble) bubble.innerHTML = `<div style="color: var(--accent-red);">Connection lost. Please check your network.</div>`;
+            }
+        }
+
+        function updateDuelChart(duel) {
+            const { entityA, entityB } = duel;
+            
+            // Normalize data for visualization (0-100 scaling)
+            const maxRev = Math.max(entityA.revenue, entityB.revenue) || 1;
+            const maxGrowth = Math.max(Math.abs(entityA.growth), Math.abs(entityB.growth), 1);
+            const maxVol = Math.max(entityA.volume, entityB.volume) || 1;
+
+            duelChart.data.labels = ['Revenue %', 'Growth %', 'Volume %'];
+            duelChart.data.datasets = [
+                { 
+                    label: entityA.name, 
+                    backgroundColor: '#42145F', 
+                    data: [
+                        (entityA.revenue / maxRev) * 100,
+                        (entityA.growth / maxGrowth) * 100,
+                        (entityA.volume / maxVol) * 100
+                    ],
+                    raw: [formatCurrency(entityA.revenue), `${entityA.growth}%`, entityA.volume]
+                },
+                { 
+                    label: entityB.name, 
+                    backgroundColor: '#ED1C24', 
+                    data: [
+                        (entityB.revenue / maxRev) * 100,
+                        (entityB.growth / maxGrowth) * 100,
+                        (entityB.volume / maxVol) * 100
+                    ],
+                    raw: [formatCurrency(entityB.revenue), `${entityB.growth}%`, entityB.volume]
+                }
+            ];
+
+            duelChart.options.plugins.tooltip = {
+                callbacks: {
+                    label: function(context) {
+                        const rawVal = context.dataset.raw[context.dataIndex];
+                        return `${context.dataset.label}: ${rawVal}`;
+                    }
+                }
+            };
+            duelChart.update();
+        }
+
+        const HISTORY_KEY = 'cg_query_history';
+        function saveToHistory(query) {
+            let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            if (history[0] === query) return;
+            history = history.filter(q => q !== query);
+            history.unshift(query);
+            if (history.length > 5) history.pop();
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            if (history.length === 0) {
+                list.innerHTML = 'No recent insights yet.';
+                list.className = 'no-history';
+                return;
+            }
+            list.className = ''; 
+            list.innerHTML = '';
+            history.forEach(query => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                const displayQuery = query.length > 35 ? query.substring(0, 32) + '...' : query;
+                item.innerHTML = `<div>${displayQuery}</div><span class="history-time">Recent Intelligence </span>`;
+                item.onclick = () => {
+                    document.getElementById('query-input').value = query;
+                    sendQuery(query);
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function appendMessage(role, text, id = null) {
+            const history = document.getElementById('chat-history');
+            const msg = document.createElement('div');
+            msg.className = `chat-msg ${role}`;
+            msg.innerHTML = `<div class="msg-bubble" ${id ? `id="${id}"` : ''}>${text}</div>`;
+            history.appendChild(msg);
+        }
+
+        function toggleTransparency(el) {
+            const content = el.nextElementSibling;
+            content.classList.toggle('active');
+            el.querySelector('svg').style.transform = content.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
+        }
+
+        function scrollToBottom() {
+            const history = document.getElementById('chat-history');
+            history.scrollTop = history.scrollHeight;
+        }
+
+        async function startVoiceRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Speech recognition is not supported in this browser.");
+                return;
+            }
+            const recognition = new SpeechRecognition();
+            const btn = document.getElementById('mic-btn');
+            
+            recognition.onstart = () => btn.classList.add('listening');
+            recognition.onend = () => btn.classList.remove('listening');
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript;
+                document.getElementById('query-input').value = text;
+                sendQuery(text);
+            };
+            recognition.start();
+        }
+
+        function generatePDF(text) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Site Theme Colors
+            const purple = [66, 20, 95];
+            const darkGrey = [50, 50, 50];
+            
+            // --- PAGE 1: EXECUTIVE SUMMARY ---
+            // 1. Watermark
+            const logoUrl = '/logo.png'; 
+            try {
+                doc.setGState(new doc.GState({ opacity: 0.1 }));
+                doc.addImage(logoUrl, 'PNG', 45, 80, 120, 120);
+                doc.setGState(new doc.GState({ opacity: 1.0 }));
+            } catch (e) { console.warn('Logo watermark failed'); }
+
+            // Header
+            doc.setTextColor(...purple);
+            doc.setFont("times", "bold");
+            doc.setFontSize(22);
+            doc.text("CASHGUARDIAN INTELLIGENCE™", 105, 25, { align: 'center' });
+            doc.setTextColor(...darkGrey);
+            doc.setFont("times", "italic");
+            doc.setFontSize(10);
+            doc.text("Professional Financial Analysis Executive Brief", 105, 33, { align: 'center' });
+            doc.setDrawColor(...purple);
+            doc.setLineWidth(0.5);
+            doc.line(20, 38, 190, 38);
+
+            // Metadata
+            doc.setFont("times", "normal");
+            doc.setFontSize(10);
+            const date = new Date().toLocaleString();
+            doc.text(`Internal Record ID: CG-${Date.now().toString().slice(-6)}`, 20, 48);
+            doc.text(`Report Date: ${date}`, 140, 48);
+
+            // Analysis Section
+            let cleanText = text
+                .replace(/₹/g, 'Rs. ') 
+                .replace(/####\s/g, '\n')
+                .replace(/###\s/g, '\n')
+                .replace(/\*\*/g, '')
+                .replace(/\*/g, '- ')
+                .replace(/---/g, '\n--------------------------------------------------\n')
+                .replace(/<br>/g, '\n');
+
+            doc.setTextColor(...purple);
+            doc.setFontSize(14);
+            doc.setFont("times", "bold");
+            doc.text("EXECUTIVE ANALYSIS & INSIGHTS", 20, 60);
+            
+            doc.setTextColor(...darkGrey);
+            doc.setFont("times", "normal");
+            doc.setFontSize(11);
+            doc.setLineHeightFactor(1.15);
+            // Trim cleaned text to avoid leading newline gaps
+            const trimmedText = cleanText.trim();
+            const splitText = doc.splitTextToSize(trimmedText, 170);
+            doc.text(splitText, 20, 70); 
+            
+            // Page 1 Footer
+            doc.setFontSize(9);
+            doc.setTextColor(150, 150, 150);
+            const pageHeight = doc.internal.pageSize.height;
+            doc.text("Page 1 | Confidential Financial Intelligence", 105, pageHeight - 10, { align: 'center' });
+
+            // --- PAGE 2: VISUAL ANALYTICS ---
+            doc.addPage();
+            
+            // Page 2 Header
+            doc.setTextColor(...purple);
+            doc.setFont("times", "bold");
+            doc.setFontSize(18);
+            doc.text("VISUAL DATA SUPPLEMENT", 20, 25);
+            doc.setDrawColor(...purple);
+            doc.line(20, 28, 190, 28);
+
+            try {
+                // 1. Trend Chart
+                const trendCanvas = document.getElementById('cashflow-chart');
+                const trendData = trendCanvas.toDataURL('image/png', 1.0);
+                doc.setTextColor(...darkGrey);
+                doc.setFontSize(12);
+                doc.text("Cash Flow Trajectory (Revenue vs Expenses)", 20, 40);
+                doc.addImage(trendData, 'PNG', 20, 45, 170, 85);
+
+                // 2. Breakdown Chart
+                const breakdownCanvas = document.getElementById('breakdown-chart');
+                const breakdownData = breakdownCanvas.toDataURL('image/png', 1.0);
+                doc.text("Expense Decomposition by Category", 20, 150);
+                doc.addImage(breakdownData, 'PNG', 45, 155, 120, 80);
+            } catch (err) {
+                console.warn('Could not export charts:', err);
+                doc.setTextColor(200, 0, 0);
+                doc.text("Note: High-fidelity visualizations were unavailable at time of export.", 20, 40);
+            }
+
+            // Page 2 Footer
+            doc.setFontSize(9);
+            doc.setTextColor(150, 150, 150);
+            doc.text("Page 2 | Visual Data Appendix", 105, pageHeight - 10, { align: 'center' });
+            
+            doc.save(`CashGuardian_Dossier_${Date.now()}.pdf`);
+        }
+
+        async function fetchSnapshot() {
+            if (!authToken) return;
+
+            document.getElementById('stat-balance').innerText = 'Loading...';
+            document.getElementById('stat-balance').className = 'metric-value';
+            document.getElementById('stat-overdue').innerText = '...';
+
+            try {
+                const res = await fetch('/api/snapshot', { headers: getAuthHeaders() });
+                if (!res.ok) throw new Error('Failed to fetch snapshot');
+                const data = await res.json();
+                
+                // Update Data Source Status
+                const statusEl = document.getElementById('dataset-name');
+                if (data.isDemo) {
+                    statusEl.innerHTML = '<span style="color: var(--accent); font-weight:bold;">(DEMO MODE)</span>';
+                } else {
+                    statusEl.innerHTML = '<span style="color: #2D9CDB; font-weight:bold;">(ACTIVE: USER DATA)</span>';
+                }
+
+                document.getElementById('stat-balance').innerText = `₹${data.netBalance.toLocaleString('en-IN')}`;
+                document.getElementById('stat-balance').className = 'metric-value ' + (data.netBalance >= 0 ? 'positive' : 'negative');
+                document.getElementById('stat-overdue').innerText = data.overdueCount;
+                document.getElementById('stat-risk').innerText = data.highRiskClients[0] || 'None';
+                document.getElementById('stat-expense').innerText = data.topExpenseCategory;
+
+                // Update dynamic charts
+                if (data.trend) updateTrendChart(data.trend, data.comparisonTrend);
+                if (data.breakdown) updateBreakdownChart(data.breakdown);
+            } catch (err) { 
+                console.error('Snapshot fetch error:', err);
+                document.getElementById('stat-balance').innerText = 'Error';
+                document.getElementById('stat-balance').className = 'metric-value negative';
+                document.getElementById('stat-overdue').innerText = 'Error';
+            }
+        }
+
+        function updateTrendChart(trend, comparison) {
+            if (!cashflowChart) return;
+            cashflowChart.data.labels = trend.labels;
+            
+            // Current Datasets
+            cashflowChart.data.datasets[0].data = trend.revenue;
+            cashflowChart.data.datasets[1].data = trend.expenses;
+            
+            // Previous Datasets (Comparison)
+            if (comparison) {
+                cashflowChart.data.datasets[2].data = comparison.revenue;
+                cashflowChart.data.datasets[3].data = comparison.expenses;
+                cashflowChart.data.datasets[2].hidden = false;
+                cashflowChart.data.datasets[3].hidden = false;
+            } else {
+                cashflowChart.data.datasets[2].hidden = true;
+                cashflowChart.data.datasets[3].hidden = true;
+            }
+            
+            cashflowChart.update();
+        }
+
+        function updateBreakdownChart(breakdownData) {
+            if (!breakdownChart) return;
+            breakdownChart.data.labels = breakdownData.map(d => d.category);
+            breakdownChart.data.datasets[0].data = breakdownData.map(d => d.total);
+            breakdownChart.update();
+        }
+
+        function initCharts() {
+            const ctxTrend = document.getElementById('cashflow-chart').getContext('2d');
+            cashflowChart = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Revenue (Cur)', data: [], borderColor: '#42145F', backgroundColor: 'rgba(66, 20, 95, 0.1)', fill: true, tension: 0.4 },
+                        { label: 'Expenses (Cur)', data: [], borderColor: '#ED1C24', fill: false, tension: 0.4 },
+                        { label: 'Revenue (Prev)', data: [], borderColor: 'rgba(66, 20, 95, 0.3)', borderDash: [5, 5], fill: false, tension: 0.4, hidden: true },
+                        { label: 'Expenses (Prev)', data: [], borderColor: 'rgba(237, 28, 36, 0.3)', borderDash: [5, 5], fill: false, tension: 0.4, hidden: true }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }, scales: { y: { display: true, beginAtZero: true }, x: { display: true, grid: { display: false } } } }
+            });
+
+            const ctxPie = document.getElementById('breakdown-chart').getContext('2d');
+            breakdownChart = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#42145F', '#ED1C24', '#005C8A', '#00FF9D', '#FFBEC3', '#B0705F'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: true, position: 'right', labels: { boxWidth: 15, font: { size: 11 } } } } }
+            });
+
+            const ctxDuel = document.getElementById('duelChart').getContext('2d');
+            // duelChart = new Chart(ctxDuel, {
+            //     type: 'bar',
+            //     data: { labels: [], datasets: [] },
+            //     options: {
+            //         indexAxis: 'y',
+            //         responsive: true,
+            //         maintainAspectRatio: false,
+            //         plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+            //         scales: { x: { beginAtZero: true } }
+            //     }
+            // });
+            duelChart = new Chart(ctxDuel, {
+    type: 'bar',
+    data: { labels: [], datasets: [] },
+    options: {
+        indexAxis: 'x',          // or remove this line entirely
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'bottom',
+                labels: { boxWidth: 12, font: { size: 11 } }
+            }
+        },
+        scales: {
+            x: { beginAtZero: true },
+            y: { ticks: { autoSkip: false } }
+        }
+    }
+});
+        }
+
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('dataset-name').innerText = 'Reading...';
+            
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                let data = [];
+                const fileName = file.name.toLowerCase();
+
+                try {
+                    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                        const workbook = XLSX.read(event.target.result, { type: 'binary' });
+                        // Process all relevant sheets
+                        workbook.SheetNames.forEach(sheetName => {
+                            if (['transactions', 'invoices', 'clients'].includes(sheetName.toLowerCase())) {
+                                const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                                data = data.concat(sheetData);
+                            }
+                        });
+                    } else if (fileName.endsWith('.json')) {
+                        data = JSON.parse(event.target.result);
+                    } else {
+                        data = parseCSV(event.target.result);
+                    }
+
+                    const res = await fetch('/api/upload', { 
+                        method: 'POST', 
+                        headers: getAuthHeaders(), 
+                        body: JSON.stringify({ name: file.name, data }) 
+                    });
+                    
+                    const result = await res.json();
+                    
+                    if (res.ok && result.stats) {
+                        document.getElementById('dataset-name').innerText = result.stats.name;
+                        fetchSnapshot();
+                        appendMessage('ai', `I have successfully loaded <strong>${result.stats.name}</strong> (${result.stats.rows} total records across sheets). You can now ask questions about this data.`);
+                    } else {
+                        document.getElementById('dataset-name').innerText = 'Upload Failed';
+                        appendMessage('ai', `<div style="color: var(--accent);">⚠️ Upload Failed: ${result.error || 'Server error'}</div><div style="font-size: 11px; opacity: 0.7;">Details: ${result.details || 'Check console'}</div>`);
+                    }
+                } catch (err) {
+                    console.error('File processing error:', err);
+                    document.getElementById('dataset-name').innerText = 'Process Error';
+                    appendMessage('ai', `<div style="color: var(--accent);">⚠️ Error reading file: ${err.message}</div>`);
+                }
+            };
+
+            if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                reader.readAsBinaryString(file);
+            } else {
+                reader.readAsText(file);
+            }
+        });
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            return lines.slice(1).filter(l => l.trim()).map(line => {
+                const values = line.split(',');
+                const obj = {};
+                headers.forEach((h, i) => {
+                    if (values[i]) obj[h] = values[i].trim();
+                });
+                return obj;
+            });
+        }
+    </script>
+</body>
+</html>

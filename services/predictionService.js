@@ -4,19 +4,20 @@ const { safeNumber } = require("../utils/formatter");
 
 /**
  * Calculates a data-driven 30-day cash forecast.
+ * @param {string} userId - Authenticated user ID.
  * @param {Array<Object>|null} dataset - Optional custom dataset.
- * @returns {Object} Forecast components and final projection.
+ * @returns {Promise<Object>} Forecast components and final projection.
  */
-function calculate30DayForecast(dataset = null) {
-  const balance = getCashBalance(dataset);
-  const latestDate = getLatestTransactionDate(dataset);
+async function calculate30DayForecast(userId, dataset = null) {
+  const balance = await getCashBalance(userId, dataset);
+  const latestDate = await getLatestTransactionDate(userId, dataset);
   
   // 1. Calculate Burn Rate (Last 90 days)
   const windowDays = 90;
   const from = new Date(latestDate);
   from.setUTCDate(from.getUTCDate() - (windowDays - 1));
   
-  const history = getTransactionsInRange(from, latestDate, dataset);
+  const history = await getTransactionsInRange(userId, from, latestDate, dataset);
   const totals = summarizeTransactions(history);
   
   const income = safeNumber(totals.income);
@@ -25,7 +26,7 @@ function calculate30DayForecast(dataset = null) {
   const avgDailyBurn = expenses / (windowDays || 1);
   
   // 2. Factored Upcoming Receipts (Next 30 days)
-  const upcomingInvoices = getUpcomingDue(30);
+  const upcomingInvoices = await getUpcomingDue(userId, 30, dataset);
   const upcomingTotal = upcomingInvoices.reduce((sum, inv) => sum + safeNumber(inv.amount), 0);
 
   // 3. Projections
