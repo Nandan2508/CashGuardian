@@ -1,125 +1,92 @@
-# Architecture: CashGuardian
+# System Architecture: CashGuardian
 
-CashGuardian is built as a **Local-First AI Assistant**. It uses a layered architecture to ensure that financial logic remains deterministic while AI reasoning provides a natural-language bridge.
+CashGuardian is engineered as a robust financial intelligence system that prioritizes data integrity and security. It utilizes a layered approach to separate user interactions, business logic, and persistent storage, ensuring that the platform remains reliable and scalable.
 
----
+## System Overview
 
-## 🏗️ System Overview
-
-The system operates via two interfaces (CLI and Web) that funnel into a single **Query Agent**.
+The application is structured into four primary layers: the Interface Layer, the Orchestration Layer, the Service Layer, and the Data Layer.
 
 ```mermaid
 graph TD
-    subgraph Client_Layer [Frontend Interfaces]
-        W[Web UI - Vanilla JS]
-        C[CLI - Readline]
+    subgraph Interface_Layer [Client Interfaces]
+        W[Web Dashboard - NatWest Theme]
+        C[CLI Interface]
     end
 
-    subgraph "Logic_Gateway (Express)"
-        S[server.js]
-        DS[In-memory Grounding Store]
+    subgraph Orchestration_Layer [API and Security]
+        S[Server Core - Express.js]
+        A[Auth Middleware - JWT/Bcrypt]
+        Q[Query Agent - Intent Classification]
     end
 
-    subgraph "Intelligence_Agent (Grounded Core)"
-        Q[queryAgent.js]
-        IM[intentMap.js]
-        
-        subgraph "Services_Layer (Deterministic)"
-            S1[cashFlowService]
-            S2[invoiceService]
-            S3[riskService]
-            S5[anomalyService]
-            S6[summaryService]
-        end
+    subgraph Service_Layer [Business Intelligence]
+        CF[Cash Flow Service]
+        IS[Invoice Service]
+        RS[Risk Service]
+        AS[Anomaly Detection]
+        SS[Summary Generation]
     end
 
-    subgraph "Data_Sources"
-        D[(Demo JSON)]
-        U[(Uploaded Excel/CSV/JSON)]
+    subgraph Data_Layer [Persistence]
+        DB[(PostgreSQL Database)]
+        ENV[.env Configuration]
     end
 
-    subgraph "LLM_Intelligence (Plug-and-Play)"
-        AI_G[Gemini 1.5 Flash]
-        AI_GR[Groq / Llama 3.1]
-        AI_GPT[GPT-4o / OpenRouter]
+    subgraph AI_Core [Natural Language Processing]
+        GM[Gemini]
+        GQ[Groq]
+        OR[OpenRouter]
     end
 
     W --> S
     C --> Q
-    S --> Q
-    DS --> Q
-    Q --> IM
-    Q --> S1
-    Q --> S2
-    Q --> S3
-    Q --> S5
-    Q --> S6
-    Q -- "Grounded Prompt" --> AI_G
-    Q -- "Grounded Prompt" --> AI_GR
-    Q -- "Grounded Prompt" --> AI_GPT
+    S --> A
+    A --> Q
+    Q --> CF
+    Q --> IS
+    Q --> RS
+    Q --> AS
+    Q --> SS
+    
+    CF --> DB
+    IS --> DB
+    RS --> DB
+    AS --> DB
+    SS --> DB
 
-    S1 --> D
-    S1 --> U
-    S2 --> D
-    S2 --> U
+    Q -- "Grounded Context" --> AI_Core
 ```
 
----
+## Component Details
 
-## 🔄 The Query Lifecycle
+### Interface Layer
 
-Every question asked to CashGuardian goes through a "Grounding First" pipeline:
+The platform offers two primary entry points:
+- **Web Dashboard**: A modern, responsive interface styled with NatWest brand aesthetics. It provides real-time visualization of cash flows, overdue invoices, and business health metrics.
+- **CLI Interface**: A terminal-based interaction tool for users who prefer a command-line environment for data querying and reporting.
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant Q as Query Agent
-    participant S as Finance Services
-    participant AI as LLM (Gemini/Groq/GPT)
+### Orchestration Layer
 
-    U->>Q: "Analyze my revenue drivers"
-    Q->>Q: Intent Classification
-    Q->>S: Pull Transactional Context
-    S->>S: Deterministic Calculation
-    S-->>Q: Grounded Snapshot (Data Only)
-    Q->>AI: Grounded Prompt (Instruction + Data)
-    AI-->>Q: Executive Narrative Response
-    Q-->>U: Final Grounded Insight
-```
+This layer manages the flow of information and enforces security protocols:
+- **Server Core**: Built on Express.js, it handles HTTP routing, request validation, and the orchestration of complex AI tasks.
+- **Authentication Middleware**: Ensures that only authorized users can access the system. It uses JSON Web Tokens (JWT) for session management and Bcrypt for secure password hashing.
+- **Query Agent**: Acting as the system's "brain," it classifies user intent and prepares a grounded context by gathering relevant data from the service layer before interacting with the LLM.
 
----
+### Service Layer
 
-## 📂 Component Breakdown
+A collection of deterministic logic modules that process transactional data:
+- **Cash Flow Service**: Calculates net balances and performs period-over-period variance analysis.
+- **Invoice Service**: Tracks payment statuses and identifies aging invoices.
+- **Risk Service**: Evaluates client reliability based on historical payment patterns.
+- **Anomaly Detection**: Identifies statistically significant spikes or drops in income and expenses.
+- **Summary Generation**: Produces high-level narratives for weekly and monthly performance reviews.
 
-### 1. `server.js` (Web Bridge)
-A minimalist Express server that serves the `web/` static files and provides API endpoints for:
-- `/api/upload`: In-memory ingestion of CSV/JSON files.
-- `/api/query`: Logic-agnostic interface for the Web UI.
-- `/api/snapshot`: Real-time metric gathering for the "Dataset Overview" panel.
-- **Excel-Robust Ingestion**: Middleware that sanitizes currency, formats dates, and infers transaction types from raw CSV/Excel streams.
+### Data Layer
 
-### 2. `agent/queryAgent.js` (Intelligence Core)
-The primary orchestrator. It is responsible for:
-- Mapping inputs to intents.
-- Gathering required facts from services.
-- Building the **Grounding Context** for the AI.
+The persistence engine of the application:
+- **PostgreSQL Database**: Provides a secure and organized storage solution for transactions, invoices, and user profiles. It enables complex relational queries and ensures data durability.
+- **Configuration Management**: Uses environment variables to securely store sensitive credentials such as database URLs and API keys.
 
-### 3. `agent/intentMap.js` (The Traffic Controller)
-Uses high-performance keyword mapping to determine if a query is deterministic (e.g., "Balance") or narrative (e.g., "Analyze my patterns").
+## The Grounding Process
 
-### 4. Services Layer (`services/`)
-A suite of immutable logic modules that perform calculations on the data.
-- **`cashFlowService.js`**: Ledger aggregation and variance analysis.
-- **`invoiceService.js`**: Status tracking and overdue aging analysis.
-- **`riskService.js`**: Customer reliability scoring using late-payment signals.
-
-- **`anomalyService.js`**: Baseline-deviation detection for spikes and drops.
-- **`summaryService.js`**: Periodic (weekly/monthly) performance narratives.
-
----
-
-## 🔒 Security & Data Privacy
-
-- **No Persistence**: Uploaded datasets are kept in RAM (`activeDataset`) and are destroyed when the server restarts.
-- **Selective Grounding**: Only relevant data extracts are sent to the AI provider. Raw, PII-heavy files are never transmitted in their entirety.
-- **Local Fallback**: The system functions entirely on local data; if the AI provider is unavailable, it returns a concise data-only response.
+To ensure accuracy, CashGuardian uses a "Grounding First" methodology. When a user asks a question, the system first retrieves the raw numbers from the database using deterministic code. These numbers are then injected into a strict system prompt along with the user's query. This ensures that the AI only interprets and narrates the data rather than attempting to calculate it, virtually eliminating mathematical hallucinations.
