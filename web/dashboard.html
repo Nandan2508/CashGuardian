@@ -395,6 +395,10 @@
             renderHistory();
         });
 
+        function shouldRefreshSnapshotFromQuery(intent) {
+            return intent === 'send_reminder';
+        }
+
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
             sidebar.classList.toggle('collapsed');
@@ -404,6 +408,29 @@
             const text = String(query || '').trim();
             if (!text) return false;
             return FAST_QUERY_PATTERNS.some((pattern) => pattern.test(text));
+        }
+
+        function isHostedDeployment() {
+            const host = window.location.hostname || '';
+            return host.includes('vercel.app') || (!host.includes('127.0.0.1') && !host.includes('localhost'));
+        }
+
+        async function runStandardQuery(query) {
+            const response = await fetch('/api/query', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    query,
+                    history: chatHistory
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok || data.error) {
+                throw new Error(data.error || data.details || 'Query failed');
+            }
+
+            return data;
         }
 
         function initResizer() {
@@ -466,22 +493,10 @@
                 chatHistory.push({ role: 'user', content: query });
                 if (chatHistory.length > 10) chatHistory.shift();
 
-                const useFastPath = shouldUseFastPath(query);
+                const useFastPath = shouldUseFastPath(query) || isHostedDeployment();
                 if (useFastPath) {
                     const start = performance.now();
-                    const response = await fetch('/api/query', {
-                        method: 'POST',
-                        headers: getAuthHeaders(),
-                        body: JSON.stringify({
-                            query,
-                            history: chatHistory
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (!response.ok || data.error) {
-                        throw new Error(data.error || data.details || 'Query failed');
-                    }
+                    const data = await runStandardQuery(query);
 
                     const bubble = document.getElementById(aiBubbleId);
                     const answer = data.response || 'No response.';
@@ -524,7 +539,7 @@
                         document.getElementById('duel-narrative').innerText = data.duel.analysis?.narrative || "Head-to-head comparison active.";
                         document.getElementById('duel-card').style.display = 'block';
                     }
-                    if (data.trend || data.comparisonTrend) {
+                    if (shouldRefreshSnapshotFromQuery(data.intent)) {
                         fetchSnapshot();
                     }
 
@@ -614,9 +629,7 @@
                         document.getElementById('duel-card').style.display = 'block';
                     }
 
-                    if (lastData.trend) {
-                        // Assuming trend data is for current vs previous
-                        // Since streaming might not send the comparisonTrend as clearly, we fetch snapshot to refresh panels
+                    if (shouldRefreshSnapshotFromQuery(lastData.intent)) {
                         fetchSnapshot();
                     }
                 }
@@ -624,7 +637,36 @@
             } catch (err) { 
                 console.error('Stream processing error:', err); 
                 const bubble = document.getElementById(aiBubbleId);
-                if (bubble) bubble.innerHTML = `<div style="color: var(--accent-red);">Connection lost. Please check your network.</div>`;
+                try {
+                    const start = performance.now();
+                    const data = await runStandardQuery(query);
+                    const answer = data.response || 'No response.';
+                    const uiLatency = Math.round(performance.now() - start);
+
+                    chatHistory.push({ role: 'assistant', content: answer });
+                    if (chatHistory.length > 10) chatHistory.shift();
+
+                    bubble.innerHTML = `
+                        <div class="answer-text">${marked.parse(answer)}</div>
+                        <div class="response-meta">
+                            <span class="latency-badge">${data.latencyMs ?? uiLatency}ms</span>
+                            <span>Source: ${data.source || 'Local Intelligence'}</span>
+                            <span class="latency-badge">fallback</span>
+                        </div>
+                    `;
+
+                    saveToHistory(query);
+                    if (data.duel) {
+                        updateDuelChart(data.duel);
+                        document.getElementById('duel-narrative').innerText = data.duel.analysis?.narrative || "Head-to-head comparison active.";
+                        document.getElementById('duel-card').style.display = 'block';
+                    }
+                    if (shouldRefreshSnapshotFromQuery(data.intent)) {
+                        fetchSnapshot();
+                    }
+                } catch (fallbackErr) {
+                    if (bubble) bubble.innerHTML = `<div style="color: var(--accent-red);">Query failed on deployed backend. Please try again.</div>`;
+                }
             }
         }
 
