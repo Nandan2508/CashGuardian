@@ -350,13 +350,24 @@ app.post('/api/upload', authenticateToken, async (req, res) => {
       await dbClient.query('DELETE FROM invoices WHERE user_id = $1', [req.user.id]);
       await dbClient.query('DELETE FROM clients WHERE user_id = $1', [req.user.id]);
 
-      for (const chunk of chunkArray(transactions)) {
+      // Deduplicate to prevent "ON CONFLICT DO UPDATE command cannot affect row a second time"
+      const uniqueTransactions = Array.from(
+        transactions.reduce((map, t) => map.set(t.id, t), new Map()).values()
+      );
+      const uniqueInvoices = Array.from(
+        invoices.reduce((map, i) => map.set(i.id, i), new Map()).values()
+      );
+      const uniqueClients = Array.from(
+        clients.reduce((map, c) => map.set(`${c.userId}_${c.name}`, c), new Map()).values()
+      );
+
+      for (const chunk of chunkArray(uniqueTransactions)) {
         await insertTransactionsBatch(dbClient, chunk);
       }
-      for (const chunk of chunkArray(invoices)) {
+      for (const chunk of chunkArray(uniqueInvoices)) {
         await insertInvoicesBatch(dbClient, chunk);
       }
-      for (const chunk of chunkArray(clients)) {
+      for (const chunk of chunkArray(uniqueClients)) {
         await insertClientsBatch(dbClient, chunk);
       }
 
