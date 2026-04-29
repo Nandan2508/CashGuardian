@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { getTransactions, getInvoices, getClients } = require("../services/dataService");
-const externalValidation = require("../data/externalValidation.json");
+
 const {
   INTENTS,
   classifyIntent
@@ -331,12 +331,11 @@ async function getSnapshot(userId, customDataset = null, preFetched = null) {
       detectAnomalies(userId)
     ]);
 
-    const metrics = require("../data/metrics.json");
-    const recentMetrics = metrics.slice(-13);
-    const previousMetrics = metrics.slice(-26, -13);
+    const recentMetrics = [];
+    const previousMetrics = [];
 
     snapshot = {
-      isDemo: true,
+      isDemo: false,
       netBalance: balance.netBalance,
       totalIncome: balance.totalIncome,
       totalExpenses: balance.totalExpenses,
@@ -344,9 +343,9 @@ async function getSnapshot(userId, customDataset = null, preFetched = null) {
       overdueTotal: overdueList.filter(i => i.effectiveStatus !== 'due_soon').reduce((sum, item) => sum + item.amount, 0),
       highRiskClients: [...new Set(overdueList.filter(i => ['high_risk', 'critical'].includes(i.effectiveStatus)).map(i => i.client))],
       topExpenseCategory: expenseBreakdown[0] ? expenseBreakdown[0].category : "none",
-      externalValidationNotes: externalValidation.map((item) =>
-        `${item.source} (${item.focus}): ${item.insight}`
-      ),
+      externalValidationNotes: [
+        'Historical benchmarks reset. Fresh data analysis active.'
+      ],
       trend: {
         labels: recentMetrics.map(m => m.week.split('-').pop()),
         revenue: recentMetrics.map(m => m.revenue),
@@ -659,12 +658,25 @@ function extractClientName(userInput, dataset = null, preComputedClients = null)
     }).filter(Boolean))];
 
     if (!dataset) {
-      // Fallback to demo data sources
+      // Fallback to demo data sources (only if files exist)
       try {
-        const demoTransactions = require("../data/transactions.json");
-        const demoInvoices = require("../data/invoices.json");
+        const demoTransactionsPath = path.join(__dirname, "../data/transactions.json");
+        const demoInvoicesPath = path.join(__dirname, "../data/invoices.json");
+        
+        let demoTransactions = [];
+        let demoInvoices = [];
+        
+        if (fs.existsSync(demoTransactionsPath)) {
+          demoTransactions = require(demoTransactionsPath);
+        }
+        if (fs.existsSync(demoInvoicesPath)) {
+          demoInvoices = require(demoInvoicesPath);
+        }
+        
         clients = [...new Set([...demoTransactions, ...demoInvoices].map(i => i.client || i.client_name).filter(Boolean))];
-      } catch (e) { }
+      } catch (e) {
+        clients = [];
+      }
     }
   }
 

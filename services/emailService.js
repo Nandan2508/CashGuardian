@@ -1,7 +1,8 @@
+const fs = require('fs');
+const path = require('path');
 const nodemailer = require("nodemailer");
 const { formatCurrency, printAlert } = require("../utils/formatter");
 const { getClients } = require("./dataService");
-const clientContacts = require("../data/clientContacts.json");
 
 /**
  * Resolves a reminder recipient email.
@@ -59,10 +60,16 @@ async function resolveRecipient(clientName, userId, customDataset = null) {
   }
 
   // 4) Static client contact map (data/clientContacts.json)
-  if (clientContacts[clientName]) {
-    console.log(`📧 Resolved recipient from clientContacts.json: ${clientContacts[clientName]}`);
-    return clientContacts[clientName];
-  }
+  try {
+    const contactPath = path.join(__dirname, "../data/clientContacts.json");
+    if (fs.existsSync(contactPath)) {
+      const clientContacts = require(contactPath);
+      if (clientContacts[clientName]) {
+        console.log(`📧 Resolved recipient from clientContacts.json: ${clientContacts[clientName]}`);
+        return clientContacts[clientName];
+      }
+    }
+  } catch (e) {}
 
   // 4) Last resort: EMAIL_USER fallback
   const fallback = process.env.EMAIL_USER || null;

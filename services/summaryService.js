@@ -1,4 +1,5 @@
-const metrics = require("../data/metrics.json");
+const fs = require('fs');
+const path = require('path');
 const { detectAnomalies } = require("./anomalyService");
 const { comparePeriods } = require("./cashFlowService");
 const { getOverdueInvoices } = require("./invoiceService");
