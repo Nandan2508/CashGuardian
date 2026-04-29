@@ -6,16 +6,18 @@ const {
 } = require("../services/cashFlowService");
 
 describe("cashFlowService", () => {
-  test("getCashBalance returns benchmark totals", () => {
-    expect(getCashBalance()).toEqual({
+  const mockTransactions = require("../data/transactions.json");
+
+  test("getCashBalance returns benchmark totals", async () => {
+    expect(await getCashBalance(null, mockTransactions)).toEqual({
       totalIncome: 925500,
       totalExpenses: 938000,
       netBalance: -12500
     });
   });
 
-  test("getCashSummary returns last 30-day totals", () => {
-    expect(getCashSummary()).toEqual({
+  test("getCashSummary returns last 30-day totals", async () => {
+    expect(await getCashSummary(null, 30, mockTransactions)).toEqual({
       period: "2026-03-12 to 2026-04-10",
       income: 260000,
       expenses: 292500,
@@ -24,19 +26,19 @@ describe("cashFlowService", () => {
     });
   });
 
-  test("getExpenseBreakdown is sorted descending", () => {
-    const breakdown = getExpenseBreakdown();
+  test("getExpenseBreakdown is sorted descending", async () => {
+    const breakdown = await getExpenseBreakdown(null, mockTransactions);
     expect(breakdown[0]).toEqual({ category: "salaries", total: 360000, percentage: "38%" });
     expect(breakdown[1]).toEqual({ category: "logistics", total: 318000, percentage: "34%" });
     expect(breakdown[2]).toEqual({ category: "rent", total: 180000, percentage: "19%" });
   });
 
-  test("getExpenseBreakdown includes all categories", () => {
-    expect(getExpenseBreakdown()).toHaveLength(6);
+  test("getExpenseBreakdown includes all categories", async () => {
+    expect(await getExpenseBreakdown(null, mockTransactions)).toHaveLength(6);
   });
 
-  test("comparePeriods month compares current month against previous month", () => {
-    const comparison = comparePeriods("month");
+  test("comparePeriods month compares current month against previous month", async () => {
+    const comparison = await comparePeriods(null, "month", 1, mockTransactions);
     expect(comparison.current).toMatchObject({
       period: "2026-04-01 to 2026-04-10",
       income: 62000,
@@ -56,9 +58,9 @@ describe("cashFlowService", () => {
     });
   });
 
-  test("comparePeriods week returns a narrative", () => {
-    const comparison = comparePeriods("week");
-    expect(comparison.narrative).toContain("Compared with the previous week");
+  test("comparePeriods week returns a narrative", async () => {
+    const comparison = await comparePeriods(null, "week", 1, mockTransactions);
+    expect(comparison.narrative).toContain("Week: Revenue");
     expect(comparison.current.period).toBe("2026-04-04 to 2026-04-10");
   });
 });

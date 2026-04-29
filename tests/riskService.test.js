@@ -1,4 +1,5 @@
 const { getClientRisk, getRiskReport } = require("../services/riskService");
+const { getInvoices } = require("../services/dataService");
 
 describe("riskService", () => {
   beforeAll(() => {
@@ -9,8 +10,10 @@ describe("riskService", () => {
     jest.useRealTimers();
   });
 
-  test("Sharma Retail is classified as HIGH risk", () => {
-    const sharma = getClientRisk("Sharma Retail");
+  const mockInvoices = require("../data/invoices.json");
+
+  test("Sharma Retail is classified as HIGH risk", async () => {
+    const sharma = getClientRisk("Sharma Retail", mockInvoices);
     expect(sharma).toMatchObject({
       client: "Sharma Retail",
       riskLevel: "HIGH",
@@ -21,8 +24,8 @@ describe("riskService", () => {
     expect(sharma.riskScore).toBeGreaterThanOrEqual(60);
   });
 
-  test("Patel Distributors is also HIGH risk under the exact formula", () => {
-    const patel = getClientRisk("Patel Distributors");
+  test("Patel Distributors is also HIGH risk under the exact formula", async () => {
+    const patel = getClientRisk("Patel Distributors", mockInvoices);
     expect(patel).toMatchObject({
       riskLevel: "HIGH",
       overdueAmount: 38500
@@ -30,8 +33,8 @@ describe("riskService", () => {
     expect(patel.riskScore).toBe(62);
   });
 
-  test("Kapoor Traders is MEDIUM because the locked dataset contains one late payment", () => {
-    const kapoor = getClientRisk("Kapoor Traders");
+  test("Kapoor Traders is MEDIUM because the locked dataset contains one late payment", async () => {
+    const kapoor = getClientRisk("Kapoor Traders", mockInvoices);
     expect(kapoor).toMatchObject({
       riskLevel: "MEDIUM",
       overdueAmount: 0
@@ -39,13 +42,13 @@ describe("riskService", () => {
     expect(kapoor.riskScore).toBe(48);
   });
 
-  test("risk report is sorted by descending score", () => {
-    const report = getRiskReport();
+  test("risk report is sorted by descending score", async () => {
+    const report = await getRiskReport(null, mockInvoices);
     expect(report[0].client).toBe("Sharma Retail");
     expect(report[0].riskScore).toBeGreaterThan(report[1].riskScore);
   });
 
-  test("unknown clients return null", () => {
-    expect(getClientRisk("Unknown Client")).toBeNull();
+  test("unknown clients return null", async () => {
+    expect(getClientRisk("Unknown Client", mockInvoices)).toBeNull();
   });
 });

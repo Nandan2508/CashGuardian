@@ -1,7 +1,0 @@
-[
-  {"date": "2026-03-01", "department": "Logistics", "amount": 36000, "description": "High fuel surcharge in South region"},
-  {"date": "2026-03-15", "department": "Salaries", "amount": 85000, "description": "Monthly payroll"},
-  {"date": "2026-03-20", "department": "Marketing", "amount": 12000, "description": "Local radio ads"},
-  {"date": "2026-04-01", "department": "Logistics", "amount": 22000, "description": "Regular delivery routes"},
-  {"date": "2026-04-10", "department": "Salaries", "amount": 85000, "description": "Monthly payroll"}
-]

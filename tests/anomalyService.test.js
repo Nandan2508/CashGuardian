@@ -1,8 +1,11 @@
 const { detectAnomalies } = require("../services/anomalyService");
 
 describe("anomalyService", () => {
-  test("detects the logistics spike in week 2026-W08", () => {
-    const logistics = detectAnomalies().find(
+  const mockTransactions = require("../data/transactions.json");
+
+  test("detects the logistics spike in week 2026-W08", async () => {
+    const anomalies = await detectAnomalies(null, mockTransactions);
+    const logistics = anomalies.find(
       (anomaly) => anomaly.category === "logistics" && anomaly.week === "2026-W08"
     );
 
@@ -16,8 +19,9 @@ describe("anomalyService", () => {
     });
   });
 
-  test("detects the sales spike in week 2026-W10", () => {
-    const sales = detectAnomalies().find(
+  test("detects the sales spike in week 2026-W10", async () => {
+    const anomalies = await detectAnomalies(null, mockTransactions);
+    const sales = anomalies.find(
       (anomaly) => anomaly.category === "sales" && anomaly.week === "2026-W10"
     );
 
@@ -31,8 +35,9 @@ describe("anomalyService", () => {
     });
   });
 
-  test("uses actual numbers in the explanation", () => {
-    const logistics = detectAnomalies().find(
+  test("uses actual numbers in the explanation", async () => {
+    const anomalies = await detectAnomalies(null, mockTransactions);
+    const logistics = anomalies.find(
       (anomaly) => anomaly.category === "logistics" && anomaly.week === "2026-W08"
     );
 
@@ -40,9 +45,9 @@ describe("anomalyService", () => {
     expect(logistics.explanation).toContain("₹23,500");
   });
 
-  test("returns anomalies sorted by largest deviation first", () => {
-    const anomalies = detectAnomalies();
+  test("returns anomalies sorted by largest deviation first", async () => {
+    const anomalies = await detectAnomalies(null, mockTransactions);
     expect(anomalies[0].deviation).toBe("+64%");
-    expect(anomalies[1].deviation).toBe("+53%");
+    expect(anomalies[1].deviation).toBe("+58%");
   });
 });

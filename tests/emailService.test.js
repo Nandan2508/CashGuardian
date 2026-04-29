@@ -10,21 +10,21 @@ describe("emailService helper logic", () => {
     process.env = { ...originalEnv };
   });
 
-  test("resolveRecipient prefers EMAIL_TO override", () => {
+  test("resolveRecipient prefers EMAIL_TO override", async () => {
     process.env.EMAIL_TO = "demo@example.com";
-    expect(resolveRecipient("Sharma Retail")).toBe("demo@example.com");
+    await expect(resolveRecipient("Sharma Retail")).resolves.toBe("demo@example.com");
   });
 
-  test("resolveRecipient falls back to mapped client email", () => {
+  test("resolveRecipient falls back to mapped client email", async () => {
     delete process.env.EMAIL_TO;
     delete process.env.EMAIL_USER;
-    expect(resolveRecipient("Sharma Retail")).toBe("accounts.sharma@example.com");
+    await expect(resolveRecipient("Sharma Retail")).resolves.toBe("nandan.nv358@gmail.com, krishanmalhotra2005@gmail.com");
   });
 
-  test("resolveRecipient falls back to EMAIL_USER when client not mapped", () => {
+  test("resolveRecipient falls back to EMAIL_USER when client not mapped", async () => {
     delete process.env.EMAIL_TO;
     process.env.EMAIL_USER = "owner@example.com";
-    expect(resolveRecipient("Unknown Client")).toBe("owner@example.com");
+    await expect(resolveRecipient("Unknown Client")).resolves.toBe("owner@example.com");
   });
 
   test("validateEmailConfig reports missing values", () => {

@@ -1,7 +1,17 @@
+jest.mock("../services/dataService", () => ({
+  getTransactions: jest.fn().mockResolvedValue(require("../data/transactions.json")),
+  getInvoices: jest.fn().mockResolvedValue(require("../data/invoices.json")),
+  getClients: jest.fn().mockResolvedValue([])
+}));
+
 const { handleQuery, extractClientName, getHelpText, buildSystemPrompt } = require("../agent/queryAgent");
 
 describe("queryAgent", () => {
   const originalApiKey = process.env.AI_API_KEY;
+
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-04-11T00:00:00Z"));
+  });
 
   beforeEach(() => {
     delete process.env.AI_API_KEY;
@@ -9,6 +19,7 @@ describe("queryAgent", () => {
 
   afterAll(() => {
     process.env.AI_API_KEY = originalApiKey;
+    jest.useRealTimers();
   });
 
   test("returns help text without AI", async () => {

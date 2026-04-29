@@ -3,7 +3,7 @@
  * Centralized data access layer for both JSON and PostgreSQL.
  */
 const { Pool } = require('pg');
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
@@ -58,7 +58,12 @@ async function getTransactions(userId, customDataset = null) {
   }
 
   // Fallback to JSON
-  return JSON.parse(await fs.readFile(path.join(__dirname, '../data/transactions.json'), 'utf8'));
+  try {
+    const data = await fs.promises.readFile(path.join(__dirname, '../data/transactions.json'), 'utf8');
+    return JSON.parse(data);
+  } catch (err) {
+    return [];
+  }
 }
 
 /**
@@ -92,7 +97,12 @@ async function getInvoices(userId, customDataset = null) {
   }
 
   // Fallback to JSON
-  return JSON.parse(await fs.readFile(path.join(__dirname, '../data/invoices.json'), 'utf8'));
+  try {
+    const data = await fs.promises.readFile(path.join(__dirname, '../data/invoices.json'), 'utf8');
+    return JSON.parse(data);
+  } catch (err) {
+    return [];
+  }
 }
 
 /**
@@ -113,7 +123,12 @@ async function getClients(userId) {
     console.error('DataService DB Error (Clients):', err.message);
   }
 
-  return JSON.parse(await fs.readFile(path.join(__dirname, '../data/clientContacts.json'), 'utf8'));
+  try {
+    const data = await fs.promises.readFile(path.join(__dirname, '../data/clientContacts.json'), 'utf8');
+    return JSON.parse(data);
+  } catch (err) {
+    return {};
+  }
 }
 
 /**

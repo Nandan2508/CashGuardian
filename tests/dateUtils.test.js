@@ -11,6 +11,13 @@ const {
 } = require("../utils/dateUtils");
 
 describe("dateUtils", () => {
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-04-11T12:00:00Z"));
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
   test("isOverdue returns false for today", () => {
     const today = new Date().toISOString().slice(0, 10);
     expect(isOverdue(today)).toBe(false);
