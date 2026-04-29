@@ -548,7 +548,8 @@ async function handleQuery(userInput, customDataset = null, history = [], userId
  */
 async function* handleStream(userInput, customDataset = null, history = [], userId = null) {
   try {
-    const messages = history.map(m => m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content));
+    const recentHistory = history.slice(-3); // Keep only last 3 messages to save tokens
+    const messages = recentHistory.map(m => m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content));
     messages.push(new HumanMessage(userInput));
 
     // 1. Pre-fetch all necessary data in parallel

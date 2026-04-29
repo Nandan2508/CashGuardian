@@ -39,78 +39,64 @@ const { formatCurrency, safeDate, safeNumber } = require("../utils/formatter");
  * @returns {string} Grounded system prompt.
  */
 function buildSystemPrompt(snapshot) {
-  const validationNotes = snapshot.externalValidationNotes.map((line) => `- ${line}`).join("\n");
-  const anomalies = (snapshot.anomalies || []).map((a) => `- CRITICAL: ${a.explanation}`).join("\n");
+  const validationNotes = (snapshot.externalValidationNotes || []).slice(0, 3).map((line) => `- ${line}`).join("\n");
+  const anomalies = (snapshot.anomalies || []).slice(0, 3).map((a) => `- ALERT: ${a.explanation}`).join("\n");
   const variances = snapshot.variances;
 
   let duelSection = "";
   if (snapshot.duel) {
     const { entityA, entityB, analysis } = snapshot.duel;
-    duelSection = `\n=== PERFORMANCE DUEL GROUNDING (H2H - Last 90 Days) ===\n` +
-      `Entity A [${entityA.name}]: Revenue ₹${entityA.revenue.toLocaleString()}, Costs ₹${entityA.costs.toLocaleString()}, Volume ${entityA.volume}\n` +
-      `Entity B [${entityB.name}]: Revenue ₹${entityB.revenue.toLocaleString()}, Costs ₹${entityB.costs.toLocaleString()}, Volume ${entityB.volume}\n` +
-      `Calculated Gap: ${analysis.gapPct}% revenue lead for ${analysis.leader}\n` +
-      `============================================================\n`;
+    duelSection = `\n=== H2H PERFORMANCE (90d) ===\n` +
+      `${entityA.name}: ₹${entityA.revenue.toLocaleString()} Rev, ₹${entityA.costs.toLocaleString()} Costs\n` +
+      `${entityB.name}: ₹${entityB.revenue.toLocaleString()} Rev, ₹${entityB.costs.toLocaleString()} Costs\n` +
+      `Gap: ${analysis.gapPct}% lead for ${analysis.leader}\n`;
   }
 
-  let popSection = "No comparison data available.";
+  let popSection = "No comparison data.";
   if (variances && variances.income) {
-    popSection = `Current Block (30d): Income ₹${variances.income.current.toLocaleString()}, Expenses ₹${variances.expenses.current.toLocaleString()}
-Previous Block (30d): Income ₹${variances.income.previous.toLocaleString()}, Expenses ₹${variances.expenses.previous.toLocaleString()}
-Deltas: Income ${variances.income.delta >= 0 ? '+' : ''}${variances.income.delta.toLocaleString()} (${variances.income.pct}%), Expenses ${variances.expenses.delta >= 0 ? '+' : ''}${variances.expenses.delta.toLocaleString()} (${variances.expenses.pct}%)`;
+    popSection = `Current (30d): In ₹${variances.income.current.toLocaleString()}, Out ₹${variances.expenses.current.toLocaleString()}\n` +
+                 `Prior (30d): In ₹${variances.income.previous.toLocaleString()}, Out ₹${variances.expenses.previous.toLocaleString()}\n` +
+                 `Deltas: In ${variances.income.pct}%, Out ${variances.expenses.pct}%`;
   }
 
-  return `You are CashGuardian, an advanced financial reasoning agent.
-Today is ${new Date().toDateString()}.
+  // Summary of Overdue Invoices instead of full JSON
+  const overdueSummary = (snapshot.overdueList || []).slice(0, 5).map(i => 
+    `${i.client}: ₹${Number(i.amount).toLocaleString()} (Due: ${i.dueDate}, ${i.daysPastDue}d late)`
+  ).join('\n');
 
-### CORE DIRECTIVE
-- **Accuracy First**: Only report what is explicitly present in the data. Never invent numbers, clients, or context.
-- **Data Grounding**: Use the "LIVE FINANCIAL DATA" and "CONTACT DIRECTORY" sections below as your single source of truth.
-- **Missing Data**: If a client's email is not in the CONTACT DIRECTORY, state that you don't have their email address rather than guessing or using a placeholder.
+  return `You are CashGuardian, a financial analyst.
+Today: ${new Date().toDateString()}.
 
-=== LIVE FINANCIAL DATA ===
-Net Cash Balance:      ₹${snapshot.netBalance.toLocaleString("en-IN")}
-Total Income (90d):    ₹${snapshot.totalIncome.toLocaleString("en-IN")}
-Total Expenses (90d):  ₹${snapshot.totalExpenses.toLocaleString("en-IN")}
-Overdue Invoices:      ${snapshot.overdueCount} invoices worth ₹${snapshot.overdueTotal.toLocaleString("en-IN")}
-High-Risk Clients:     ${snapshot.highRiskClients.join(", ")}
-Top Expense Category:  ${snapshot.topExpenseCategory}
-Operational Regions:   ${snapshot.regions || 'All'}
-Active Channels:       ${snapshot.channels || 'N/A'}
-===========================
+=== KEY METRICS ===
+Net Balance: ₹${snapshot.netBalance.toLocaleString("en-IN")}
+Income (90d): ₹${snapshot.totalIncome.toLocaleString("en-IN")}
+Expenses (90d): ₹${snapshot.totalExpenses.toLocaleString("en-IN")}
+Overdue: ${snapshot.overdueCount} invoices (₹${snapshot.overdueTotal.toLocaleString("en-IN")})
+Risk Clients: ${snapshot.highRiskClients.join(", ")}
+Top Expense: ${snapshot.topExpenseCategory}
+===================
 
-=== PERIOD-ON-PERIOD PERFORMANCE (Last 30d vs Prior 30d) ===
+=== GROWTH (30d vs Prior) ===
 ${popSection}
-===========================================================
+=============================
 
-=== IDENTIFIED ANOMALIES & ALERTS ===
-${anomalies || "No critical anomalies detected in recent spending patterns."}
-=====================================
+=== ANOMALIES ===
+${anomalies || "None."}
+=================
 ${duelSection}
-=== EXTERNAL VALIDATION REFERENCES ===
-${validationNotes}
-=====================================
+=== OVERDUE LIST (Top 5) ===
+${overdueSummary || "No overdue invoices."}
+============================
 
-=== TOP TRANSACTION DRIVERS (FOR ROOT CAUSE) ===
-${(snapshot.topDrivers || []).join('\n')}
-================================================
-
-=== CONTACTS (TOP 3) ===
-${JSON.stringify(Object.fromEntries(Object.entries(snapshot.contacts || {}).slice(0, 3)), null, 2)}
-================================================
-
-=== OVERDUE & RISK INVOICES (DYNAMIC) ===
-${JSON.stringify((snapshot.overdueList || []).slice(0, 10), null, 2)}
-==========================================
+=== TOP DRIVERS ===
+${(snapshot.topDrivers || []).slice(0, 3).join('\n')}
+===================
 
 Rules:
-- **Dynamic Overdue Logic**: An invoice is overdue if its due date has passed and it is not paid. Prioritize this date-based logic over any static status fields.
-- **Risk Tiers**: Use 1-30 days (Overdue), 31-60 days (High Risk), 60+ days (Critical).
-- Format money as ₹X,XX,XXX (Indian style).
-- Use Markdown headings (####) for structure.
-- **Narrative Consistency**: If a PERFORMANCE DUEL GROUNDING section is present, prioritize its long-term totals (Entity A vs Entity B) over short-term "Transaction Drivers".
-- **Communication Style**: Do NOT mention the names of the source sections (e.g., avoid "According to the TOP TRANSACTION DRIVERS..."). Instead, use phrases like "Our historical data shows..." or "Based on current performance...".
-- Always identify the general source of your information (e.g., "According to recent transaction logs...").
+1. Answer ONLY using the data above. No halluncinations.
+2. Format money as ₹X,XX,XXX.
+3. Be concise. Use headings.
+4. If asked for a summary, provide a professional narrative with 3 actionable tips.
 ---
 `;
 }
@@ -215,19 +201,15 @@ const snapshotCache = new Map(); // User-specific cache
  * @returns {Promise<object>} Global snapshot.
  */
 async function getSnapshot(userId, customDataset = null, preFetched = null) {
-  // Check cache first (ignore if customDataset or preFetched is provided)
-  if (!customDataset && !preFetched && snapshotCache.has(userId)) {
+  // 1. Check cache first
+  if (!customDataset && snapshotCache.has(userId)) {
     return snapshotCache.get(userId);
   }
 
-  // Use pre-fetched data or parallel fetch
-  const transactionsPromise = preFetched?.transactions ? Promise.resolve(preFetched.transactions) : getTransactions(userId);
-  const invoicesPromise = getOverdueInvoices(userId, preFetched?.invoices || null);
-
-  // Note: detectAnomalies still called here, but we'll optimize it to use the same transactions below
+  // 2. Parallel Data Gathering
   const [dbData, overdueList, activeAnomaliesRaw] = await Promise.all([
-    transactionsPromise,
-    invoicesPromise,
+    preFetched?.transactions ? Promise.resolve(preFetched.transactions) : getTransactions(userId),
+    getOverdueInvoices(userId, preFetched?.invoices || null),
     detectAnomalies(userId, customDataset || preFetched?.transactions)
   ]);
 
