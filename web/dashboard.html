@@ -65,7 +65,7 @@
         .meter-fill.warning { background: var(--accent-red); }
         .meter-fill.success { background: var(--accent-green); }
 
-        .sidebar-history { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; height: 100%; }
+        .sidebar-history { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; }
         .history-item { padding: 10px 12px; background: #FAFAFA; border: 1px solid #F0F0F0; border-radius: var(--border-radius-sm); font-size: 11px; color: var(--text-main); cursor: pointer; transition: 0.2s; animation: slideIn 0.3s ease-out both; position: relative; overflow: hidden; }
         .history-item:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); transform: translateX(4px); }
         .history-time { font-size: 9px; color: var(--text-muted); margin-top: 4px; display: block; }
@@ -555,6 +555,13 @@
                         history: chatHistory 
                     })
                 });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    const bubble = document.getElementById(aiBubbleId);
+                    bubble.innerHTML = `<div style="color: var(--accent-red); font-weight: 600;">⚠️ Security Block</div><div style="font-size: 13px; margin-top: 4px;">${errData.error || 'Invalid query detected (Security Block)'}</div>`;
+                    return;
+                }
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();

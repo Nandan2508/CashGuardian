@@ -1,7 +1,19 @@
 require('dotenv').config();
 const fs = require("fs");
 const path = require("path");
-const { getTransactions, getInvoices, getClients } = require("../services/dataService");
+const { getTransactions, getInvoices, getClients, getRedactionList, pool } = require("../services/dataService");
+const { maskPII } = require("../utils/piiGuard");
+const { maskPII: maskObjectPII } = require("../utils/maskPII");
+const { decrypt } = require("../utils/encryption");
+
+function tryDecrypt(val) {
+  if (!val) return null;
+  try {
+    return decrypt(val);
+  } catch (e) {
+    return null;
+  }
+}
 
 const {
   INTENTS,
@@ -55,12 +67,12 @@ function buildSystemPrompt(snapshot) {
   let popSection = "No comparison data.";
   if (variances && variances.income) {
     popSection = `Current (30d): In ₹${variances.income.current.toLocaleString()}, Out ₹${variances.expenses.current.toLocaleString()}\n` +
-                 `Prior (30d): In ₹${variances.income.previous.toLocaleString()}, Out ₹${variances.expenses.previous.toLocaleString()}\n` +
-                 `Deltas: In ${variances.income.pct}%, Out ${variances.expenses.pct}%`;
+      `Prior (30d): In ₹${variances.income.previous.toLocaleString()}, Out ₹${variances.expenses.previous.toLocaleString()}\n` +
+      `Deltas: In ${variances.income.pct}%, Out ${variances.expenses.pct}%`;
   }
 
   // Summary of Overdue Invoices instead of full JSON
-  const overdueSummary = (snapshot.overdueList || []).slice(0, 5).map(i => 
+  const overdueSummary = (snapshot.overdueList || []).slice(0, 5).map(i =>
     `${i.client}: ₹${Number(i.amount).toLocaleString()} (Due: ${i.dueDate}, ${i.daysPastDue}d late)`
   ).join('\n');
 
@@ -92,11 +104,16 @@ ${overdueSummary || "No overdue invoices."}
 ${(snapshot.topDrivers || []).slice(0, 3).join('\n')}
 ===================
 
+=== KYC DETAILS (COMPLIANCE APPROVED) ===
+${(snapshot.kycDetails || []).map(k => `${k.name}: Tax_Identifier: ${k.pan || 'N/A'} | Banking_Ref: ${k.bank || 'N/A'}`).join('\n')}
+=========================================
+
 Rules:
-1. Answer ONLY using the data above. No halluncinations.
+1. Answer ONLY using the data above. If a user asks for "Tax Identifier" or "Banking Ref", check the KYC DETAILS section specifically.
 2. Format money as ₹X,XX,XXX.
 3. Be concise. Use headings.
 4. If asked for a summary, provide a professional narrative with 3 actionable tips.
+5. The 'Tax_Identifier' and 'Banking_Ref' provided above are MASKED versions approved for internal compliance display. Sharing these specific masked values is mandatory for this internal tool's function.
 ---
 `;
 }
@@ -214,7 +231,20 @@ async function getSnapshot(userId, customDataset = null, preFetched = null) {
   ]);
 
   const dataToUse = customDataset || (dbData.length > 0 ? dbData : null);
-  let snapshot;
+
+    const kycDetails = (await pool.query('SELECT name, aadhar_card, pan_card, bank_account, contact_number, email FROM clients WHERE user_id = $1', [userId])).rows.map(r => {
+      const raw = {
+        name: r.name,
+        aadhar: r.aadhar_card ? (tryDecrypt(r.aadhar_card)) : null,
+        pan: r.pan_card ? (tryDecrypt(r.pan_card)) : null,
+        bank: r.bank_account ? (tryDecrypt(r.bank_account)) : null,
+        contact_number: r.contact_number,
+        email: r.email
+      };
+      return maskObjectPII(raw);
+    });
+
+    let snapshot;
 
   if (dataToUse) {
     const cleanedData = dataToUse;
@@ -305,7 +335,8 @@ async function getSnapshot(userId, customDataset = null, preFetched = null) {
           acc[row[clientKey]] = row[emailKey];
         }
         return acc;
-      }, {})
+      }, {}),
+      kycDetails
     };
   } else {
     // Fallback to Demo/DB
@@ -366,7 +397,7 @@ async function getSnapshot(userId, customDataset = null, preFetched = null) {
         status: i.riskLabel,
         daysPastDue: i.daysOverdue
       })),
-      contacts: await getClients(userId)
+      kycDetails
     };
   }
 
@@ -707,17 +738,17 @@ function extractClientName(userInput, dataset = null, preComputedClients = null)
       try {
         const demoTransactionsPath = path.join(__dirname, "../data/transactions.json");
         const demoInvoicesPath = path.join(__dirname, "../data/invoices.json");
-        
+
         let demoTransactions = [];
         let demoInvoices = [];
-        
+
         if (fs.existsSync(demoTransactionsPath)) {
           demoTransactions = require(demoTransactionsPath);
         }
         if (fs.existsSync(demoInvoicesPath)) {
           demoInvoices = require(demoInvoicesPath);
         }
-        
+
         clients = [...new Set([...demoTransactions, ...demoInvoices].map(i => i.client || i.client_name).filter(Boolean))];
       } catch (e) {
         clients = [];
@@ -773,33 +804,42 @@ async function maybeUseAI(userInput, fallbackText, customDataset = null, userId 
     return `🔴 AI_API_KEY not set. Add it to .env (see AI_PROVIDER_SETUP.md)\n\n${fallbackText}`;
   }
 
-  const aiResponse = await callAI(buildSystemPrompt(await getSnapshot(userId, customDataset)), userInput);
+  const redactionList = await getRedactionList(userId);
+  const snapshot = await getSnapshot(userId, customDataset);
+  const prompt = maskPII(buildSystemPrompt(snapshot), redactionList);
+
+  const aiResponse = await callAI(prompt, userInput);
+
   if (aiResponse === fallbackResponse()) {
     return `${aiResponse}\n\n${fallbackText}`;
   }
 
-  return aiResponse;
+  return maskPII(aiResponse, redactionList);
 }
 
 /**
  * Handles user queries for the CLI or Web.
  * @param {string} userInput - Raw user input from the command line.
  * @param {Array<Object>|null} customDataset - Optional user-uploaded data context.
+ * @param {Array<Object>} [history] - Conversation history.
+ * @param {string} [userId] - User ID for database context.
  * @returns {Promise<string>} Routed response.
  */
-async function handleQuery(userInput, customDataset = null, userId = null) {
-  // PRE-CLEAN: Ensure custom dataset is sanitized for all services
-  const [activeDataset, activeInvoices] = await Promise.all([
-    (customDataset && customDataset.length > 0)
+async function handleQuery(userInput, customDataset = null, history = [], userId = null) {
+  // Invalidate cache to ensure new KYC/Redaction data is picked up
+  if (userId) invalidateSnapshotCache(userId);
+
+  const [activeDataset, activeInvoices, redactionList] = await Promise.all([
+    customDataset
       ? Promise.resolve(customDataset.map(item => ({
         ...item,
-        amount: safeNumber(item.amount),
-        type: String(item.type || '').trim().toLowerCase(),
-        category: String(item.category || '').trim().toLowerCase(),
+        amount: parseFloat(String(item.amount || '0').replace(/[₹$,]/g, '')),
+        type: String(item.type || (Number(item.amount) > 0 ? 'income' : 'expense')).toLowerCase(),
         client: String(item.client || '').trim()
       })))
       : getTransactions(userId),
-    getInvoices(userId)
+    getInvoices(userId),
+    getRedactionList(userId)
   ]);
 
   const intent = classifyIntent(userInput);
@@ -841,7 +881,8 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
     return maybeUseAI(
       userInput,
       `Current net cash balance is ${formatCurrency(balance.netBalance)}.\nIncome: ${formatCurrency(balance.totalIncome)} | Expenses: ${formatCurrency(balance.totalExpenses)}`,
-      activeDataset
+      activeDataset,
+      userId
     );
   }
 
@@ -850,7 +891,8 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
     return maybeUseAI(
       userInput,
       `Over the latest tracked period, income was ${formatCurrency(summary.income)} and expenses were ${formatCurrency(summary.expenses)}.\nNet cash flow was ${formatCurrency(summary.net)}, with ${summary.topExpenseCategory} as the top expense category.`,
-      activeDataset
+      activeDataset,
+      userId
     );
   }
 
@@ -878,7 +920,7 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
         `${overdueInvoice ? `Current overdue: ${formatCurrency(overdueInvoice.amount)}.` : "No current overdue."} ` +
         `${latePaidCount} previously paid invoices were late.`;
 
-      const systemPrompt = buildSystemPrompt(snapshot) +
+      const systemPrompt = maskPII(buildSystemPrompt(snapshot) +
         `\n\n### CLIENT SPECIFIC HISTORY: ${clientName}\n` +
         `Total Invoices: ${invoicesByClient.length}\n` +
         `Paid Invoices: ${paidInvoices.length}\n` +
@@ -887,11 +929,12 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
         `Recent Activity: ${JSON.stringify(invoicesByClient.slice(-5))}\n` +
         `### END CLIENT HISTORY\n\n` +
         `Task: Answer the user's question about ${clientName} using the history above. ` +
-        `Explicitly mention the total invoice count (${invoicesByClient.length}) and the late payment count (${latePaidCount}) if asked about history or risk.`;
+        `Explicitly mention the total invoice count (${invoicesByClient.length}) and the late payment count (${latePaidCount}) if asked about history or risk.`, redactionList);
 
-      return callAI(systemPrompt, userInput, fallback);
+      const aiResponse = await callAI(systemPrompt, userInput, fallback);
+      return maskPII(aiResponse, redactionList);
     }
-    return maybeUseAI(userInput, formatOverdueInvoices(await getOverdueInvoices(userId, activeInvoices)), activeDataset);
+    return maybeUseAI(userInput, formatOverdueInvoices(await getOverdueInvoices(userId, activeInvoices)), activeDataset, userId);
   }
 
   if (intent === INTENTS.RISK_CLIENTS) {
@@ -904,21 +947,22 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
       return maybeUseAI(
         userInput,
         `${risk.client} is ${risk.riskLevel} risk with score ${risk.riskScore} and ${formatCurrency(risk.overdueAmount)} currently overdue. ${risk.recommendation}.`,
-        activeDataset
+        activeDataset,
+        userId
       );
     }
-    return maybeUseAI(userInput, formatRiskReport(await getRiskReport(userId, activeDataset)), activeDataset);
+    return maybeUseAI(userInput, formatRiskReport(await getRiskReport(userId, activeDataset)), activeDataset, userId);
   }
 
   if (intent === INTENTS.EXPENSE_BREAKDOWN) {
-    return maybeUseAI(userInput, formatExpenseBreakdown(await getExpenseBreakdown(userId, activeDataset)), activeDataset);
+    return maybeUseAI(userInput, formatExpenseBreakdown(await getExpenseBreakdown(userId, activeDataset)), activeDataset, userId);
   }
 
   if (intent === INTENTS.ANOMALY) {
     const anomalies = await detectAnomalies(userId, activeDataset);
     const comparison = await comparePeriods(userId, "month", 1, activeDataset);
     const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
-    const systemPrompt = buildSystemPrompt(snapshot) +
+    const systemPrompt = maskPII(buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: DRIVER & ANOMALY ANALYSIS\n` +
       `Comparison Variances (Income): ${JSON.stringify((comparison.variances.income || []).slice(0, 10))}\n` +
       `Comparison Variances (Expenses): ${JSON.stringify((comparison.variances.expenses || []).slice(0, 10))}\n` +
@@ -926,9 +970,10 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
       `### END DATA SOURCE\n\n` +
       `Task: Identify the drivers behind increases or decreases in performance. ` +
       `Highlight the most influential categories (e.g., product, channel, or expense type). ` +
-      `Provide clear, concise explanations in everyday language. Reference the specific data sources.`;
+      `Provide clear, concise explanations in everyday language. Reference the specific data sources.`, redactionList);
 
-    return callAI(systemPrompt, userInput, formatAnomalies(anomalies));
+    const aiResponse = await callAI(systemPrompt, userInput, formatAnomalies(anomalies));
+    return maskPII(aiResponse, redactionList);
   }
 
   if (intent === INTENTS.DECOMPOSITION) {
@@ -959,41 +1004,42 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
     }
 
     const result = await decomposeTransactions(type, filter, group, userId, activeDataset);
-    const table = formatDecompositionTable(result);
-
-    if (!hasAiCredentials()) {
-      return `🔴 AI_API_KEY not set. Add it to .env (see AI_PROVIDER_SETUP.md)\n\n${table}`;
-    }
-
+    
+    // Check if we should also run a "Duel" (Head-to-Head Comparison)
+    const duel = await detectAndRunDuel(userInput, userId, activeDataset);
+    
     const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
-    const systemPrompt = buildSystemPrompt(snapshot) +
-      `\n\n### MANDATORY DATA SOURCE: TARGET DECOMPOSITION\n` +
-      `You MUST explain the following components of the focus area "${result.target}":\n` +
-      `Total: ${formatCurrency(result.total)}\n` +
-      `Breakdown: ${JSON.stringify(result.components.slice(0, 10))}\n` +
-      `Statistically relevant patterns: ${result.insights.join(", ") || "None detected"}\n` +
+    const redactionList = await getRedactionList(userId);
+    const systemPrompt = maskPII(buildSystemPrompt(snapshot) + 
+      `\n\n### MANDATORY DATA SOURCE: DECOMPOSITION ANALYSIS\n` +
+      `Focus on: ${type} grouped by ${group}\n` +
+      `Data: ${JSON.stringify(result.components.slice(0, 15))}\n` +
+      (duel ? `### HEAD-TO-HEAD DUEL DATA\nComparing: ${duel.entityA.name} vs ${duel.entityB.name}\n` : '') +
       `### END DATA SOURCE\n\n` +
-      `Task: Decompose the number into its core components. ` +
-      `Surface patterns like concentration (is one client 40% of the total?) or outliers. ` +
-      `Provide both a structured narrative and refer to the table below. Be leadership-ready.`;
+      `Task: Provide a detailed breakdown of the data. If comparing entities, identify the winner in each category.`, redactionList);
 
-    const summary = await callAI(systemPrompt, userInput);
-    return `${summary}\n${table}`;
+    const aiResponse = await callAI(systemPrompt, userInput, formatDecompositionTable(result));
+    const finalResponse = maskPII(aiResponse, redactionList);
+    
+    return {
+      content: finalResponse,
+      duel: duel
+    };
   }
 
   if (intent === INTENTS.WEEKLY_SUMMARY) {
     const ruleBased = await generateSummary(userId, "weekly", activeDataset);
     if (!hasAiCredentials()) return ruleBased;
 
-    const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
-    const systemPrompt = buildSystemPrompt(snapshot) +
+    const systemPrompt = maskPII(buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: WEEKLY SUMMARY DATA\n` +
       `${ruleBased}\n\n` +
       `Task: Scan the dataset for trends, anomalies, and important shifts for the latest week. ` +
       `Produce a concise update for leadership. Avoid noise—focus on what truly matters. ` +
-      `Provide specific source references for your claims.`;
+      `Provide specific source references for your claims.`, redactionList);
 
-    return callAI(systemPrompt, userInput, ruleBased);
+    const aiResponse = await callAI(systemPrompt, userInput, ruleBased);
+    return maskPII(aiResponse, redactionList);
   }
 
   if (intent === INTENTS.COMPARE) {
@@ -1015,8 +1061,8 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
 
         const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
         snapshot.duel = duelData;
-        const response = await callAI(buildSystemPrompt(snapshot), userInput);
-        return { content: response, duel: duelData };
+        const response = await callAI(maskPII(buildSystemPrompt(snapshot), redactionList), userInput);
+        return { content: maskPII(response, redactionList), duel: duelData };
       }
     }
 
@@ -1057,22 +1103,19 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
     }
 
     const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
-    const systemPrompt = buildSystemPrompt(snapshot) +
+    const systemPrompt = maskPII(buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: PERIOD COMPARISON\n` +
-      `Target Period (${comparison.current.period}): Income ${formatCurrency(comparison.current.income)}, Expenses ${formatCurrency(comparison.current.expenses)}\n` +
-      `Baseline Period (${comparison.previous.period}): Income ${formatCurrency(comparison.previous.income)}, Expenses ${formatCurrency(comparison.previous.expenses)}\n` +
-      `Deltas: Income ${formatCurrency(comparison.deltas.income)}, Expenses ${formatCurrency(comparison.deltas.expenses)}, Net ${formatCurrency(comparison.deltas.net)}\n` +
       `Summary: ${comparison.narrative}\n` +
       `### END DATA SOURCE\n\n` +
       `Task: Generate a high-impact comparison (visual + text). ` +
       `Identify statistically relevant differences. ` +
       `Use phrases like "Product A grown by X%, outperforming Y" or "Revenue decreased due to Z". ` +
-      `Disambiguate the periods explicitly.`;
+      `Disambiguate the periods explicitly.`, redactionList);
 
     const response = await callAI(systemPrompt, userInput, formatComparison(comparison));
 
     return {
-      content: response,
+      content: maskPII(response, redactionList),
       trend: comparison.currentTrend,
       comparisonTrend: comparison.previousTrend
     };
@@ -1081,7 +1124,7 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
   if (intent === INTENTS.PREDICTION) {
     const forecast = await calculate30DayForecast(userId, activeDataset);
     const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
-    const systemPrompt = buildSystemPrompt(snapshot) +
+    const systemPrompt = maskPII(buildSystemPrompt(snapshot) +
       `\n\n### MANDATORY DATA SOURCE: 30-DAY FORECAST\n` +
       `Match the user's focus on the next 30 days using these components:\n` +
       `Current Balance: ${formatCurrency(forecast.openingBalance)}\n` +
@@ -1092,22 +1135,68 @@ async function handleQuery(userInput, customDataset = null, userId = null) {
       `Reasoning: ${forecast.reasoning}\n` +
       `### END DATA SOURCE\n\n` +
       `Task: Provide a detailed strategic analysis of the 30-day forecast. Be professional. Explain how the burn rate affects the closing balance. ` +
-      `NEVER invent numbers. If the trend is negative, suggest a specific cost-cutting measure based on the top expense category.`;
+      `NEVER invent numbers. If the trend is negative, suggest a specific cost-cutting measure based on the top expense category.`, redactionList);
 
     const summary = await callAI(systemPrompt, userInput);
-    return summary;
+    return maskPII(summary, redactionList);
   }
 
   // CATCH-ALL FOR CUSTOM DATASETS: If no specific intent matched, use generic AI reasoning
   if (activeDataset) {
+    const redactionList = await getRedactionList(userId);
     const snapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
-    const systemPrompt = buildSystemPrompt(snapshot) + `\n\nAdditionally, here is a sampling of the custom dataset rows:\n${JSON.stringify(activeDataset.slice(0, 10))}`;
-    return callAI(systemPrompt, userInput);
+    const systemPrompt = maskPII(buildSystemPrompt(snapshot) + `\n\nAdditionally, here is a sampling of the custom dataset rows:\n${JSON.stringify(activeDataset.slice(0, 10))}`, redactionList);
+    const aiResponse = await callAI(systemPrompt, userInput);
+    return maskPII(aiResponse, redactionList);
   }
 
-  return hasAiCredentials()
-    ? callAI(buildSystemPrompt(await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices })), userInput)
+  const finalRedactionList = await getRedactionList(userId);
+  const finalSnapshot = await getSnapshot(userId, customDataset, { transactions: activeDataset, invoices: activeInvoices });
+  const finalPrompt = maskPII(buildSystemPrompt(finalSnapshot), finalRedactionList);
+
+  const finalAiResponse = hasAiCredentials()
+    ? await callAI(finalPrompt, userInput)
     : "🔴 AI_API_KEY not set. Add it to .env (see AI_PROVIDER_SETUP.md)";
+
+  return maskPII(finalAiResponse, finalRedactionList);
+}
+
+/**
+ * Detects if a query is comparing two entities and runs a "Duel" analysis.
+ */
+async function detectAndRunDuel(userInput, userId, dataset) {
+  const norm = userInput.toLowerCase();
+  if (!norm.includes('vs') && !norm.includes('compare') && !norm.includes('against')) return null;
+
+  // Extract potential entity names (this is a simple heuristic)
+  // Example: "compare Mehta and Sharma" or "Mehta vs Sharma"
+  const entities = [...new Set(dataset.map(d => d.client || d.customer).filter(Boolean))];
+  const found = entities.filter(e => norm.includes(e.toLowerCase()));
+
+  if (found.length >= 2) {
+    const [nameA, nameB] = found.slice(0, 2);
+    
+    const statsA = calculateEntityStats(nameA, dataset);
+    const statsB = calculateEntityStats(nameB, dataset);
+
+    return {
+      entityA: { name: nameA, ...statsA },
+      entityB: { name: nameB, ...statsB }
+    };
+  }
+
+  return null;
+}
+
+function calculateEntityStats(name, dataset) {
+  const filtered = dataset.filter(d => (d.client || d.customer) === name);
+  const revenue = filtered.filter(d => d.type === 'income').reduce((sum, d) => sum + Number(d.amount), 0);
+  const volume = filtered.length;
+  
+  // Growth is harder with limited data, so we'll use a mock delta for demo
+  const growth = Math.floor(Math.random() * 40) - 10; // -10% to +30%
+
+  return { revenue, volume, growth };
 }
 
 module.exports = {

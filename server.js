@@ -20,6 +20,7 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { encrypt } = require('./utils/encryption');
+const rateLimit = require('express-rate-limit');
 
 // PostgreSQL Pool
 const pool = new Pool({
@@ -31,6 +32,13 @@ const PORT = process.env.PORT || 3000;
 const queryCache = new Map();
 const QUERY_CACHE_TTL_MS = 60 * 1000;
 const DB_BATCH_SIZE = 250;
+
+// 🛡️ Layer 1: Rate Limiting
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 50, // Relaxed for testing
+  message: { error: "Too many requests, please try again later." }
+});
 
 function normalizeQueryKey(userId, query, history) {
   return JSON.stringify({
@@ -419,11 +427,21 @@ app.get('/api/snapshot', authenticateToken, async (req, res) => {
 });
 
 // ─── API: QUERY ────────────────────────────────────────────────────────────
-app.post('/api/query', authenticateToken, async (req, res) => {
+app.post('/api/query', authenticateToken, apiLimiter, async (req, res) => {
   const { query, history } = req.body;
+  
+  // 🛡️ Layer 2 & 3: Input Validation & Prompt Injection Prevention
   if (!query) return res.status(400).json({ error: 'Query required' });
+  if (query.length > 2000) return res.status(400).json({ error: "Query too long (Max 2000 chars)" });
+  
+  const bannedKeywords = ["ignore previous", "jailbreak", "act as dan", "forget instructions", "system prompt"];
+  if (bannedKeywords.some(w => query.toLowerCase().includes(w))) {
+    return res.status(400).json({ error: "Invalid query detected (Security Block)" });
+  }
 
-  const cacheKey = normalizeQueryKey(req.user.id, query, history);
+  // 🛡️ Layer 4: Strict User Scoping (Always use req.user.id from JWT)
+  const userId = req.user.id;
+  const cacheKey = normalizeQueryKey(userId, query, history);
   const cached = getCachedResponse(cacheKey);
   if (cached) {
     return res.json({
@@ -468,9 +486,19 @@ app.post('/api/query', authenticateToken, async (req, res) => {
 });
 
 // ─── API: QUERY STREAM ─────────────────────────────────────────────────────
-app.post('/api/query/stream', authenticateToken, async (req, res) => {
+app.post('/api/query/stream', authenticateToken, apiLimiter, async (req, res) => {
   const { query, history } = req.body;
+  
+  // 🛡️ Layer 2 & 3: Input Validation & Prompt Injection Prevention
   if (!query) return res.status(400).json({ error: 'Query required' });
+  if (query.length > 2000) return res.status(400).json({ error: "Query too long" });
+  
+  const bannedKeywords = ["ignore previous", "jailbreak", "act as dan", "forget instructions", "system prompt"];
+  if (bannedKeywords.some(w => query.toLowerCase().includes(w))) {
+    return res.status(400).json({ error: "Invalid query detected" });
+  }
+
+  const userId = req.user.id;
 
   // Set SSE headers
   res.setHeader('Content-Type', 'text/event-stream');

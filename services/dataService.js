@@ -5,6 +5,7 @@
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const { decrypt } = require('../utils/encryption');
 require('dotenv').config();
 
 // PostgreSQL Pool
@@ -17,14 +18,14 @@ const pool = new Pool({
 
 // One-time optimization setup
 if (process.env.NODE_ENV !== "test") (async () => {
-    try {
-        await pool.query('CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions (user_id, date)');
-        await pool.query('CREATE INDEX IF NOT EXISTS idx_invoices_user_status ON invoices (user_id, status)');
-        await pool.query('CREATE INDEX IF NOT EXISTS idx_clients_user_name ON clients (user_id, name)');
-        if (process.env.NODE_ENV !== 'test') console.log("⚡ Database indexes verified");
-    } catch (e) {
-        console.warn("⚠️ Index creation skipped:", e.message);
-    }
+  try {
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions (user_id, date)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_invoices_user_status ON invoices (user_id, status)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_clients_user_name ON clients (user_id, name)');
+    if (process.env.NODE_ENV !== 'test') console.log("⚡ Database indexes verified");
+  } catch (e) {
+    console.warn("⚠️ Index creation skipped:", e.message);
+  }
 })();
 
 /**
@@ -132,6 +133,30 @@ async function getClients(userId) {
 }
 
 /**
+ * Fetches all sensitive fields for the current user to build a redaction list.
+ * @param {number} userId - The user ID.
+ * @returns {Promise<string[]>} List of decrypted PII strings.
+ */
+async function getRedactionList(userId) {
+  if (!userId) return [];
+  try {
+    const res = await pool.query('SELECT aadhar_card, pan_card, bank_account FROM clients WHERE user_id = $1', [userId]);
+    const list = [];
+    res.rows.forEach(r => {
+      if (r.aadhar_card) try { list.push(decrypt(r.aadhar_card)); } catch(e) {}
+      if (r.pan_card) try { list.push(decrypt(r.pan_card)); } catch(e) {}
+      if (r.bank_account) try { list.push(decrypt(r.bank_account)); } catch(e) {}
+    });
+    const result = [...new Set(list.filter(s => s && String(s).length > 5))];
+    console.log(`[DEBUG] getRedactionList: userId=${userId}, Found ${result.length} items to redact.`);
+    return result;
+  } catch (err) {
+    console.error('DataService Redaction Error:', err.message);
+    return [];
+  }
+}
+
+/**
  * Returns pre-aggregated finance KPIs directly from PostgreSQL.
  * @param {number|string} userId
  * @returns {Promise<{totalIncome:number,totalExpenses:number,netBalance:number}|null>}
@@ -163,4 +188,4 @@ async function getCashKpis(userId) {
   }
 }
 
-module.exports = { getTransactions, getInvoices, getClients, getCashKpis, pool };
+module.exports = { getTransactions, getInvoices, getClients, getRedactionList, getCashKpis, pool };
