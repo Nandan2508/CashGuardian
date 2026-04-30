@@ -30,7 +30,7 @@ async function resolveRecipient(clientName, userId, customDataset = null) {
   if (customDataset && customDataset.length > 0) {
     const row = customDataset.find(item => {
       // Find the client key (robust)
-      const clientKey = Object.keys(item).find(k => k.toLowerCase() === 'client' || k.toLowerCase() === 'customer');
+      const clientKey = Object.keys(item).find(k => ['client', 'customer', 'name', 'entity'].includes(k.toLowerCase()));
       return clientKey && item[clientKey] && item[clientKey].toLowerCase() === normalizedClient;
     });
 

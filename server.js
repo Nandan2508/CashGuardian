@@ -328,9 +328,9 @@ app.post('/api/upload', authenticateToken, async (req, res) => {
         });
       }
 
-      // 3. Client PII Logic
-      if (row.aadhar || row.pan || row.bankaccount || row.bank_account) {
-        const client = row.client || row.clientname || row.customer || 'Unknown';
+      // 3. Client PII & Contact Logic
+      if (row.name || row.client || row.customer || row.email) {
+        const client = row.name || row.client || row.clientname || row.customer || 'Unknown';
         const aadhar = row.aadhar || row.aadharcard || row.aadhar_card;
         const pan = row.pan || row.pancard || row.pan_card;
         const bank = row.bankaccount || row.bank_account;
