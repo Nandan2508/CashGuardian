@@ -5,6 +5,7 @@ const { getTransactions, getInvoices, getClients, getRedactionList, pool } = req
 const { maskPII } = require("../utils/piiGuard");
 const { maskPII: maskObjectPII } = require("../utils/maskPII");
 const { decrypt } = require("../utils/encryption");
+const { auditLog } = require("../utils/auditLog");
 
 function tryDecrypt(val) {
   if (!val) return null;
@@ -543,8 +544,18 @@ function buildMarkdownTable(rows, columns) {
   const body = rows.map((row) => {
     const cells = columns.map((column) => {
       const value = row[column];
+      
+      // Only format as currency if it's a number AND the column name implies money
       if (typeof value === "number") {
-        return formatCurrency(value);
+        const c = column.toLowerCase();
+        const isMoney = c.includes('amount') || c.includes('balance') || c.includes('total') || 
+                        c.includes('income') || c.includes('expense') || c.includes('revenue') || 
+                        c.includes('cost') || c.includes('value');
+        
+        if (isMoney) {
+          return formatCurrency(value);
+        }
+        return String(value);
       }
 
       return String(value ?? "").replace(/\|/g, "\\|");
@@ -843,6 +854,7 @@ async function handleQuery(userInput, customDataset = null, history = [], userId
   ]);
 
   const intent = classifyIntent(userInput);
+  auditLog(userId, 'AI_QUERY', intent, '0.0.0.0', { query: userInput.substring(0, 100) }).catch(() => {});
 
   // If sending a reminder, we should ALWAYS trigger the actual service
   if (intent === INTENTS.SEND_REMINDER) {

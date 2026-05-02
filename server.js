@@ -20,6 +20,7 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { encrypt } = require('./utils/encryption');
+const { auditLog } = require('./utils/auditLog');
 const rateLimit = require('express-rate-limit');
 
 // PostgreSQL Pool
@@ -202,9 +203,14 @@ app.post('/api/auth/register', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+    
+    auditLog(result.rows[0].id, 'REGISTER_SUCCESS', 'AUTH', req.ip, { username }).catch(() => {});
     res.status(201).json({ success: true, token, user: result.rows[0] });
   } catch (err) {
-    if (err.code === '23505') return res.status(400).json({ error: 'Username already exists' });
+    if (err.code === '23505') {
+        auditLog(null, 'REGISTER_FAILURE', 'AUTH', req.ip, { username, reason: 'Duplicate' }).catch(() => {});
+        return res.status(400).json({ error: 'Username already exists' });
+    }
     console.error('Registration Error:', err);
     res.status(500).json({ error: 'Registration failed' });
   }
@@ -217,17 +223,20 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
     const user = result.rows[0];
+    const isMatch = user && (await bcrypt.compare(password, user.password_hash));
 
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!isMatch) {
+      auditLog(null, 'LOGIN_FAILURE', 'AUTH', req.ip, { username }).catch(() => {});
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    auditLog(user.id, 'LOGIN_SUCCESS', 'AUTH', req.ip).catch(() => {});
 
     res.json({
       success: true,
@@ -392,17 +401,18 @@ app.post('/api/upload', authenticateToken, async (req, res) => {
     queryCache.clear();
     
     // Data is already in DB, no need to store in global memory.
-    const stats = {
-      name: name || 'Enriched Dataset',
-      rows: data.length,
-      columns: Object.keys(data[0] || {}),
-      type: 'enriched'
-    };
+    auditLog(req.user.id, 'FILE_UPLOAD', name, req.ip, { rows: data.length }).catch(() => {});
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `Successfully mapped to enriched dataset and stored in PostgreSQL.`,
-      stats: stats 
+      stats: {
+        name: name || 'Enriched Dataset',
+        rows: data.length,
+        transactions: transactions.length,
+        invoices: invoices.length,
+        clients: clients.length
+      }
     });
   } catch (err) {
     console.error('Upload Mapping Error:', err);
@@ -436,6 +446,7 @@ app.post('/api/query', authenticateToken, apiLimiter, async (req, res) => {
   
   const bannedKeywords = ["ignore previous", "jailbreak", "act as dan", "forget instructions", "system prompt"];
   if (bannedKeywords.some(w => query.toLowerCase().includes(w))) {
+    auditLog(req.user.id, 'SECURITY_BLOCK', 'BANNED_KEYWORD', req.ip, { query: query.substring(0, 100), status: 'BLOCKED' }).catch(() => {});
     return res.status(400).json({ error: "Invalid query detected (Security Block)" });
   }
 
@@ -495,6 +506,7 @@ app.post('/api/query/stream', authenticateToken, apiLimiter, async (req, res) =>
   
   const bannedKeywords = ["ignore previous", "jailbreak", "act as dan", "forget instructions", "system prompt"];
   if (bannedKeywords.some(w => query.toLowerCase().includes(w))) {
+    auditLog(req.user.id, 'SECURITY_BLOCK', 'BANNED_KEYWORD', req.ip, { query: query.substring(0, 100), status: 'BLOCKED' }).catch(() => {});
     return res.status(400).json({ error: "Invalid query detected" });
   }
 
@@ -525,6 +537,7 @@ app.post('/api/query/stream', authenticateToken, apiLimiter, async (req, res) =>
     }
   } catch (error) {
     console.error('❌ Stream Error:', error);
+    auditLog(userId, 'AI_QUERY_ERROR', 'STREAM_FAILURE', req.ip, { error: error.message, status: 'ERROR' }).catch(() => {});
     res.write(`data: ${JSON.stringify({ error: 'Stream interrupted' })}\n\n`);
   } finally {
     res.end();

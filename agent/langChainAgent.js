@@ -25,6 +25,7 @@ const { sendPaymentReminder } = require("../services/emailService");
 const { formatCurrency } = require("../utils/formatter");
 const { getTransactions, getInvoices } = require("../services/dataService");
 const { extractClientName, getSnapshot, buildSystemPrompt, formatOverdueTable, formatDecompositionTable } = require("./queryAgent");
+const { auditLog } = require("../utils/auditLog");
 
 function isFastModeEnabled() {
   return process.env.AI_FAST_PATH !== "false";
@@ -519,6 +520,9 @@ async function handleQuery(userInput, customDataset = null, history = [], userId
     }
 
     // 3. Run the Graph
+    const intent = classifyIntent(userInput);
+    auditLog(userId, 'AI_QUERY', intent, '0.0.0.0', { query: userInput.substring(0, 100), agent: 'langgraph-legacy' }).catch(() => {});
+
     const result = await app.invoke({
       messages,
       activeDataset: customDataset,
@@ -591,6 +595,8 @@ async function* handleStream(userInput, customDataset = null, history = [], user
     }
 
     const intent = classifyIntent(userInput);
+    auditLog(userId, 'AI_QUERY_STREAM', intent, '0.0.0.0', { query: userInput.substring(0, 100), agent: 'langgraph-stream' }).catch(() => {});
+
     const clientFromQuery = extractClientName(userInput, activeTransactions, preComputedClients);
     const resolvedClient = clientFromQuery || lastClient;
     console.timeEnd(`[LangGraph] Processing:${userInput.substring(0, 20)}`);
