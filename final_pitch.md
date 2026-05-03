@@ -31,58 +31,64 @@
 **Transition**: "To understand the need for CashGuardian, we must first look at the challenges hindering the growth of MSMEs."
 
 **Script**: 
-"In today's complex MSME landscape, businesses frequently encounter the critical challenge of **Data Overload**. As financial transactions and operational expenses accumulate daily, this raw information becomes increasingly **Difficult and Complex to Interpret** without significant investment in specialized analysis. Business owners require **Immediate and Absolute Clarity** on fundamental questions—specifically regarding their current liquidity positions and pending receivables. Unfortunately, conventional reporting methods often yield only **Static Data Points**, rather than the actionable, decision-ready insights that are truly necessary for effective strategic management and long-term business survival."
+"Small businesses generate financial data every single day — through transactions, invoices, and expenses. But here's the problem: that data just sits there.
+ It's hard to interpret without spreadsheets, analysts, or expensive BI tools that most small business owners simply don't have access to.
+
+What they actually need are simple, direct answers — How much cash do I have? Which customers haven't paid me yet? Am I going to be okay this month?
+
+Traditional dashboards show numbers, but they don't tell you what to do with those numbers. They're not decision-ready.
+That's the gap we're solving — turning raw financial data into clear, actionable answers.
 
 ---
 
 ## 3. Why This Matters (1:15 - 2:00)
-**Transition**: "This isn't just a minor operational friction—it's a systemic risk that directly impacts business survival."
-
-**Script**: 
-"Research indicates a significant disparity in financial data accessibility. While large enterprises are well-equipped, **55% of small businesses** are currently struggling to access clear insights. This matters because **Cash Flow Risk** is real; missing overdue invoices directly destabilizes operations. Most SMEs lack **Dedicated Financial Expertise**, making simple and immediate insights a necessity, not a luxury. Without them, **Hidden Problems**—like unusual spending patterns—often go unnoticed. Ultimately, a system that explains data in **Plain English** restores the confidence and operational control that over half of our small businesses are currently missing. *Source: CompassApp Research 2025.*"
+Now, why does this actually matter? Look at this chart — 55% of small businesses are genuinely struggling to make sense of their financial data. Another 25% have only partial clarity. That's 80% of businesses flying somewhat blind.
+And the consequences are real. A missed overdue invoice directly hits your cash flow. Unusual spending goes unnoticed until it's too late. And most small business owners don't have a finance team to catch these things — they're doing it all themselves.
+The good news? You don't need to hire an analyst. If a system can explain your business data in plain English — clearly, instantly — it improves your confidence, your speed, and your control.
+That's not a nice-to-have. For a small business owner, that's the difference between staying afloat and falling behind.
 
 ---
 
 ## 4. Solution Overview (2:00 - 3:00)
-
-
 **Script**: 
-"To address this information gap, we present **CashGuardian**—a platform designed to facilitate a **'Talk to Data'** experience for business owners. Our solution utilizes **Natural Language Queries**, allowing users to inquire about their finances in plain English. Beyond simple interaction, it employs **Grounded AI** by integrating deterministic financial logic—drawn directly from the database—with AI-driven insights. This approach enables **Intelligent Analysis** that can help identify **Cash Balances**, **Overdue Invoices**, and **Spending Anomalies**. By providing **Period Comparisons** and **Weekly Summaries**, CashGuardian aims to transform raw data into a more accessible narrative to assist in day-to-day business decision-making."
+The core idea is simple — a small business owner should be able to just ask a question in plain English and get a straight answer. No spreadsheets, no training required. Something like 'How much cash do I have?' or 'Who hasn't paid me yet?' — and CashGuardian just tells you.
+Under the hood, it does something important that most AI tools don't. It doesn't just guess. It combines solid, rule-based financial logic with AI-generated explanations — so the numbers are always accurate, and the answers are always easy to understand. We're calling this grounded AI.
+In terms of what it can actually do — it handles your cash balance, flags overdue invoices, spots unusual spending before it becomes a problem, compares performance across time periods, and gives you weekly summaries so you always know where you stand.
+Think of it as a financial assistant that's always on, always accurate, and speaks your language — not the language of accountants.
 
 ---
 
 ## 5. 9 Key Features: Rapid Fire (3:00 - 4:40)
 *(Approx. 11 Seconds Per Feature)*
-1.  **Upload & Analyze**: Users can effortlessly upload complex financial datasets to receive instant, AI-driven insights that simplify the entire process of raw data interpretation and decision-making.
-2.  **Overdue Detection**: We utilize automated identification protocols to isolate pending invoices and late-paying customers, ensuring that no receivable is overlooked in the daily billing cycle.
-3.  **Email Reminders**: The platform supports professional, automated payment reminders that can be sent directly to overdue clients to improve the overall recovery speed of your receivables.
-4.  **Cash Balance and Flow**: This feature provides a real-time monitoring system for net liquidity, allowing business owners to track operational cash movements with absolute precision and clarity.
-5.  **Anomaly Detection**: The system employs automated statistical flags to detect unusual income patterns or unexpected expense spikes that might otherwise go completely unnoticed in manual audits.
-6.  **PDF Export**: Users can facilitate one-click generation of professional financial reports, making it simple to share critical business performance data with any of your external stakeholders.
-7.  **Expense Breakdown**: Our deep-dive categorization engine allows entrepreneurs to understand exactly where their capital is being allocated across multiple business and operational spending categories.
-8.  **Weekly Summary**: We generate executive-level reports that summarize the last seven days of business performance, providing a high-impact narrative of all your weekly operational trends.
-9.  **Voice-Based Financial Querying**: This enables true hands-free intelligence, allowing owners to simply speak their financial questions to receive immediate, data-grounded answers without any need for manual typing.
-
+"Let me walk you through what CashGuardian actually does.
+First — you upload your financial data, and the system gets to work immediately. No setup headache, no configuration. You get insights straight away.
+From there, it shows you your real-time cash balance and how money is moving in and out of your business. Alongside that, the expense breakdown gives you a clear picture of where your money is actually going — broken down by category so nothing gets missed.
+Overdue detection automatically identifies which customers haven't paid, and then — with the email reminders feature — it can send follow-up reminders to those clients directly. That alone can make a real difference to cash flow.
+The anomaly detection keeps an eye out for anything unusual — an unexpected expense spike or an income drop — so issues don't quietly slip through unnoticed.
+The weekly summary gives you a quick snapshot of how the business is doing, without having to dig through your data yourself.
+And finally — PDF export, so reports can be shared with an accountant or a partner easily. And voice-based querying, so users can simply speak their question rather than type it — making the whole experience even more accessible.
+Together, these features are designed to give a small business owner the kind of visibility that was previously only available to much larger companies."
 ---
 
 ## 6. Security & Trust (4:40 - 5:40)
-**Transition**: "But all of these high-impact features require a foundation of absolute trust. Let’s look at how we secure your most sensitive financial intelligence."
-
-**Script**: 
-"In the financial sector, trust is non-negotiable. CashGuardian is engineered with **Enterprise-Grade Security** at its core, powered by a multi-layered system of **AI Guardrails**. First, our **PII Protection & Masking guardrail** automatically redacts sensitive identifiers like Aadhar, PAN, and bank details before they ever leave our server. We ensure that critical data is encrypted and completely invisible to the AI. Second, we implement **Prompt Injection Protection as a defensive guardrail**, filtering malicious queries to prevent unauthorized data leaks or logic manipulation. Access is strictly controlled via **Secure JWT Authentication**, providing stateless, rate-limited entry to the platform. Finally, we maintain a complete **Activity Logging & Audit Trail**, where every query, login, and upload is recorded for monitoring and compliance. By combining these essential guardrails, we protect what matters most—your business's financial integrity."
+When you're dealing with a business's financial data, trust is everything. So let me talk about how CashGuardian handles security — powered by AI guardrails.
+First — PII protection. Sensitive information like Aadhar numbers, PAN, and bank details are automatically masked and encrypted before they ever reach the AI. Your data stays protected at every step.
+Second — prompt injection protection. Any malicious or manipulative queries are filtered out by our guardrails before AI processing even begins, preventing data leaks and unauthorized access.
+Third — secure JWT authentication. Access to the system is stateless, secure, and rate-limited — which means it's built to handle security at an enterprise level, not just a basic login screen.
+And finally — every single action on the platform, whether it's a query, a login, or a file upload, is logged and tracked. This gives businesses a full audit trail for monitoring and compliance purposes.
 
 ---
 
 ## 7. What Makes It Unique (5:40 - 6:25)
-**Transition**: "You might ask, 'What makes us different from any other financial chatbot?' The answer lies in our fundamental design philosophy."
-
-**Script**: 
-"What truly makes CashGuardian unique is our **'Truth-First'** philosophy. First, our **AI is Grounded, Not Blind**. We prioritize data accuracy by anchoring every response in real, computed financial information from our secure database. Second, we follow a strict sequence of **Truth First, Explanation Next**. Our **Deterministic Service Layer** performs the mathematical calculations to find the 'ground truth' *before* the AI provides any narrative context. By combining this rigorous logic with natural language explanations, we ensure that CashGuardian delivers **answers you can trust**, significantly reducing the common risks associated with AI interpretation in critical financial contexts."
+So what actually makes CashGuardian different?
+Most AI tools just take your question and generate an answer. We don't do that. The AI is grounded — meaning every response is based on real, computed financial data. Not guesswork, not assumptions.
+Here's how it works. First, a deterministic service layer calculates the actual numbers — the truth. Then, and only then, does the AI come in to explain it in plain English.
+Truth first, explanation next.
+The result is something that's both accurate and easy to understand. We combine solid financial logic with AI explanations to deliver answers you can actually trust.
 
 ---
 
 ## 8. Architecture: Technical Deep-Dive (6:25 - 8:15)
-**Script**: 
 "Let’s look under the hood. We use an agentic workflow powered by **LangGraph**. 
 - First, the **Classify Node** identifies intent and resolves conversational context.
 - Next, the **Data Layer** pulls a snapshot from our optimized PostgreSQL schema.
