@@ -42,7 +42,7 @@ function formatForecastQuick(forecast) {
   ].join("\n");
 }
 
-async function invokeWithTimeout(llm, messages, fallbackText, timeoutMs = 1200) {
+async function invokeWithTimeout(llm, messages, fallbackText, timeoutMs = 8000) {
   try {
     const result = await Promise.race([
       llm.invoke(messages),
@@ -91,24 +91,14 @@ function getLLM() {
 
 /**
  * Node: Intent Classification
- * Determines what the user wants to do and resolves context (like client names) from memory.
+ * Determines what the user wants to do.
  */
 async function classifyNode(state) {
   const lastUserMessage = state.messages[state.messages.length - 1].content;
   const intent = classifyIntent(lastUserMessage);
   
-  // Try to extract client from current query
-  let client = await extractClientName(lastUserMessage, state.transactions);
-  
-  // CONTEXT MEMORY: If no client in query, use the one from state
-  if (!client && state.lastClient) {
-    client = state.lastClient;
-    console.log(`[LangGraph] Resolved context: using last client "${client}"`);
-  }
-
   return { 
-    intent, 
-    lastClient: client || state.lastClient 
+    intent 
   };
 }
 
@@ -117,30 +107,35 @@ async function classifyNode(state) {
  * Actually calls the services or the LLM based on the intent.
  */
 async function executeNode(state) {
-  const { intent, lastClient, activeDataset, messages } = state;
+  const { intent, activeDataset, messages } = state;
   const userInput = messages[messages.length - 1].content;
   const fastMode = isFastModeEnabled();
+  
+  // Extract client from current query
+  const clientFromQuery = await extractClientName(userInput, state.transactions);
+  
+  console.log(`[DEBUG] executeNode - Intent: ${intent}, Invoices in State: ${state.invoices?.length || 0}`);
 
   // 1. High-Priority Action: Send Reminder
   if (intent === INTENTS.SEND_REMINDER) {
-    if (!lastClient) return { response: "Please specify which client should receive the reminder." };
+    if (!clientFromQuery) return { response: "Please specify which client should receive the reminder." };
 
-    const clientInvoices = await getInvoicesByClient(state.userId, lastClient, state.invoices);
+    const clientInvoices = await getInvoicesByClient(state.userId, clientFromQuery);
     const overdueRow = clientInvoices.find((inv) => {
       const dueDate = inv.dueDate || inv.duedate;
       const status = String(inv.status || "").toLowerCase();
       return status === "overdue" || (dueDate && new Date(dueDate).getTime() < Date.now());
     });
-    if (!overdueRow) return { response: `No overdue records found for ${lastClient}.` };
+    if (!overdueRow) return { response: `No overdue records found for ${clientFromQuery}.` };
     const dueDate = overdueRow.dueDate || overdueRow.duedate;
     const daysOverdue = dueDate ? Math.max(1, Math.ceil((Date.now() - new Date(dueDate).getTime()) / 86400000)) : 7;
 
     const result = await sendPaymentReminder({
-      client: lastClient,
+      client: clientFromQuery,
       amount: Math.abs(Number(overdueRow.amount) || 0),
       daysOverdue,
       invoiceId: overdueRow.id || overdueRow.invoiceId || "N/A"
-    }, state.userId, activeDataset);
+    }, state.userId);
 
     return { response: result.alert };
   }
@@ -151,110 +146,43 @@ async function executeNode(state) {
     const balance = await getCashBalance(state.userId, state.transactions);
     fallbackText = `Current net cash balance is ${formatCurrency(balance.netBalance)}.\nIncome: ${formatCurrency(balance.totalIncome)} | Expenses: ${formatCurrency(balance.totalExpenses)}`;
     if (fastMode) return { response: fallbackText, duel: null, trend: null, comparisonTrend: null };
-  } else if (intent === INTENTS.EXPENSE_BREAKDOWN || intent === INTENTS.DECOMPOSITION) {
-    const norm = userInput.toLowerCase();
-    let decompType = (norm.includes("sales") || norm.includes("revenue") || norm.includes("income")) ? "income" : "expense";
-    let decompGroup = (norm.includes("region") || norm.includes("location") || norm.includes("area")) ? "region" : (norm.includes("channel") ? "channel" : "category");
-    if (norm.includes("client") || norm.includes("customer") || norm.includes("account")) {
-      decompGroup = "client";
-    }
-    const result = await decomposeTransactions(decompType, null, decompGroup, state.userId, state.transactions);
-    const table = formatDecompositionTable(result);
-    const decompFallback = [
-      "#### Breakdown Analysis",
-      `Total analyzed: ${formatCurrency(result.total)}.`,
-      result.insights.length ? result.insights.join(" ") : "The mix is relatively distributed without a single dominant outlier."
-    ].join("\n\n");
-
-    const systemPrompt =
-      buildSystemPrompt(await getSnapshot(state.userId, activeDataset, {
-        transactions: state.transactions,
-        invoices: state.invoices
-      })) +
-      `\n\n### MANDATORY DATA SOURCE: TARGET DECOMPOSITION\n` +
-      `Total: ${formatCurrency(result.total)}\n` +
-      `Breakdown Table:\n${table}\n` +
-      `### END DATA SOURCE\n\n` +
-      "Task: Provide a deep-dive executive analysis (approx 100-150 words). Discuss concentrations, outliers, and strategic implications. Do NOT reproduce the table. Return narrative only.";
-
-    const llm = getLLM();
-    const responseText = await invokeWithTimeout(
-      llm,
-      [new SystemMessage(systemPrompt), ...messages],
-      decompFallback,
-      2500
-    );
-
-    return {
-      response: `${table}\n\n${responseText}`,
-      duel: null,
-      trend: null,
-      comparisonTrend: null
-    };
-  } else if (intent === INTENTS.CASH_SUMMARY || intent === INTENTS.WEEKLY_SUMMARY) {
-    const summary = (intent === INTENTS.WEEKLY_SUMMARY) 
-      ? await generateSummary(state.userId, "weekly", state.transactions)
-      : await getCashSummary(state.userId, 90, state.transactions);
-    
-    const summaryText = typeof summary === 'string' ? summary : `Income: ${formatCurrency(summary.income)}\nExpenses: ${formatCurrency(summary.expenses)}\nNet: ${formatCurrency(summary.net)}`;
-    const summaryPrompt = buildSystemPrompt(await getSnapshot(state.userId, activeDataset, {
-      transactions: state.transactions,
-      invoices: state.invoices
-    })) +
-      `\n\n### MANDATORY DATA SOURCE: FINANCIAL SUMMARY\n` +
-      `${summaryText}\n` +
-      `### END DATA SOURCE\n\n` +
-      `Task: Provide a comprehensive executive narrative (minimum 100 words). ` +
-      `Identify key drivers of performance, risks, and provide three distinct actionable recommendations. ` +
-      `Be professional and insightful.`;
-
-    const llm = getLLM();
-    const aiSummary = await invokeWithTimeout(
-      llm,
-      [new SystemMessage(summaryPrompt), ...messages],
-      summaryText,
-      3500
-    );
-    return { response: aiSummary, duel: null, trend: null, comparisonTrend: null };
+  } else if (intent === INTENTS.CASH_SUMMARY) {
+    const summary = await getCashSummary(state.userId, 90, state.transactions);
+    fallbackText = `Over the latest tracked period, income was ${formatCurrency(summary.income)} and expenses were ${formatCurrency(summary.expenses)}.\nNet cash flow was ${formatCurrency(summary.net)}, with ${summary.topExpenseCategory} as the top expense category.`;
+    if (fastMode) return { response: fallbackText, duel: null, trend: null, comparisonTrend: null };
+  } else if (intent === INTENTS.WEEKLY_SUMMARY) {
+    fallbackText = await generateSummary(state.userId, "weekly", state.transactions);
+    if (fastMode) return { response: fallbackText, duel: null, trend: null, comparisonTrend: null };
+  } else if (intent === INTENTS.EXPENSE_BREAKDOWN) {
+    const breakdown = await getExpenseBreakdown(state.userId, state.transactions);
+    const { formatExpenseBreakdown } = require("./queryAgent");
+    fallbackText = formatExpenseBreakdown(breakdown);
+    if (fastMode) return { response: fallbackText, duel: null, trend: null, comparisonTrend: null };
   } else if (intent === INTENTS.ANOMALY) {
-    const anomalies = await detectAnomalies(state.userId, state.transactions);
-    if (fastMode) {
-      const text = anomalies.length
-        ? anomalies.map((a) => `- ${a.explanation}`).join("\n")
-        : "No significant anomalies detected.";
-      return { response: `#### Anomaly Report\n${text}`, duel: null, trend: null, comparisonTrend: null };
-    }
+    const activeTxns = activeDataset || state.transactions;
+    const anomalies = await detectAnomalies(state.userId, activeTxns);
+    const text = anomalies.length
+      ? anomalies.map((a) => `- ${a.explanation}`).join("\n")
+      : "No significant anomalies detected.";
+
+    return { 
+      response: `#### Anomaly Report\n${text}`, 
+      duel: null, 
+      trend: null, 
+      comparisonTrend: null 
+    };
   } else if (intent === INTENTS.OVERDUE_INVOICES) {
-    const snapshot = await getSnapshot(state.userId, activeDataset, {
-      transactions: state.transactions,
-      invoices: state.invoices
-    });
-    
-    let invoices = snapshot.overdueList || [];
-    let contextTitle = "Global Overdue Status";
-
-    if (lastClient) {
-      invoices = invoices.filter(inv => inv.client.toLowerCase().includes(lastClient.toLowerCase()));
-      contextTitle = `Overdue History for ${lastClient}`;
-    }
-
+    // 🛡️ ENFORCED GLOBAL RULE: No client-specific filtering for overdue
+    const invoices = await getOverdueInvoices(state.userId);
     const table = formatOverdueTable(invoices);
-    const systemPrompt = buildSystemPrompt(snapshot) +
-      `\n\n### MANDATORY DATA SOURCE: OVERDUE TABLE\n` +
-      `Focus: ${contextTitle}\n` +
-      `${table}\n` +
-      `### END DATA SOURCE\n\n` +
-      `Task: Present the data above. You MUST lead with the provided markdown table. Accuracy is 100% mandatory. Ignore irrelevant snapshot data if it contradicts this specific table.`;
-    if (fastMode) {
-      return { response: table, duel: null, trend: null, comparisonTrend: null };
+    
+    let response = table;
+    if (clientFromQuery) {
+      response += `\n\n*Note: Providing global operational view. Client-specific filtering for ${clientFromQuery} is restricted for overdue reporting.*`;
     }
-
-    const llm = getLLM();
-    const fallback = table;
-    const responseText = await invokeWithTimeout(llm, [new SystemMessage(systemPrompt), ...messages], fallback);
 
     return {
-      response: responseText,
+      response,
       duel: null,
       trend: null,
       comparisonTrend: null
@@ -310,7 +238,7 @@ async function executeNode(state) {
       llm,
       [new SystemMessage(systemPrompt), ...messages],
       decompFallback,
-      1800
+      2500
     );
 
     return {
@@ -355,7 +283,7 @@ async function executeNode(state) {
     };
   }
 
-  // 4. Fallback to AI Reasoning (Passing history for conversational awareness)
+  // 5. Fallback to AI Reasoning (Passing history for conversational awareness)
   const normalized = userInput.toLowerCase();
   
   // SMART ROUTING: Determine if this is a month-on-month trend or an entity duel
@@ -385,14 +313,6 @@ async function executeNode(state) {
     }
   }
 
-  if (fastMode && intent === INTENTS.WEEKLY_SUMMARY) {
-    return {
-      response: await generateSummary("weekly", state.transactions),
-      duel: null,
-      trend: snapshot.trend || null,
-      comparisonTrend: snapshot.comparisonTrend || null
-    };
-  }
 
   if (fastMode && intent === INTENTS.COMPARE) {
     const period = normalized.includes("week") ? "week" : "month";
@@ -406,7 +326,6 @@ async function executeNode(state) {
   }
 
   const systemPrompt = buildSystemPrompt(snapshot) + 
-    (lastClient ? `\n\nCONTEXT: You are currently discussing "${lastClient}". If the user uses pronouns like "him", "them", or "that client", they refer to "${lastClient}".` : "") +
     `\n\nGROUNDING RULE: Answer ONLY using the data provided in the snapshot. Be professional and provide executive-level analysis. ` +
     `NEVER guess email addresses or suggest unrelated high-risk clients (like Patel) if the requested client is missing from the directory. ` +
     `If a client is not in the OVERDUE LIST, simply state that they have no overdue invoices. Accuracy is 100% mandatory.`;
@@ -439,20 +358,16 @@ const StateAnnotation = Annotation.Root({
     reducer: (x, y) => y ?? x,
     default: () => null,
   }),
-  lastClient: Annotation({
-    reducer: (x, y) => y ?? x,
-    default: () => null,
-  }),
   activeDataset: Annotation({
     reducer: (x, y) => y ?? x,
     default: () => null,
   }),
   transactions: Annotation({
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => x, // Read-only once set
     default: () => null,
   }),
   invoices: Annotation({
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => x, // Read-only once set
     default: () => null,
   }),
   userId: Annotation({
@@ -498,26 +413,12 @@ async function handleQuery(userInput, customDataset = null, history = [], userId
     const messages = history.map(m => m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content));
     messages.push(new HumanMessage(userInput));
 
-    // 1.5 Pre-fetch data for the graph
+    // 1.5 Pre-fetch data for the graph (with deep cloning for safety)
+    const clonedCustom = customDataset && customDataset.length > 0 ? JSON.parse(JSON.stringify(customDataset)) : null;
     const [transactions, invoices] = await Promise.all([
-      customDataset && customDataset.length > 0 ? Promise.resolve(customDataset) : getTransactions(userId),
+      clonedCustom ? Promise.resolve(clonedCustom) : getTransactions(userId),
       getInvoices(userId)
     ]);
-
-    // 2. Compute clients for context
-    const clients = [...new Set([
-      ...transactions.map(t => t.client || t.client_name),
-      ...invoices.map(i => i.client || i.client_name)
-    ].filter(Boolean))];
-
-    let lastClient = null;
-    for (let i = history.length - 1; i >= 0; i--) {
-      const match = extractClientName(history[i].content, transactions, clients);
-      if (match) {
-        lastClient = match;
-        break;
-      }
-    }
 
     // 3. Run the Graph
     const intent = classifyIntent(userInput);
@@ -525,10 +426,9 @@ async function handleQuery(userInput, customDataset = null, history = [], userId
 
     const result = await app.invoke({
       messages,
-      activeDataset: customDataset,
-      transactions,
-      invoices,
-      lastClient,
+      activeDataset: clonedCustom,
+      transactions: JSON.parse(JSON.stringify(transactions)),
+      invoices: JSON.parse(JSON.stringify(invoices)),
       userId
     });
 
@@ -556,34 +456,19 @@ async function* handleStream(userInput, customDataset = null, history = [], user
     const messages = recentHistory.map(m => m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content));
     messages.push(new HumanMessage(userInput));
 
-    // 1. Pre-fetch all necessary data in parallel
+    // 1. Pre-fetch all necessary data in parallel (deep clone customDataset)
+    const clonedCustom = customDataset && customDataset.length > 0 ? JSON.parse(JSON.stringify(customDataset)) : null;
     const [activeTransactions, activeInvoices] = await Promise.all([
-      customDataset && customDataset.length > 0 ? Promise.resolve(customDataset) : getTransactions(userId),
+      clonedCustom ? Promise.resolve(clonedCustom) : getTransactions(userId),
       getInvoices(userId)
     ]);
-
-    // 2. Pre-compute unique clients list for efficient matching
-    const preComputedClients = [...new Set([
-      ...activeTransactions.map(t => t.client || t.client_name),
-      ...activeInvoices.map(i => i.client || i.client_name)
-    ].filter(Boolean))];
-
-    let lastClient = null;
-    for (let i = history.length - 1; i >= 0; i--) {
-      // Use synchronous optimized matching
-      const match = extractClientName(history[i].content, activeTransactions, preComputedClients);
-      if (match) {
-        lastClient = match;
-        break;
-      }
-    }
 
     console.time(`[LangGraph] Processing:${userInput.substring(0, 20)}`);
     // 1. Processing (Snapshot + Intent)
     let snapshot;
     try {
       console.time("[Performance] getSnapshot");
-      snapshot = await getSnapshot(userId, customDataset, { 
+      snapshot = await getSnapshot(userId, clonedCustom, { 
         transactions: activeTransactions, 
         invoices: activeInvoices 
       });
@@ -597,41 +482,40 @@ async function* handleStream(userInput, customDataset = null, history = [], user
     const intent = classifyIntent(userInput);
     auditLog(userId, 'AI_QUERY_STREAM', intent, '0.0.0.0', { query: userInput.substring(0, 100), agent: 'langgraph-stream' }).catch(() => {});
 
-    const clientFromQuery = extractClientName(userInput, activeTransactions, preComputedClients);
-    const resolvedClient = clientFromQuery || lastClient;
     console.timeEnd(`[LangGraph] Processing:${userInput.substring(0, 20)}`);
     
-    console.log(`[LangGraph] Intent=${intent}, Client=${resolvedClient || 'none'}`);
+    console.log(`[LangGraph] Intent=${intent}`);
 
     // 2. High-Priority Side-Effect: Send Reminder
     if (intent === INTENTS.SEND_REMINDER) {
-      if (!resolvedClient) {
+      const clientFromQuery = extractClientName(userInput, activeTransactions, [...new Set([...activeTransactions.map(t => t.client || t.client_name), ...activeInvoices.map(i => i.client || i.client_name)].filter(Boolean))]);
+      if (!clientFromQuery) {
         yield { type: 'text', content: "Please specify which client should receive the reminder." };
         return;
       }
 
       const overdueRow = activeInvoices.find((inv) => {
         const clientValue = inv.client || inv.client_name || inv.customer || "";
-        if (clientValue.toLowerCase() !== resolvedClient.toLowerCase()) return false;
+        if (clientValue.toLowerCase() !== clientFromQuery.toLowerCase()) return false;
         const status = String(inv.status || "").toLowerCase();
         const dueDate = inv.dueDate || inv.duedate;
         return status === "overdue" || (dueDate && new Date(dueDate).getTime() < Date.now());
       });
 
       if (!overdueRow) {
-        yield { type: 'text', content: `No overdue records found for ${resolvedClient}.` };
+        yield { type: 'text', content: `No overdue records found for ${clientFromQuery}.` };
         return;
       }
 
       const result = await sendPaymentReminder({
-        client: resolvedClient,
+        client: clientFromQuery,
         amount: Math.abs(overdueRow.amount || 0),
         daysOverdue: (() => {
           const dueDate = overdueRow.dueDate || overdueRow.duedate;
           return dueDate ? Math.max(1, Math.ceil((Date.now() - new Date(dueDate).getTime()) / 86400000)) : 7;
         })(),
         invoiceId: overdueRow.id || overdueRow.invoiceId || 'N/A'
-      }, userId, activeTransactions);
+      }, userId);
 
       yield { 
         type: 'text', 
@@ -642,15 +526,36 @@ async function* handleStream(userInput, customDataset = null, history = [], user
     }
 
     // 3. Narrative Support Intelligence (Tables, Data Injections)
-    let extraContext = "";
     if (intent === INTENTS.OVERDUE_INVOICES) {
-      let invoices = snapshot.overdueList || [];
-      if (resolvedClient) {
-        invoices = invoices.filter(i => i.client.toLowerCase().includes(resolvedClient.toLowerCase()));
+      const clientFromQuery = extractClientName(userInput, activeTransactions, [...new Set([...activeTransactions.map(t => t.client || t.client_name), ...activeInvoices.map(i => i.client || i.client_name)].filter(Boolean))]);
+      
+      const overdueList = await getOverdueInvoices(userId);
+      const table = formatOverdueTable(overdueList);
+      
+      let content = table;
+      if (clientFromQuery) {
+        content += `\n\n*Note: Providing global operational view. Client-specific filtering for ${clientFromQuery} is restricted for overdue reporting.*`;
       }
-      const table = formatOverdueTable(invoices);
-      extraContext = `\n\n### MANDATORY DATA SOURCE: OVERDUE TABLE\n${table}\nTask: You MUST lead your response with the markdown table provided above.`;
-    } else if (intent === INTENTS.EXPENSE_BREAKDOWN || intent === INTENTS.DECOMPOSITION) {
+
+      yield { type: 'text', content: content, intent };
+      return;
+    }
+
+    if (intent === INTENTS.ANOMALY) {
+      const anomalies = await detectAnomalies(userId, activeTransactions);
+      const text = anomalies.length
+        ? anomalies.map((a) => `- ${a.explanation}`).join("\n")
+        : "No significant anomalies detected.";
+      yield { 
+        type: 'text', 
+        content: `#### Anomaly Report\n${text}`,
+        intent 
+      };
+      return;
+    }
+
+    let extraContext = "";
+    if (intent === INTENTS.EXPENSE_BREAKDOWN || intent === INTENTS.DECOMPOSITION) {
       const norm = userInput.toLowerCase();
       let decompType = (norm.includes("sales") || norm.includes("revenue") || norm.includes("income")) ? "income" : "expense";
       let decompGroup = (norm.includes("region") || norm.includes("location") || norm.includes("area")) ? "region" : (norm.includes("channel") ? "channel" : "category");
@@ -690,7 +595,6 @@ async function* handleStream(userInput, customDataset = null, history = [], user
 
     // 4. Build the system prompt for narrative intents
     const systemPrompt = buildSystemPrompt(snapshot) + 
-      (resolvedClient ? `\n\nCONTEXT: You are currently discussing "${resolvedClient}".` : "") +
       extraContext +
       `\n\nGROUNDING RULE: Answer ONLY using the snapshot data. Accuracy is 100% mandatory.`;
 
