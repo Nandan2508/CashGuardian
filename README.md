@@ -10,6 +10,7 @@ Talk to your business finances in plain English — via natural language, ground
 ![Benchmarks](https://img.shields.io/badge/Benchmarks-43%2F53-yellow?style=flat-square)
 ![Latency](https://img.shields.io/badge/Avg%20Latency-70ms-blue?style=flat-square)
 ![Deploy](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat-square&logo=vercel)
+.
 
 ---
 
